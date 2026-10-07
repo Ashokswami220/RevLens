@@ -30,7 +30,9 @@ fun RevLensNavGraph(
         }
         
         composable<InputDataRoute> {
-            // Placeholder for Input Data Screen
+            com.example.revlens.ui.setup.BusinessSetupScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
         
         composable<WhatIfRoute> {
