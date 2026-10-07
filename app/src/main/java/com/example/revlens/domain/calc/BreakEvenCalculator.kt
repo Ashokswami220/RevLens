@@ -1,6 +1,6 @@
 package com.example.revlens.domain.calc
 
-import com.example.revlens.domain.model.BusinessProfile
+import com.example.revlens.model.BusinessProfile
 import java.math.BigDecimal
 import java.math.RoundingMode
 

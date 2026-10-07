@@ -1,7 +1,7 @@
 package com.example.revlens.domain.calc
 
-import com.example.revlens.domain.model.BusinessProfile
-import com.example.revlens.domain.model.Plan
+import com.example.revlens.model.BusinessProfile
+import com.example.revlens.model.Plan
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.math.BigDecimal

@@ -1,4 +1,4 @@
-package com.example.revlens.core.designsystem.components
+package com.example.revlens.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
-import com.example.revlens.core.designsystem.theme.RevLensTheme
+import com.example.revlens.ui.theme.RevLensTheme
 
 @Composable
 fun ProgressBar(
@@ -75,7 +75,7 @@ fun ProgressRing(
         )
         androidx.compose.material3.Text(
             text = "${(progress * 100).toInt()}%",
-            style = com.example.revlens.core.designsystem.theme.RevLensTypography.displayLarge,
+            style = com.example.revlens.ui.theme.RevLensTypography.displayLarge,
             color = RevLensTheme.colors.textPrimary
         )
     }

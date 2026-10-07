@@ -4,8 +4,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import com.example.revlens.domain.model.BusinessProfile
-import com.example.revlens.domain.model.Plan
+import com.example.revlens.model.BusinessProfile
+import com.example.revlens.model.Plan
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.encodeToString

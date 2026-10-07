@@ -1,4 +1,4 @@
-package com.example.revlens.core.designsystem.components
+package com.example.revlens.ui.components
 
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,8 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.example.revlens.core.designsystem.theme.RevLensTheme
-import com.example.revlens.core.designsystem.theme.RevLensTypography
+import com.example.revlens.ui.theme.RevLensTheme
+import com.example.revlens.ui.theme.RevLensTypography
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

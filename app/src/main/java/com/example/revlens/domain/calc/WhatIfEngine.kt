@@ -1,7 +1,7 @@
 package com.example.revlens.domain.calc
 
-import com.example.revlens.domain.model.BusinessProfile
-import com.example.revlens.domain.model.MetricResult
+import com.example.revlens.model.BusinessProfile
+import com.example.revlens.model.MetricResult
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.NumberFormat

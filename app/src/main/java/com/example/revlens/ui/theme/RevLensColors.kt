@@ -1,4 +1,4 @@
-package com.example.revlens.core.designsystem.theme
+package com.example.revlens.ui.theme
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable

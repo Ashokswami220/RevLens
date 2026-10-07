@@ -1,4 +1,4 @@
-package com.example.revlens.core.designsystem.components
+package com.example.revlens.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -29,8 +29,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.example.revlens.core.designsystem.theme.RevLensTheme
-import com.example.revlens.core.designsystem.theme.RevLensTypography
+import com.example.revlens.ui.theme.RevLensTheme
+import com.example.revlens.ui.theme.RevLensTypography
 
 @Composable
 fun SectionCard(

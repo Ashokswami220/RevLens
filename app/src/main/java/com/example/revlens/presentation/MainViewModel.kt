@@ -3,8 +3,8 @@ package com.example.revlens.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.revlens.data.ProfileRepository
-import com.example.revlens.domain.model.BusinessProfile
-import com.example.revlens.domain.model.Plan
+import com.example.revlens.model.BusinessProfile
+import com.example.revlens.model.Plan
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

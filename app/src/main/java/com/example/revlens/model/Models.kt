@@ -1,4 +1,4 @@
-package com.example.revlens.domain.model
+package com.example.revlens.model
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.KSerializer

@@ -1,4 +1,4 @@
-package com.example.revlens.core.designsystem.components
+package com.example.revlens.ui.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,8 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.revlens.core.designsystem.theme.RevLensTheme
-import com.example.revlens.core.designsystem.theme.RevLensTypography
+import com.example.revlens.ui.theme.RevLensTheme
+import com.example.revlens.ui.theme.RevLensTypography
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
