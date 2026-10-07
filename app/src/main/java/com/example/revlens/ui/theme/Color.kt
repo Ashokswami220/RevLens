@@ -46,7 +46,7 @@ val BrandPrimarySoft = Color(0x1F06B6D4)
 val BrandSecondarySoft = Color(0x1F6366F1)
 val BrandTertiarySoft = Color(0x1F10B981)
 
-// Text-safe variants (optional, small coloured text only)
+// Text-safe variants (optional, small colored text only)
 val LightBrandPrimaryText = Color(0xFF0E7490)
 val LightBrandSecondaryText = Color(0xFF4F46E5)
 val LightBrandTertiaryText = Color(0xFF047857)
