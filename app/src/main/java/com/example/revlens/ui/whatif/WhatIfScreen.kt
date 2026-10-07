@@ -11,6 +11,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -22,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.revlens.ui.components.PrimaryButton
 import com.example.revlens.domain.calc.PricingSimulationEngine
 import com.example.revlens.domain.calc.WhatIfEngine
 import com.example.revlens.model.Assumptions
@@ -48,6 +52,9 @@ fun WhatIfScreen(
     var churnChangePercent by remember { mutableStateOf(0f) }
     var growthChangePercent by remember { mutableStateOf(0f) }
     var cacChange by remember { mutableStateOf(0f) }
+
+    var showSaveDialog by remember { mutableStateOf(false) }
+    var scenarioName by remember { mutableStateOf("") }
 
     val assumptions by remember {
         derivedStateOf {
@@ -132,8 +139,50 @@ fun WhatIfScreen(
                         valueString = "$${cacChange.toInt()}",
                         caption = "Absolute dollar change in CAC"
                     )
+                    
+                    PrimaryButton(
+                        text = "Save as Scenario",
+                        onClick = { showSaveDialog = true }
+                    )
                 }
             }
+        }
+
+        if (showSaveDialog) {
+            AlertDialog(
+                onDismissRequest = { showSaveDialog = false },
+                title = { Text("Save Scenario", style = RevLensTypography.titleLarge, color = RevLensTheme.colors.textPrimary) },
+                text = {
+                    TextField(
+                        value = scenarioName,
+                        onValueChange = { scenarioName = it },
+                        label = { Text("Scenario Name") }
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        profile?.let { p ->
+                            viewModel.saveScenario(
+                                com.example.revlens.model.Scenario(
+                                    name = scenarioName.ifEmpty { "New Scenario" },
+                                    baselineProfile = p,
+                                    assumptions = assumptions
+                                )
+                            )
+                        }
+                        showSaveDialog = false
+                        onNavigateBack() // Or navigate to Scenario builder directly
+                    }) {
+                        Text("Save")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showSaveDialog = false }) {
+                        Text("Cancel")
+                    }
+                },
+                containerColor = RevLensTheme.colors.surface
+            )
         }
     }
 }

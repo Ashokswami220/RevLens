@@ -3,8 +3,10 @@ package com.example.revlens.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.revlens.data.ProfileRepository
+import com.example.revlens.data.ScenarioRepository
 import com.example.revlens.model.BusinessProfile
 import com.example.revlens.model.Plan
+import com.example.revlens.model.Scenario
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +17,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val repository: ProfileRepository
+    private val repository: ProfileRepository,
+    private val scenarioRepository: ScenarioRepository
 ) : ViewModel() {
 
     // The single source of truth for the app's current business profile
@@ -24,6 +27,13 @@ class MainViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = null
+        )
+
+    val scenarios: StateFlow<List<Scenario>> = scenarioRepository.scenariosFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
         )
 
     fun updateProfile(updatedProfile: BusinessProfile) {
@@ -60,6 +70,18 @@ class MainViewModel @Inject constructor(
     fun updateFixedCosts(newCosts: BigDecimal) {
         profile.value?.let { current ->
             updateProfile(current.copy(fixedCosts = newCosts))
+        }
+    }
+
+    fun saveScenario(scenario: Scenario) {
+        viewModelScope.launch {
+            scenarioRepository.saveScenario(scenario)
+        }
+    }
+
+    fun deleteScenario(scenarioId: String) {
+        viewModelScope.launch {
+            scenarioRepository.deleteScenario(scenarioId)
         }
     }
 }

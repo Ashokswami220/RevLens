@@ -19,3 +19,9 @@ object GoalPlannerRoute
 
 @Serializable
 object BreakEvenRoute
+
+@Serializable
+object ScenarioBuilderRoute
+
+@Serializable
+object ScenarioComparisonRoute
