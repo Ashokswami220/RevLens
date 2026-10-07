@@ -1,27 +1,46 @@
 package com.example.revlens.domain.model
 
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import java.math.BigDecimal
 import java.util.UUID
 
+object BigDecimalSerializer : KSerializer<BigDecimal> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("BigDecimal", PrimitiveKind.STRING)
+    override fun serialize(encoder: Encoder, value: BigDecimal) = encoder.encodeString(value.toPlainString())
+    override fun deserialize(decoder: Decoder): BigDecimal = BigDecimal(decoder.decodeString())
+}
+
+@Serializable
 enum class BillingPeriod {
     MONTHLY,
     ANNUALLY
 }
 
+@Serializable
 data class Plan(
-    val id: String = UUID.randomUUID()
-        .toString(),
+    val id: String = UUID.randomUUID().toString(),
     val name: String,
+    @Serializable(with = BigDecimalSerializer::class)
     val price: BigDecimal,
     val billingPeriod: BillingPeriod = BillingPeriod.MONTHLY,
     val customerCount: Int
 )
 
+@Serializable
 data class BusinessProfile(
-    val monthlyChurnRate: Double, // e.g. 0.021 for 2.1%
-    val monthlyGrowthRate: Double, // e.g. 0.06 for 6.0%
-    val cac: BigDecimal, // Customer Acquisition Cost
+    val monthlyChurnRate: Double,
+    val monthlyGrowthRate: Double,
+    @Serializable(with = BigDecimalSerializer::class)
+    val cac: BigDecimal,
+    @Serializable(with = BigDecimalSerializer::class)
     val fixedCosts: BigDecimal,
+    @Serializable(with = BigDecimalSerializer::class)
     val variableCostPerCustomer: BigDecimal,
     val plans: List<Plan>
 ) {
@@ -29,7 +48,7 @@ data class BusinessProfile(
         get() = plans.sumOf { it.customerCount }
 
     val currentMrr: BigDecimal
-        get() = plans.sumOf {
+        get() = plans.sumOf { 
             val monthlyPrice = if (it.billingPeriod == BillingPeriod.ANNUALLY) {
                 it.price.divide(BigDecimal(12), 2, java.math.RoundingMode.HALF_UP)
             } else {
@@ -46,25 +65,30 @@ data class BusinessProfile(
         }
 }
 
+@Serializable
 data class Assumptions(
-    val priceChangePercent: Double = 0.0, // e.g. 0.10 for +10%
-    val churnChangePercent: Double = 0.0, // e.g. 0.015 for +1.5% point
-    val cacChange: BigDecimal = BigDecimal.ZERO, // absolute change in CAC
-    val growthChangePercent: Double = 0.0, // e.g. 0.02 for +2% point
+    val priceChangePercent: Double = 0.0,
+    val churnChangePercent: Double = 0.0,
+    @Serializable(with = BigDecimalSerializer::class)
+    val cacChange: BigDecimal = BigDecimal.ZERO,
+    val growthChangePercent: Double = 0.0,
+    @Serializable(with = BigDecimalSerializer::class)
     val fixedCostChange: BigDecimal = BigDecimal.ZERO
 )
 
+@Serializable
 data class Scenario(
-    val id: String = UUID.randomUUID()
-        .toString(),
+    val id: String = UUID.randomUUID().toString(),
     val name: String,
     val baselineProfile: BusinessProfile,
     val assumptions: Assumptions,
     val createdAt: Long = System.currentTimeMillis()
 )
 
+@Serializable
 data class MetricResult(
     val label: String,
+    @Serializable(with = BigDecimalSerializer::class)
     val value: BigDecimal,
     val formattedValue: String,
     val deltaPercent: Double? = null,

@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -68,6 +69,7 @@ dependencies {
     implementation(libs.vico.compose.m3)
     implementation(libs.vico.core)
     implementation(libs.core.splashscreen)
+    implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.turbine)
     testImplementation(libs.kotlinx.coroutines.test)
