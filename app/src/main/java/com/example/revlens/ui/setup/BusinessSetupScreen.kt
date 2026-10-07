@@ -9,11 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,7 +22,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.revlens.model.BusinessProfile
 import com.example.revlens.presentation.MainViewModel
 import com.example.revlens.ui.components.NumberField
 import com.example.revlens.ui.components.PrimaryButton
@@ -34,7 +29,6 @@ import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
-import java.math.BigDecimal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,13 +37,13 @@ fun BusinessSetupScreen(
     onNavigateBack: () -> Unit
 ) {
     val profile by viewModel.profile.collectAsState()
-    
+
     var churnRateStr by remember { mutableStateOf("") }
     var growthRateStr by remember { mutableStateOf("") }
     var cacStr by remember { mutableStateOf("") }
     var fixedCostsStr by remember { mutableStateOf("") }
     var varCostsStr by remember { mutableStateOf("") }
-    
+
     // Load initial values when profile becomes available
     LaunchedEffect(profile) {
         profile?.let {
@@ -86,7 +80,7 @@ fun BusinessSetupScreen(
                         label = "Monthly Churn Rate",
                         suffix = "%"
                     )
-                    
+
                     NumberField(
                         value = growthRateStr,
                         onValueChange = { growthRateStr = it },
@@ -104,14 +98,14 @@ fun BusinessSetupScreen(
                         label = "Customer Acquisition Cost (CAC)",
                         suffix = "$"
                     )
-                    
+
                     NumberField(
                         value = fixedCostsStr,
                         onValueChange = { fixedCostsStr = it },
                         label = "Monthly Fixed Costs",
                         suffix = "$"
                     )
-                    
+
                     NumberField(
                         value = varCostsStr,
                         onValueChange = { varCostsStr = it },
@@ -124,12 +118,12 @@ fun BusinessSetupScreen(
             SectionCard(title = "Pricing Plans") {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     profile?.plans?.forEach { plan ->
-                        com.example.revlens.ui.components.SectionCard(
+                        SectionCard(
                             title = plan.name,
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                text = "\$${plan.price} / ${plan.billingPeriod.name.lowercase()}",
+                                text = $$"$$${plan.price} / $${plan.billingPeriod.name.lowercase()}",
                                 style = RevLensTypography.bodyLarge,
                                 color = RevLensTheme.colors.textSecondary
                             )
@@ -142,7 +136,7 @@ fun BusinessSetupScreen(
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
 
             PrimaryButton(
@@ -151,11 +145,15 @@ fun BusinessSetupScreen(
                     val currentProfile = profile
                     if (currentProfile != null) {
                         val newProfile = currentProfile.copy(
-                            monthlyChurnRate = churnRateStr.toDoubleOrNull()?.div(100.0) ?: currentProfile.monthlyChurnRate,
-                            monthlyGrowthRate = growthRateStr.toDoubleOrNull()?.div(100.0) ?: currentProfile.monthlyGrowthRate,
+                            monthlyChurnRate = churnRateStr.toDoubleOrNull()
+                                ?.div(100.0) ?: currentProfile.monthlyChurnRate,
+                            monthlyGrowthRate = growthRateStr.toDoubleOrNull()
+                                ?.div(100.0) ?: currentProfile.monthlyGrowthRate,
                             cac = cacStr.toBigDecimalOrNull() ?: currentProfile.cac,
-                            fixedCosts = fixedCostsStr.toBigDecimalOrNull() ?: currentProfile.fixedCosts,
-                            variableCostPerCustomer = varCostsStr.toBigDecimalOrNull() ?: currentProfile.variableCostPerCustomer
+                            fixedCosts = fixedCostsStr.toBigDecimalOrNull()
+                                ?: currentProfile.fixedCosts,
+                            variableCostPerCustomer = varCostsStr.toBigDecimalOrNull()
+                                ?: currentProfile.variableCostPerCustomer
                         )
                         viewModel.updateProfile(newProfile)
                         onNavigateBack()

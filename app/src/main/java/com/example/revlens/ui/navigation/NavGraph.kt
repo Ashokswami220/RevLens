@@ -7,6 +7,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.revlens.ui.dashboard.DashboardScreen
+import com.example.revlens.ui.setup.BusinessSetupScreen
+import com.example.revlens.ui.whatif.WhatIfScreen
 
 @Composable
 fun RevLensNavGraph(
@@ -30,13 +32,15 @@ fun RevLensNavGraph(
         }
         
         composable<InputDataRoute> {
-            com.example.revlens.ui.setup.BusinessSetupScreen(
+            BusinessSetupScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
         
         composable<WhatIfRoute> {
-            // Placeholder for What-If Screen
+            WhatIfScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
         
         composable<ForecastRoute> {
