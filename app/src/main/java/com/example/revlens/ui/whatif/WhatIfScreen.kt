@@ -8,11 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,7 +25,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.revlens.domain.calc.PricingSimulationEngine
 import com.example.revlens.domain.calc.WhatIfEngine
 import com.example.revlens.model.Assumptions
-import com.example.revlens.model.BusinessProfile
 import com.example.revlens.model.MetricResult
 import com.example.revlens.presentation.MainViewModel
 import com.example.revlens.ui.components.LabeledSlider
@@ -47,13 +42,13 @@ fun WhatIfScreen(
     onNavigateBack: () -> Unit
 ) {
     val profile by viewModel.profile.collectAsState()
-    
+
     // Sliders state
     var priceChangePercent by remember { mutableStateOf(0f) }
     var churnChangePercent by remember { mutableStateOf(0f) }
     var growthChangePercent by remember { mutableStateOf(0f) }
     var cacChange by remember { mutableStateOf(0f) }
-    
+
     val assumptions by remember {
         derivedStateOf {
             Assumptions(
@@ -65,7 +60,7 @@ fun WhatIfScreen(
             )
         }
     }
-    
+
     val results = remember(profile, assumptions) {
         profile?.let { p ->
             val projected = PricingSimulationEngine.simulate(p, assumptions)
@@ -110,7 +105,7 @@ fun WhatIfScreen(
                         valueString = "${priceChangePercent.toInt()}%",
                         caption = "Adjust pricing across all plans"
                     )
-                    
+
                     LabeledSlider(
                         label = "Churn Change",
                         value = churnChangePercent,
@@ -119,7 +114,7 @@ fun WhatIfScreen(
                         valueString = "${churnChangePercent.toInt()}%",
                         caption = "Absolute change in churn rate"
                     )
-                    
+
                     LabeledSlider(
                         label = "Growth Change",
                         value = growthChangePercent,
@@ -128,7 +123,7 @@ fun WhatIfScreen(
                         valueString = "${growthChangePercent.toInt()}%",
                         caption = "Absolute change in MRR growth rate"
                     )
-                    
+
                     LabeledSlider(
                         label = "CAC Change",
                         value = cacChange,
@@ -162,10 +157,11 @@ fun MetricResultRow(result: MetricResult) {
                 color = RevLensTheme.colors.textPrimary
             )
         }
-        
+
         if (result.deltaPercent != null && result.deltaPercent != 0.0) {
             val isPositiveIndicator = result.isPositive
-            val color = if (isPositiveIndicator) RevLensTheme.colors.success else RevLensTheme.colors.error
+            val color =
+                if (isPositiveIndicator) RevLensTheme.colors.success else RevLensTheme.colors.error
             val sign = if (result.deltaPercent > 0) "+" else ""
             Text(
                 text = "$sign${String.format(Locale.US, "%.1f", result.deltaPercent)}%",

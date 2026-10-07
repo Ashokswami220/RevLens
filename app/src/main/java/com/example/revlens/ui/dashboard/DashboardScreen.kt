@@ -25,15 +25,15 @@ import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
 import java.text.NumberFormat
-import java.util.Locale
 import java.util.Currency
-import java.math.BigDecimal
+import java.util.Locale
 
 @Composable
 fun DashboardScreen(
     viewModel: MainViewModel = hiltViewModel(),
     onNavigateToInput: () -> Unit,
-    onNavigateToWhatIf: () -> Unit
+    onNavigateToWhatIf: () -> Unit,
+    onNavigateToBreakEven: () -> Unit
 ) {
     val profile by viewModel.profile.collectAsState()
 
@@ -54,7 +54,8 @@ fun DashboardScreen(
                 DashboardContent(
                     profile = currentProfile,
                     onNavigateToInput = onNavigateToInput,
-                    onNavigateToWhatIf = onNavigateToWhatIf
+                    onNavigateToWhatIf = onNavigateToWhatIf,
+                    onNavigateToBreakEven = onNavigateToBreakEven
                 )
             } ?: run {
                 // Loading or null state
@@ -72,12 +73,14 @@ fun DashboardScreen(
 private fun DashboardContent(
     profile: BusinessProfile,
     onNavigateToInput: () -> Unit,
-    onNavigateToWhatIf: () -> Unit
+    onNavigateToWhatIf: () -> Unit,
+    onNavigateToBreakEven: () -> Unit
 ) {
-    val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.US).apply {
-        currency = Currency.getInstance("USD")
-        maximumFractionDigits = 0
-    }
+    val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.US)
+        .apply {
+            currency = Currency.getInstance("USD")
+            maximumFractionDigits = 0
+        }
 
     val mrr = profile.currentMrr
     val arpu = profile.arpu
@@ -100,7 +103,7 @@ private fun DashboardContent(
                 color = RevLensTheme.colors.brandPrimary
             )
         }
-        
+
         SectionCard(
             title = "ARPU",
             modifier = Modifier.weight(1f)
@@ -129,13 +132,17 @@ private fun DashboardContent(
                 color = RevLensTheme.colors.textPrimary
             )
         }
-        
+
         SectionCard(
             title = "CAC Payback",
             modifier = Modifier.weight(1f)
         ) {
             Text(
-                text = if (cacPayback != null) "${String.format(Locale.US, "%.1f", cacPayback)} mo" else "Never",
+                text = if (cacPayback != null) "${
+                    String.format(
+                        Locale.US, "%.1f", cacPayback
+                    )
+                } mo" else "Never",
                 style = RevLensTypography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = if (cacPayback != null && cacPayback < 12.0) RevLensTheme.colors.success else RevLensTheme.colors.error
@@ -157,6 +164,11 @@ private fun DashboardContent(
             PrimaryButton(
                 text = "What-If",
                 onClick = onNavigateToWhatIf,
+                modifier = Modifier.weight(1f)
+            )
+            PrimaryButton(
+                text = "Break-Even",
+                onClick = onNavigateToBreakEven,
                 modifier = Modifier.weight(1f)
             )
         }

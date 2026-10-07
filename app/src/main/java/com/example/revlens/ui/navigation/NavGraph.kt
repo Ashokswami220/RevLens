@@ -6,6 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.revlens.ui.breakeven.BreakEvenScreen
 import com.example.revlens.ui.dashboard.DashboardScreen
 import com.example.revlens.ui.setup.BusinessSetupScreen
 import com.example.revlens.ui.whatif.WhatIfScreen
@@ -27,26 +28,35 @@ fun RevLensNavGraph(
                 },
                 onNavigateToWhatIf = {
                     navController.navigate(WhatIfRoute)
+                },
+                onNavigateToBreakEven = {
+                    navController.navigate(BreakEvenRoute)
                 }
             )
         }
-        
+
         composable<InputDataRoute> {
             BusinessSetupScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-        
+
         composable<WhatIfRoute> {
             WhatIfScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-        
+
+        composable<BreakEvenRoute> {
+            BreakEvenScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
         composable<ForecastRoute> {
             // Placeholder for Forecast Screen
         }
-        
+
         composable<GoalPlannerRoute> {
             // Placeholder for Goal Planner Screen
         }

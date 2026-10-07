@@ -1,7 +1,7 @@
 package com.example.revlens.model
 
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -11,8 +11,12 @@ import java.math.BigDecimal
 import java.util.UUID
 
 object BigDecimalSerializer : KSerializer<BigDecimal> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("BigDecimal", PrimitiveKind.STRING)
-    override fun serialize(encoder: Encoder, value: BigDecimal) = encoder.encodeString(value.toPlainString())
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("BigDecimal", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: BigDecimal) =
+        encoder.encodeString(value.toPlainString())
+
     override fun deserialize(decoder: Decoder): BigDecimal = BigDecimal(decoder.decodeString())
 }
 
@@ -24,7 +28,8 @@ enum class BillingPeriod {
 
 @Serializable
 data class Plan(
-    val id: String = UUID.randomUUID().toString(),
+    val id: String = UUID.randomUUID()
+        .toString(),
     val name: String,
     @Serializable(with = BigDecimalSerializer::class)
     val price: BigDecimal,
@@ -48,7 +53,7 @@ data class BusinessProfile(
         get() = plans.sumOf { it.customerCount }
 
     val currentMrr: BigDecimal
-        get() = plans.sumOf { 
+        get() = plans.sumOf {
             val monthlyPrice = if (it.billingPeriod == BillingPeriod.ANNUALLY) {
                 it.price.divide(BigDecimal(12), 2, java.math.RoundingMode.HALF_UP)
             } else {
@@ -78,7 +83,8 @@ data class Assumptions(
 
 @Serializable
 data class Scenario(
-    val id: String = UUID.randomUUID().toString(),
+    val id: String = UUID.randomUUID()
+        .toString(),
     val name: String,
     val baselineProfile: BusinessProfile,
     val assumptions: Assumptions,

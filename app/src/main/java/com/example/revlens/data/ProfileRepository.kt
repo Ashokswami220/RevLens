@@ -8,7 +8,6 @@ import com.example.revlens.model.BusinessProfile
 import com.example.revlens.model.Plan
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.math.BigDecimal
 import javax.inject.Inject

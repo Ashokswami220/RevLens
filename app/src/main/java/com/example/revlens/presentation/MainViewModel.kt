@@ -6,12 +6,9 @@ import com.example.revlens.data.ProfileRepository
 import com.example.revlens.model.BusinessProfile
 import com.example.revlens.model.Plan
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import javax.inject.Inject
@@ -59,7 +56,7 @@ class MainViewModel @Inject constructor(
             updateProfile(current.copy(cac = newCac))
         }
     }
-    
+
     fun updateFixedCosts(newCosts: BigDecimal) {
         profile.value?.let { current ->
             updateProfile(current.copy(fixedCosts = newCosts))

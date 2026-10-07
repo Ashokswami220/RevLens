@@ -16,3 +16,6 @@ object ForecastRoute
 
 @Serializable
 object GoalPlannerRoute
+
+@Serializable
+object BreakEvenRoute
