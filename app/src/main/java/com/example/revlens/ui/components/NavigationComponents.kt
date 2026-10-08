@@ -112,7 +112,11 @@ fun RevLensBottomBar(
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
-                        ) { onNavigate(item.route) }
+                        ) {
+                            if (!isSelected) {
+                                onNavigate(item.route)
+                            }
+                        }
                         .padding(bottom = 12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Top

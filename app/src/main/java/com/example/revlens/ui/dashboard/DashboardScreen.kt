@@ -56,13 +56,6 @@ fun DashboardScreen(
                             tint = RevLensTheme.colors.textPrimary
                         )
                     }
-                    androidx.compose.material3.IconButton(onClick = onNavigateToSettings) {
-                        androidx.compose.material3.Icon(
-                            imageVector = androidx.compose.material.icons.Icons.Filled.Settings,
-                            contentDescription = "Settings",
-                            tint = RevLensTheme.colors.textPrimary
-                        )
-                    }
                 }
             )
         },

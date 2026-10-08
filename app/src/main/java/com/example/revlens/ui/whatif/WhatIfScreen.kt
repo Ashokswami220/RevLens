@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -124,6 +125,15 @@ fun WhatIfScreen(
             // Live Impact Section
             SectionCard(title = "Live Impact") {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    val barData = results.map { (it.deltaPercent ?: 0.0).toFloat() }
+                    if (barData.any { it != 0f }) {
+                        com.example.revlens.ui.components.RevLensBarChart(
+                            data = barData,
+                            colors = results.map { if (it.isPositive) RevLensTheme.colors.success else RevLensTheme.colors.error }
+                        )
+                        androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(8.dp))
+                    }
+
                     results.forEach { result ->
                         MetricResultRow(result)
                     }

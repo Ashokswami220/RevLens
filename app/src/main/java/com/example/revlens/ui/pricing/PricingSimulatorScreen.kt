@@ -43,6 +43,8 @@ import com.example.revlens.model.Assumptions
 import com.example.revlens.presentation.MainViewModel
 import com.example.revlens.ui.components.ChoiceChip
 import com.example.revlens.ui.components.DeltaChip
+import com.example.revlens.ui.components.RevLensBarChart
+import com.example.revlens.ui.components.ChartLegend
 import com.example.revlens.ui.components.DeltaType
 import com.example.revlens.ui.components.LabeledSlider
 import com.example.revlens.ui.components.PrimaryButton
@@ -231,17 +233,23 @@ fun PricingSimulatorScreen(
                             )
                         }
 
-                        // Chart Placeholder
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(120.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(RevLensTheme.colors.background),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("Before / After Bars", color = RevLensTheme.colors.textSecondary)
-                        }
+                        // Before / After Chart
+                        RevLensBarChart(
+                            data = listOf(
+                                profile!!.currentMrr.toFloat(),
+                                projected.currentMrr.toFloat()
+                            ),
+                            colors = listOf(
+                                RevLensTheme.colors.textTertiary,
+                                if (mrrDelta >= 0) RevLensTheme.colors.brandPrimary else RevLensTheme.colors.error
+                            )
+                        )
+                        ChartLegend(
+                            items = listOf(
+                                "Current MRR" to RevLensTheme.colors.textTertiary,
+                                "Projected MRR" to if (mrrDelta >= 0) RevLensTheme.colors.brandPrimary else RevLensTheme.colors.error
+                            )
+                        )
                     }
                 }
 

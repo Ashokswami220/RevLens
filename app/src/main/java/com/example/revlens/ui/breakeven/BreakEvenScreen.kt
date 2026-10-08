@@ -3,6 +3,7 @@ package com.example.revlens.ui.breakeven
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -102,6 +103,37 @@ fun BreakEvenScreen(
 
             SectionCard(title = "Break-Even Results") {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    val breakEven = breakEvenCustomers ?: 0
+                    val maxCustomers = if (breakEven > 0) breakEven * 2 else 100
+                    
+                    val revenueData = mutableListOf<Float>()
+                    val costData = mutableListOf<Float>()
+                    
+                    simulatedProfile?.let { p ->
+                        val arpu = p.currentMrr.toFloat() / (if (p.totalCustomers > 0) p.totalCustomers else 1)
+                        for (i in 0..10) {
+                            val customers = (maxCustomers * i / 10f).toInt()
+                            val revenue = arpu * customers
+                            val costs = p.fixedCosts.toFloat() + (p.variableCostPerCustomer.toFloat() * customers)
+                            revenueData.add(revenue)
+                            costData.add(costs)
+                        }
+                    }
+
+                    if (revenueData.isNotEmpty()) {
+                        com.example.revlens.ui.components.RevLensLineChart(
+                            data = listOf(revenueData, costData),
+                            colors = listOf(RevLensTheme.colors.brandPrimary, RevLensTheme.colors.error)
+                        )
+                        com.example.revlens.ui.components.ChartLegend(
+                            items = listOf(
+                                "Revenue" to RevLensTheme.colors.brandPrimary,
+                                "Costs" to RevLensTheme.colors.error
+                            )
+                        )
+                        androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(16.dp))
+                    }
+
                     val paybackStr =
                         cacPayback?.let { String.format(Locale.US, "%.1f months", it) } ?: "Never"
                     ResultRow(label = "CAC Payback Period", value = paybackStr)
