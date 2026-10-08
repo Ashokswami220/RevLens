@@ -27,6 +27,7 @@ import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
+import com.example.revlens.ui.components.SegmentedTabs
 import java.math.BigDecimal
 import java.util.Locale
 
@@ -34,7 +35,9 @@ import java.util.Locale
 @Composable
 fun BreakEvenScreen(
     viewModel: MainViewModel = hiltViewModel(),
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToPricing: () -> Unit,
+    onNavigateToWhatIf: () -> Unit
 ) {
     val profile by viewModel.profile.collectAsState()
 
@@ -85,6 +88,18 @@ fun BreakEvenScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Segmented Tabs
+            SegmentedTabs(
+                options = listOf("Pricing", "What-If", "Break-Even"),
+                selectedIndex = 2,
+                onOptionSelected = { index ->
+                    when (index) {
+                        0 -> onNavigateToPricing()
+                        1 -> onNavigateToWhatIf()
+                    }
+                }
+            )
+
             SectionCard(title = "Break-Even Results") {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     val paybackStr =

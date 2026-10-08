@@ -39,6 +39,7 @@ import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
+import com.example.revlens.ui.components.SegmentedTabs
 import java.math.BigDecimal
 import java.util.Locale
 
@@ -47,7 +48,9 @@ import java.util.Locale
 fun WhatIfScreen(
     viewModel: MainViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
-    onNavigateToMetrics: () -> Unit
+    onNavigateToMetrics: () -> Unit,
+    onNavigateToPricing: () -> Unit,
+    onNavigateToBreakEven: () -> Unit
 ) {
     val profile by viewModel.profile.collectAsState()
 
@@ -105,6 +108,18 @@ fun WhatIfScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Segmented Tabs
+            SegmentedTabs(
+                options = listOf("Pricing", "What-If", "Break-Even"),
+                selectedIndex = 1,
+                onOptionSelected = { index ->
+                    when (index) {
+                        0 -> onNavigateToPricing()
+                        2 -> onNavigateToBreakEven()
+                    }
+                }
+            )
+
             // Live Impact Section
             SectionCard(title = "Live Impact") {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {

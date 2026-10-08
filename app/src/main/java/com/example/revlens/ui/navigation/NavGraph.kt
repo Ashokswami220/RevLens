@@ -24,7 +24,10 @@ import com.example.revlens.ui.dashboard.DashboardScreen
 import com.example.revlens.ui.forecast.ForecastScreen
 import com.example.revlens.ui.goal.GoalPlannerScreen
 import com.example.revlens.ui.metrics.SaaSMetricsScreen
+import com.example.revlens.ui.onboarding.OnboardingScreen
+import com.example.revlens.ui.pricing.PricingSimulatorScreen
 import com.example.revlens.ui.scenario.ScenarioBuilderScreen
+import com.example.revlens.ui.scenario.ScenarioComparisonScreen
 import com.example.revlens.ui.settings.SettingsScreen
 import com.example.revlens.ui.setup.BusinessSetupScreen
 import com.example.revlens.ui.whatif.WhatIfScreen
@@ -41,7 +44,7 @@ fun RevLensNavGraph(
         BottomNavItem(
             "Dashboard", Icons.Filled.Dashboard, DashboardRoute::class.qualifiedName ?: ""
         ),
-        BottomNavItem("Simulator", Icons.Filled.Tune, WhatIfRoute::class.qualifiedName ?: ""),
+        BottomNavItem("Simulator", Icons.Filled.Tune, PricingSimulatorRoute::class.qualifiedName ?: ""),
         BottomNavItem(
             "Scenarios", Icons.Filled.Layers, ScenarioBuilderRoute::class.qualifiedName ?: ""
         ),
@@ -84,16 +87,26 @@ fun RevLensNavGraph(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = DashboardRoute,
+            startDestination = OnboardingRoute,
             modifier = modifier.padding(innerPadding)
         ) {
+            composable<OnboardingRoute> {
+                OnboardingScreen(
+                    onFinishOnboarding = {
+                        navController.navigate(DashboardRoute) {
+                            popUpTo(OnboardingRoute) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
             composable<DashboardRoute> {
                 DashboardScreen(
                     onNavigateToInput = {
                         navController.navigate(InputDataRoute)
                     },
                     onNavigateToWhatIf = {
-                        navController.navigate(WhatIfRoute)
+                        navController.navigate(PricingSimulatorRoute)
                     },
                     onNavigateToBreakEven = {
                         navController.navigate(BreakEvenRoute)
@@ -113,29 +126,43 @@ fun RevLensNavGraph(
                 )
             }
 
+            composable<PricingSimulatorRoute> {
+                PricingSimulatorScreen(
+                    onNavigateToWhatIf = { navController.navigate(WhatIfRoute) },
+                    onNavigateToBreakEven = { navController.navigate(BreakEvenRoute) },
+                    onNavigateToMetrics = { navController.navigate(MetricsRoute) }
+                )
+            }
+
             composable<WhatIfRoute> {
                 WhatIfScreen(
                     onNavigateBack = { navController.popBackStack() },
-                    onNavigateToMetrics = { navController.navigate(MetricsRoute) }
+                    onNavigateToMetrics = { navController.navigate(MetricsRoute) },
+                    onNavigateToPricing = { navController.navigate(PricingSimulatorRoute) },
+                    onNavigateToBreakEven = { navController.navigate(BreakEvenRoute) }
                 )
             }
 
             composable<BreakEvenRoute> {
                 BreakEvenScreen(
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToPricing = { navController.navigate(PricingSimulatorRoute) },
+                    onNavigateToWhatIf = { navController.navigate(WhatIfRoute) }
                 )
             }
 
             composable<ScenarioBuilderRoute> {
                 ScenarioBuilderScreen(
-                    onNavigateToCreate = { navController.navigate(WhatIfRoute) },
+                    onNavigateToCreate = { navController.navigate(PricingSimulatorRoute) },
                     onNavigateToCompare = { navController.navigate(ScenarioComparisonRoute) },
                     onNavigateToMetrics = { navController.navigate(MetricsRoute) }
                 )
             }
 
             composable<ScenarioComparisonRoute> {
-                // Placeholder for Scenario Comparison Screen
+                ScenarioComparisonScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
             }
 
             composable<ForecastRoute> {
