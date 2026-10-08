@@ -25,3 +25,6 @@ object ScenarioBuilderRoute
 
 @Serializable
 object ScenarioComparisonRoute
+
+@Serializable
+object MetricsRoute

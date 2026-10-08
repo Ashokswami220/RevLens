@@ -8,9 +8,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.revlens.ui.breakeven.BreakEvenScreen
 import com.example.revlens.ui.dashboard.DashboardScreen
+import com.example.revlens.ui.forecast.ForecastScreen
+import com.example.revlens.ui.goal.GoalPlannerScreen
+import com.example.revlens.ui.scenario.ScenarioBuilderScreen
 import com.example.revlens.ui.setup.BusinessSetupScreen
 import com.example.revlens.ui.whatif.WhatIfScreen
-import com.example.revlens.ui.scenario.ScenarioBuilderScreen
+import com.example.revlens.ui.metrics.SaaSMetricsScreen
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -39,7 +42,7 @@ fun RevLensNavGraph(
         BottomNavItem("Simulate", Icons.Filled.Build, WhatIfRoute::class.qualifiedName ?: ""),
         BottomNavItem("Scenarios", Icons.Filled.Assessment, ScenarioBuilderRoute::class.qualifiedName ?: ""),
         BottomNavItem("Forecast", Icons.Filled.Timeline, ForecastRoute::class.qualifiedName ?: ""),
-        BottomNavItem("Metrics", Icons.Filled.ShowChart, "MetricsPlaceholder")
+        BottomNavItem("Metrics", Icons.Filled.ShowChart, MetricsRoute::class.qualifiedName ?: "")
     )
 
     // Only show bottom bar on root destinations
@@ -120,11 +123,19 @@ fun RevLensNavGraph(
             }
 
             composable<ForecastRoute> {
-                // Placeholder for Forecast Screen
+                ForecastScreen(
+                    onNavigateToGoalPlanner = { navController.navigate(GoalPlannerRoute) }
+                )
             }
 
             composable<GoalPlannerRoute> {
-                // Placeholder for Goal Planner Screen
+                GoalPlannerScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable<MetricsRoute> {
+                SaaSMetricsScreen()
             }
         }
     }
