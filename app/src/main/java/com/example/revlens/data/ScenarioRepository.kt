@@ -7,7 +7,6 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.revlens.model.Scenario
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
@@ -39,14 +38,15 @@ class ScenarioRepository @Inject constructor(
             val currentJson = preferences[SCENARIOS_KEY]
             val currentList = if (currentJson != null) {
                 try {
-                    json.decodeFromString<List<Scenario>>(currentJson).toMutableList()
+                    json.decodeFromString<List<Scenario>>(currentJson)
+                        .toMutableList()
                 } catch (e: Exception) {
                     mutableListOf()
                 }
             } else {
                 mutableListOf()
             }
-            
+
             // Overwrite if exists, else add
             val index = currentList.indexOfFirst { it.id == scenario.id }
             if (index != -1) {
@@ -54,7 +54,7 @@ class ScenarioRepository @Inject constructor(
             } else {
                 currentList.add(scenario)
             }
-            
+
             preferences[SCENARIOS_KEY] = json.encodeToString(currentList)
         }
     }
@@ -64,7 +64,8 @@ class ScenarioRepository @Inject constructor(
             val currentJson = preferences[SCENARIOS_KEY]
             if (currentJson != null) {
                 try {
-                    val currentList = json.decodeFromString<List<Scenario>>(currentJson).toMutableList()
+                    val currentList = json.decodeFromString<List<Scenario>>(currentJson)
+                        .toMutableList()
                     currentList.removeAll { it.id == scenarioId }
                     preferences[SCENARIOS_KEY] = json.encodeToString(currentList)
                 } catch (e: Exception) {

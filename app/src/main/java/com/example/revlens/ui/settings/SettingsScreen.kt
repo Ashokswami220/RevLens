@@ -49,7 +49,7 @@ fun SettingsScreen(
 
     Scaffold(
         topBar = {
-            RevLensTopAppBar(title = "Settings", onBackClick = onNavigateBack)
+            RevLensTopAppBar(title = "Settings")
         },
         containerColor = RevLensTheme.colors.background
     ) { paddingValues ->
@@ -61,7 +61,7 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            
+
             // Profile Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -77,12 +77,21 @@ fun SettingsScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text("FD", style = RevLensTypography.headlineMedium, color = RevLensTheme.colors.background)
+                    Text(
+                        "FD", style = RevLensTypography.headlineMedium,
+                        color = RevLensTheme.colors.background
+                    )
                 }
-                
+
                 Column {
-                    Text("Founder", style = RevLensTypography.titleLarge, fontWeight = FontWeight.Bold, color = RevLensTheme.colors.textPrimary)
-                    Text("founder@startup.com", style = RevLensTypography.bodyMedium, color = RevLensTheme.colors.textSecondary)
+                    Text(
+                        "Founder", style = RevLensTypography.titleLarge,
+                        fontWeight = FontWeight.Bold, color = RevLensTheme.colors.textPrimary
+                    )
+                    Text(
+                        "founder@startup.com", style = RevLensTypography.bodyMedium,
+                        color = RevLensTheme.colors.textSecondary
+                    )
                 }
             }
 
@@ -96,7 +105,7 @@ fun SettingsScreen(
                         checked = darkModeEnabled,
                         onCheckedChange = { darkModeEnabled = it }
                     )
-                    
+
                     SettingToggleRow(
                         icon = Icons.Filled.Notifications,
                         title = "Push Notifications",
@@ -104,7 +113,7 @@ fun SettingsScreen(
                         checked = notificationsEnabled,
                         onCheckedChange = { notificationsEnabled = it }
                     )
-                    
+
                     SettingActionRow(
                         icon = Icons.Filled.Language,
                         title = "Currency",
@@ -155,13 +164,22 @@ private fun SettingToggleRow(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(imageVector = icon, contentDescription = null, tint = RevLensTheme.colors.brandPrimary)
+            Icon(
+                imageVector = icon, contentDescription = null,
+                tint = RevLensTheme.colors.brandPrimary
+            )
             Column {
-                Text(text = title, style = RevLensTypography.bodyLarge, color = RevLensTheme.colors.textPrimary)
-                Text(text = subtitle, style = RevLensTypography.bodySmall, color = RevLensTheme.colors.textSecondary)
+                Text(
+                    text = title, style = RevLensTypography.bodyLarge,
+                    color = RevLensTheme.colors.textPrimary
+                )
+                Text(
+                    text = subtitle, style = RevLensTypography.bodySmall,
+                    color = RevLensTheme.colors.textSecondary
+                )
             }
         }
-        
+
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
@@ -188,13 +206,25 @@ private fun SettingActionRow(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(imageVector = icon, contentDescription = null, tint = RevLensTheme.colors.brandPrimary)
+            Icon(
+                imageVector = icon, contentDescription = null,
+                tint = RevLensTheme.colors.brandPrimary
+            )
             Column {
-                Text(text = title, style = RevLensTypography.bodyLarge, color = RevLensTheme.colors.textPrimary)
-                Text(text = subtitle, style = RevLensTypography.bodySmall, color = RevLensTheme.colors.textSecondary)
+                Text(
+                    text = title, style = RevLensTypography.bodyLarge,
+                    color = RevLensTheme.colors.textPrimary
+                )
+                Text(
+                    text = subtitle, style = RevLensTypography.bodySmall,
+                    color = RevLensTheme.colors.textSecondary
+                )
             }
         }
-        
-        Icon(imageVector = Icons.Filled.ChevronRight, contentDescription = null, tint = RevLensTheme.colors.textTertiary)
+
+        Icon(
+            imageVector = Icons.Filled.ChevronRight, contentDescription = null,
+            tint = RevLensTheme.colors.textTertiary
+        )
     }
 }

@@ -21,7 +21,7 @@ val LightDivider = Color(0xFFE5E5E5)
 
 // ───────────── DARK mode ─────────────
 val DarkBackground = Color(0xFF1C1C1C)
-val DarkSurface = Color(0xFF1C1C1C)
+val DarkSurface = Color(0xFF242424)
 val DarkSurfaceElevated = Color(0xFF272727)
 val DarkPrimaryAction = Color(0xFFFFFFFF)
 val DarkOnPrimaryAction = Color(0xFF000000)

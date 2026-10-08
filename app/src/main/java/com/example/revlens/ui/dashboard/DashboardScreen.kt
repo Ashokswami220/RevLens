@@ -3,9 +3,13 @@ package com.example.revlens.ui.dashboard
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ShowChart
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.compose.material.icons.filled.Settings
 import com.example.revlens.domain.calc.BreakEvenCalculator
 import com.example.revlens.domain.calc.LtvCalculator
 import com.example.revlens.model.BusinessProfile
@@ -35,15 +38,24 @@ fun DashboardScreen(
     onNavigateToInput: () -> Unit,
     onNavigateToWhatIf: () -> Unit,
     onNavigateToBreakEven: () -> Unit,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    onNavigateToMetrics: () -> Unit
 ) {
     val profile by viewModel.profile.collectAsState()
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             RevLensTopAppBar(
                 title = "RevLens Dashboard",
                 actions = {
+                    androidx.compose.material3.IconButton(onClick = onNavigateToMetrics) {
+                        androidx.compose.material3.Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ShowChart,
+                            contentDescription = "Metrics",
+                            tint = RevLensTheme.colors.textPrimary
+                        )
+                    }
                     androidx.compose.material3.IconButton(onClick = onNavigateToSettings) {
                         androidx.compose.material3.Icon(
                             imageVector = androidx.compose.material.icons.Icons.Filled.Settings,

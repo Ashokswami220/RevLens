@@ -4,12 +4,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -26,9 +29,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.revlens.ui.components.PrimaryButton
 import com.example.revlens.domain.calc.ForecastEngine
 import com.example.revlens.presentation.MainViewModel
+import com.example.revlens.ui.components.PrimaryButton
 import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.theme.RevLensTheme
@@ -41,17 +44,19 @@ import java.util.Locale
 @Composable
 fun ForecastScreen(
     viewModel: MainViewModel = hiltViewModel(),
-    onNavigateToGoalPlanner: () -> Unit
+    onNavigateToGoalPlanner: () -> Unit,
+    onNavigateToMetrics: () -> Unit
 ) {
     val profile by viewModel.profile.collectAsState()
-    
+
     var selectedMonths by remember { mutableStateOf(12) }
-    
+
     val currencyFormatter = remember {
-        NumberFormat.getCurrencyInstance(Locale.US).apply {
-            currency = Currency.getInstance("USD")
-            maximumFractionDigits = 0
-        }
+        NumberFormat.getCurrencyInstance(Locale.US)
+            .apply {
+                currency = Currency.getInstance("USD")
+                maximumFractionDigits = 0
+            }
     }
 
     val forecastData = remember(profile, selectedMonths) {
@@ -59,8 +64,20 @@ fun ForecastScreen(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            RevLensTopAppBar(title = "Revenue Forecast")
+            RevLensTopAppBar(
+                title = "Revenue Forecast",
+                actions = {
+                    androidx.compose.material3.IconButton(onClick = onNavigateToMetrics) {
+                        androidx.compose.material3.Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ShowChart,
+                            contentDescription = "Metrics",
+                            tint = RevLensTheme.colors.textPrimary
+                        )
+                    }
+                }
+            )
         },
         containerColor = RevLensTheme.colors.background
     ) { paddingValues ->
@@ -100,12 +117,27 @@ fun ForecastScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
-                            Text("Projected MRR", style = RevLensTypography.bodySmall, color = RevLensTheme.colors.textSecondary)
-                            Text(currencyFormatter.format(finalMonth.mrr), style = RevLensTypography.headlineMedium, fontWeight = FontWeight.Bold, color = RevLensTheme.colors.brandPrimary)
+                            Text(
+                                "Projected MRR", style = RevLensTypography.bodySmall,
+                                color = RevLensTheme.colors.textSecondary
+                            )
+                            Text(
+                                currencyFormatter.format(finalMonth.mrr),
+                                style = RevLensTypography.headlineMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = RevLensTheme.colors.brandPrimary
+                            )
                         }
                         Column(horizontalAlignment = Alignment.End) {
-                            Text("Customers", style = RevLensTypography.bodySmall, color = RevLensTheme.colors.textSecondary)
-                            Text("${finalMonth.customers}", style = RevLensTypography.headlineMedium, fontWeight = FontWeight.Bold, color = RevLensTheme.colors.textPrimary)
+                            Text(
+                                "Customers", style = RevLensTypography.bodySmall,
+                                color = RevLensTheme.colors.textSecondary
+                            )
+                            Text(
+                                "${finalMonth.customers}", style = RevLensTypography.headlineMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = RevLensTheme.colors.textPrimary
+                            )
                         }
                     }
                 }
@@ -116,7 +148,10 @@ fun ForecastScreen(
                 onClick = onNavigateToGoalPlanner
             )
 
-            Text("Month by Month Breakdown", style = RevLensTypography.titleMedium, color = RevLensTheme.colors.textPrimary)
+            Text(
+                "Month by Month Breakdown", style = RevLensTypography.titleMedium,
+                color = RevLensTheme.colors.textPrimary
+            )
 
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(8.dp),

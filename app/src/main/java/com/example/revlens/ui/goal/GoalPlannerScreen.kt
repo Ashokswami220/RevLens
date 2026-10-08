@@ -3,7 +3,6 @@ package com.example.revlens.ui.goal
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -40,7 +39,7 @@ fun GoalPlannerScreen(
     onNavigateBack: () -> Unit
 ) {
     val profile by viewModel.profile.collectAsState()
-    
+
     val currentMrr = profile?.currentMrr?.toFloat() ?: 1000f
     var targetMrr by remember { mutableStateOf(currentMrr * 2) }
     var targetMonths by remember { mutableStateOf(12f) }
@@ -56,10 +55,11 @@ fun GoalPlannerScreen(
     }
 
     val currencyFormatter = remember {
-        NumberFormat.getCurrencyInstance(Locale.US).apply {
-            currency = Currency.getInstance("USD")
-            maximumFractionDigits = 0
-        }
+        NumberFormat.getCurrencyInstance(Locale.US)
+            .apply {
+                currency = Currency.getInstance("USD")
+                maximumFractionDigits = 0
+            }
     }
 
     Scaffold(
@@ -76,7 +76,7 @@ fun GoalPlannerScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            
+
             SectionCard(title = "Set Your Goal") {
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     LabeledSlider(
@@ -104,15 +104,21 @@ fun GoalPlannerScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         ResultRow(
                             label = "Required Monthly Growth (CMGR)",
-                            value = "${(goalPlan.requiredMonthlyGrowthRate * 100).let { "%.1f".format(it) }}%"
+                            value = "${
+                                (goalPlan.requiredMonthlyGrowthRate * 100).let {
+                                    "%.1f".format(
+                                        it
+                                    )
+                                }
+                            }%"
                         )
-                        
+
                         ResultRow(
                             label = "New Customers Needed / Month",
                             value = "${goalPlan.requiredNewCustomersPerMonth}",
                             caption = "(Assuming ARPU stays the same)"
                         )
-                        
+
                         ResultRow(
                             label = "Or, Required ARPU",
                             value = currencyFormatter.format(goalPlan.requiredArpu),
@@ -128,10 +134,19 @@ fun GoalPlannerScreen(
 @Composable
 private fun ResultRow(label: String, value: String, caption: String? = null) {
     Column {
-        Text(text = label, style = RevLensTypography.bodyMedium, color = RevLensTheme.colors.textSecondary)
-        Text(text = value, style = RevLensTypography.headlineMedium, fontWeight = FontWeight.Bold, color = RevLensTheme.colors.brandPrimary)
+        Text(
+            text = label, style = RevLensTypography.bodyMedium,
+            color = RevLensTheme.colors.textSecondary
+        )
+        Text(
+            text = value, style = RevLensTypography.headlineMedium, fontWeight = FontWeight.Bold,
+            color = RevLensTheme.colors.brandPrimary
+        )
         if (caption != null) {
-            Text(text = caption, style = RevLensTypography.labelSmall, color = RevLensTheme.colors.textTertiary)
+            Text(
+                text = caption, style = RevLensTypography.labelSmall,
+                color = RevLensTheme.colors.textTertiary
+            )
         }
     }
 }

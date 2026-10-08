@@ -3,17 +3,20 @@ package com.example.revlens.ui.whatif
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ShowChart
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -25,13 +28,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.revlens.ui.components.PrimaryButton
 import com.example.revlens.domain.calc.PricingSimulationEngine
 import com.example.revlens.domain.calc.WhatIfEngine
 import com.example.revlens.model.Assumptions
 import com.example.revlens.model.MetricResult
 import com.example.revlens.presentation.MainViewModel
 import com.example.revlens.ui.components.LabeledSlider
+import com.example.revlens.ui.components.PrimaryButton
 import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.theme.RevLensTheme
@@ -43,7 +46,8 @@ import java.util.Locale
 @Composable
 fun WhatIfScreen(
     viewModel: MainViewModel = hiltViewModel(),
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToMetrics: () -> Unit
 ) {
     val profile by viewModel.profile.collectAsState()
 
@@ -76,10 +80,19 @@ fun WhatIfScreen(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             RevLensTopAppBar(
                 title = "What-If Analysis",
-                onBackClick = onNavigateBack
+                actions = {
+                    androidx.compose.material3.IconButton(onClick = onNavigateToMetrics) {
+                        androidx.compose.material3.Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ShowChart,
+                            contentDescription = "Metrics",
+                            tint = RevLensTheme.colors.textPrimary
+                        )
+                    }
+                }
             )
         },
         containerColor = RevLensTheme.colors.background
@@ -139,7 +152,7 @@ fun WhatIfScreen(
                         valueString = "$${cacChange.toInt()}",
                         caption = "Absolute dollar change in CAC"
                     )
-                    
+
                     PrimaryButton(
                         text = "Save as Scenario",
                         onClick = { showSaveDialog = true }
@@ -151,7 +164,12 @@ fun WhatIfScreen(
         if (showSaveDialog) {
             AlertDialog(
                 onDismissRequest = { showSaveDialog = false },
-                title = { Text("Save Scenario", style = RevLensTypography.titleLarge, color = RevLensTheme.colors.textPrimary) },
+                title = {
+                    Text(
+                        "Save Scenario", style = RevLensTypography.titleLarge,
+                        color = RevLensTheme.colors.textPrimary
+                    )
+                },
                 text = {
                     TextField(
                         value = scenarioName,

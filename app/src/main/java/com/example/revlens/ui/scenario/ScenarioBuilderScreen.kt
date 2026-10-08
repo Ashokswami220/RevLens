@@ -2,10 +2,13 @@ package com.example.revlens.ui.scenario
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -32,18 +35,32 @@ import java.util.Locale
 fun ScenarioBuilderScreen(
     viewModel: MainViewModel = hiltViewModel(),
     onNavigateToCreate: () -> Unit,
-    onNavigateToCompare: () -> Unit
+    onNavigateToCompare: () -> Unit,
+    onNavigateToMetrics: () -> Unit
 ) {
     val scenarios by viewModel.scenarios.collectAsState()
-    
-    val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.US).apply {
-        currency = Currency.getInstance("USD")
-        maximumFractionDigits = 0
-    }
+
+    val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.US)
+        .apply {
+            currency = Currency.getInstance("USD")
+            maximumFractionDigits = 0
+        }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            RevLensTopAppBar(title = "Scenarios")
+            RevLensTopAppBar(
+                title = "Scenarios",
+                actions = {
+                    androidx.compose.material3.IconButton(onClick = onNavigateToMetrics) {
+                        androidx.compose.material3.Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ShowChart,
+                            contentDescription = "Metrics",
+                            tint = RevLensTheme.colors.textPrimary
+                        )
+                    }
+                }
+            )
         },
         containerColor = RevLensTheme.colors.background
     ) { paddingValues ->
@@ -54,7 +71,7 @@ fun ScenarioBuilderScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            
+
             PrimaryButton(
                 text = "+ Create New Scenario",
                 onClick = onNavigateToCreate
@@ -100,20 +117,21 @@ fun ScenarioCard(
     SectionCard(title = scenario.name) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             // Projected MRR
-            val projected = PricingSimulationEngine.simulate(scenario.baselineProfile, scenario.assumptions)
-            
+            val projected =
+                PricingSimulationEngine.simulate(scenario.baselineProfile, scenario.assumptions)
+
             Text(
                 text = "Projected MRR: ${currencyFormatter.format(projected.currentMrr)}",
                 style = RevLensTypography.bodyLarge,
                 color = RevLensTheme.colors.textPrimary
             )
-            
+
             Text(
-                text = "Assumptions: Price(${scenario.assumptions.priceChangePercent*100}%), Churn(${scenario.assumptions.churnChangePercent*100}%), CAC(${scenario.assumptions.cacChange})",
+                text = "Assumptions: Price(${scenario.assumptions.priceChangePercent * 100}%), Churn(${scenario.assumptions.churnChangePercent * 100}%), CAC(${scenario.assumptions.cacChange})",
                 style = RevLensTypography.bodyMedium,
                 color = RevLensTheme.colors.textSecondary
             )
-            
+
             PrimaryButton(
                 text = "Delete",
                 onClick = onDelete

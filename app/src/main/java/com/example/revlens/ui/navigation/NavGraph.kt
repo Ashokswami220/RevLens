@@ -1,34 +1,33 @@
 package com.example.revlens.ui.navigation
 
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.revlens.ui.breakeven.BreakEvenScreen
+import com.example.revlens.ui.components.BottomNavItem
+import com.example.revlens.ui.components.RevLensBottomBar
 import com.example.revlens.ui.dashboard.DashboardScreen
 import com.example.revlens.ui.forecast.ForecastScreen
 import com.example.revlens.ui.goal.GoalPlannerScreen
+import com.example.revlens.ui.metrics.SaaSMetricsScreen
 import com.example.revlens.ui.scenario.ScenarioBuilderScreen
+import com.example.revlens.ui.settings.SettingsScreen
 import com.example.revlens.ui.setup.BusinessSetupScreen
 import com.example.revlens.ui.whatif.WhatIfScreen
-import com.example.revlens.ui.metrics.SaaSMetricsScreen
-import com.example.revlens.ui.settings.SettingsScreen
-
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Assessment
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.ShowChart
-import androidx.compose.material.icons.filled.Timeline
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.getValue
-import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.revlens.ui.components.BottomNavItem
-import com.example.revlens.ui.components.RevLensBottomBar
 
 @Composable
 fun RevLensNavGraph(
@@ -39,11 +38,18 @@ fun RevLensNavGraph(
     val currentDestination = navBackStackEntry?.destination
 
     val bottomNavItems = listOf(
-        BottomNavItem("Home", Icons.Filled.Home, DashboardRoute::class.qualifiedName ?: ""),
-        BottomNavItem("Simulate", Icons.Filled.Build, WhatIfRoute::class.qualifiedName ?: ""),
-        BottomNavItem("Scenarios", Icons.Filled.Assessment, ScenarioBuilderRoute::class.qualifiedName ?: ""),
-        BottomNavItem("Forecast", Icons.Filled.Timeline, ForecastRoute::class.qualifiedName ?: ""),
-        BottomNavItem("Metrics", Icons.Filled.ShowChart, MetricsRoute::class.qualifiedName ?: "")
+        BottomNavItem(
+            "Dashboard", Icons.Filled.Dashboard, DashboardRoute::class.qualifiedName ?: ""
+        ),
+        BottomNavItem("Simulator", Icons.Filled.Tune, WhatIfRoute::class.qualifiedName ?: ""),
+        BottomNavItem(
+            "Scenarios", Icons.Filled.Layers, ScenarioBuilderRoute::class.qualifiedName ?: ""
+        ),
+        BottomNavItem(
+            "Forecast", Icons.AutoMirrored.Filled.TrendingUp,
+            ForecastRoute::class.qualifiedName ?: ""
+        ),
+        BottomNavItem("Profile", Icons.Filled.Person, SettingsRoute::class.qualifiedName ?: "")
     )
 
     // Only show bottom bar on root destinations
@@ -52,6 +58,7 @@ fun RevLensNavGraph(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             if (showBottomBar) {
                 RevLensBottomBar(
@@ -93,6 +100,9 @@ fun RevLensNavGraph(
                     },
                     onNavigateToSettings = {
                         navController.navigate(SettingsRoute)
+                    },
+                    onNavigateToMetrics = {
+                        navController.navigate(MetricsRoute)
                     }
                 )
             }
@@ -105,7 +115,8 @@ fun RevLensNavGraph(
 
             composable<WhatIfRoute> {
                 WhatIfScreen(
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToMetrics = { navController.navigate(MetricsRoute) }
                 )
             }
 
@@ -118,7 +129,8 @@ fun RevLensNavGraph(
             composable<ScenarioBuilderRoute> {
                 ScenarioBuilderScreen(
                     onNavigateToCreate = { navController.navigate(WhatIfRoute) },
-                    onNavigateToCompare = { navController.navigate(ScenarioComparisonRoute) }
+                    onNavigateToCompare = { navController.navigate(ScenarioComparisonRoute) },
+                    onNavigateToMetrics = { navController.navigate(MetricsRoute) }
                 )
             }
 
@@ -128,7 +140,8 @@ fun RevLensNavGraph(
 
             composable<ForecastRoute> {
                 ForecastScreen(
-                    onNavigateToGoalPlanner = { navController.navigate(GoalPlannerRoute) }
+                    onNavigateToGoalPlanner = { navController.navigate(GoalPlannerRoute) },
+                    onNavigateToMetrics = { navController.navigate(MetricsRoute) }
                 )
             }
 

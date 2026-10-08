@@ -38,16 +38,18 @@ fun SaaSMetricsScreen(
     val profile by viewModel.profile.collectAsState()
 
     val currencyFormatter = remember {
-        NumberFormat.getCurrencyInstance(Locale.US).apply {
-            currency = Currency.getInstance("USD")
-            maximumFractionDigits = 0
-        }
+        NumberFormat.getCurrencyInstance(Locale.US)
+            .apply {
+                currency = Currency.getInstance("USD")
+                maximumFractionDigits = 0
+            }
     }
-    
+
     val percentFormatter = remember {
-        NumberFormat.getPercentInstance(Locale.US).apply {
-            maximumFractionDigits = 1
-        }
+        NumberFormat.getPercentInstance(Locale.US)
+            .apply {
+                maximumFractionDigits = 1
+            }
     }
 
     Scaffold(
@@ -98,17 +100,47 @@ fun SaaSMetricsScreen(
 
                 SectionCard(title = "Churn & Growth") {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Monthly Churn Rate", style = RevLensTypography.bodyLarge, color = RevLensTheme.colors.textPrimary)
-                            Text(percentFormatter.format(p.monthlyChurnRate), style = RevLensTypography.headlineMedium, fontWeight = FontWeight.Bold, color = RevLensTheme.colors.error)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                "Monthly Churn Rate", style = RevLensTypography.bodyLarge,
+                                color = RevLensTheme.colors.textPrimary
+                            )
+                            Text(
+                                percentFormatter.format(p.monthlyChurnRate),
+                                style = RevLensTypography.headlineMedium,
+                                fontWeight = FontWeight.Bold, color = RevLensTheme.colors.error
+                            )
                         }
-                        Text("The percentage of your customers that cancel their subscription every month.", style = RevLensTypography.bodySmall, color = RevLensTheme.colors.textSecondary)
+                        Text(
+                            "The percentage of your customers that cancel their subscription every month.",
+                            style = RevLensTypography.bodySmall,
+                            color = RevLensTheme.colors.textSecondary
+                        )
 
-                        Row(modifier = Modifier.fillMaxWidth().padding(top = 16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Monthly Growth Rate", style = RevLensTypography.bodyLarge, color = RevLensTheme.colors.textPrimary)
-                            Text(percentFormatter.format(p.monthlyGrowthRate), style = RevLensTypography.headlineMedium, fontWeight = FontWeight.Bold, color = RevLensTheme.colors.success)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                "Monthly Growth Rate", style = RevLensTypography.bodyLarge,
+                                color = RevLensTheme.colors.textPrimary
+                            )
+                            Text(
+                                percentFormatter.format(p.monthlyGrowthRate),
+                                style = RevLensTypography.headlineMedium,
+                                fontWeight = FontWeight.Bold, color = RevLensTheme.colors.success
+                            )
                         }
-                        Text("The percentage at which your customer base is growing every month.", style = RevLensTypography.bodySmall, color = RevLensTheme.colors.textSecondary)
+                        Text(
+                            "The percentage at which your customer base is growing every month.",
+                            style = RevLensTypography.bodySmall,
+                            color = RevLensTheme.colors.textSecondary
+                        )
                     }
                 }
             }
@@ -128,18 +160,36 @@ fun MetricTileRow(
         Column(modifier = Modifier.weight(1f)) {
             SectionCard(title = "") {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(title1, style = RevLensTypography.labelMedium, color = RevLensTheme.colors.textSecondary)
-                    Text(val1, style = RevLensTypography.headlineMedium, fontWeight = FontWeight.Bold, color = RevLensTheme.colors.textPrimary)
-                    Text(desc1, style = RevLensTypography.bodySmall, color = RevLensTheme.colors.textTertiary)
+                    Text(
+                        title1, style = RevLensTypography.labelMedium,
+                        color = RevLensTheme.colors.textSecondary
+                    )
+                    Text(
+                        val1, style = RevLensTypography.headlineMedium,
+                        fontWeight = FontWeight.Bold, color = RevLensTheme.colors.textPrimary
+                    )
+                    Text(
+                        desc1, style = RevLensTypography.bodySmall,
+                        color = RevLensTheme.colors.textTertiary
+                    )
                 }
             }
         }
         Column(modifier = Modifier.weight(1f)) {
             SectionCard(title = "") {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(title2, style = RevLensTypography.labelMedium, color = RevLensTheme.colors.textSecondary)
-                    Text(val2, style = RevLensTypography.headlineMedium, fontWeight = FontWeight.Bold, color = RevLensTheme.colors.textPrimary)
-                    Text(desc2, style = RevLensTypography.bodySmall, color = RevLensTheme.colors.textTertiary)
+                    Text(
+                        title2, style = RevLensTypography.labelMedium,
+                        color = RevLensTheme.colors.textSecondary
+                    )
+                    Text(
+                        val2, style = RevLensTypography.headlineMedium,
+                        fontWeight = FontWeight.Bold, color = RevLensTheme.colors.textPrimary
+                    )
+                    Text(
+                        desc2, style = RevLensTypography.bodySmall,
+                        color = RevLensTheme.colors.textTertiary
+                    )
                 }
             }
         }

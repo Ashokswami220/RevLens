@@ -41,12 +41,10 @@ fun LabeledSlider(
                 modifier = Modifier.weight(1f)
             )
             Spacer(modifier = Modifier.width(16.dp))
-            // Simplified NumberField chip for MVP
-            NumberField(
-                value = valueString,
-                onValueChange = onValueStringChange,
-                label = "",
-                modifier = Modifier.width(100.dp)
+            Text(
+                text = valueString,
+                style = RevLensTypography.bodyMedium,
+                color = RevLensTheme.colors.textPrimary
             )
         }
 
