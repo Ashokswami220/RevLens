@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.material.icons.filled.Settings
 import com.example.revlens.domain.calc.BreakEvenCalculator
 import com.example.revlens.domain.calc.LtvCalculator
 import com.example.revlens.model.BusinessProfile
@@ -33,13 +34,25 @@ fun DashboardScreen(
     viewModel: MainViewModel = hiltViewModel(),
     onNavigateToInput: () -> Unit,
     onNavigateToWhatIf: () -> Unit,
-    onNavigateToBreakEven: () -> Unit
+    onNavigateToBreakEven: () -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
     val profile by viewModel.profile.collectAsState()
 
     Scaffold(
         topBar = {
-            RevLensTopAppBar(title = "RevLens Dashboard")
+            RevLensTopAppBar(
+                title = "RevLens Dashboard",
+                actions = {
+                    androidx.compose.material3.IconButton(onClick = onNavigateToSettings) {
+                        androidx.compose.material3.Icon(
+                            imageVector = androidx.compose.material.icons.Icons.Filled.Settings,
+                            contentDescription = "Settings",
+                            tint = RevLensTheme.colors.textPrimary
+                        )
+                    }
+                }
+            )
         },
         containerColor = RevLensTheme.colors.background
     ) { innerPadding ->

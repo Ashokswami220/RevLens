@@ -14,6 +14,7 @@ import com.example.revlens.ui.scenario.ScenarioBuilderScreen
 import com.example.revlens.ui.setup.BusinessSetupScreen
 import com.example.revlens.ui.whatif.WhatIfScreen
 import com.example.revlens.ui.metrics.SaaSMetricsScreen
+import com.example.revlens.ui.settings.SettingsScreen
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -89,6 +90,9 @@ fun RevLensNavGraph(
                     },
                     onNavigateToBreakEven = {
                         navController.navigate(BreakEvenRoute)
+                    },
+                    onNavigateToSettings = {
+                        navController.navigate(SettingsRoute)
                     }
                 )
             }
@@ -136,6 +140,12 @@ fun RevLensNavGraph(
 
             composable<MetricsRoute> {
                 SaaSMetricsScreen()
+            }
+
+            composable<SettingsRoute> {
+                SettingsScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
             }
         }
     }
