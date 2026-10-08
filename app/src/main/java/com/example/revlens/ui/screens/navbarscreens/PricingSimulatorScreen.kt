@@ -37,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.revlens.domain.calc.PricingSimulationEngine
 import com.example.revlens.model.Assumptions
 import com.example.revlens.presentation.MainViewModel
@@ -60,12 +59,7 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PricingSimulatorScreen(
-    viewModel: MainViewModel = hiltViewModel(),
-    onNavigateToWhatIf: () -> Unit,
-    onNavigateToBreakEven: () -> Unit,
-    onNavigateToMetrics: () -> Unit
-) {
+fun PricingSimulatorScreen(viewModel: MainViewModel) {
     val profile by viewModel.profile.collectAsState()
 
     var selectedPlanId by remember { mutableStateOf<String?>(null) }
@@ -95,43 +89,16 @@ fun PricingSimulatorScreen(
         }
     }
 
-    Scaffold(
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = {
-            RevLensTopAppBar(
-                title = "Simulate",
-                actions = {
-                    IconButton(onClick = onNavigateToMetrics) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ShowChart,
-                            contentDescription = "Metrics",
-                            tint = RevLensTheme.colors.textPrimary
-                        )
-                    }
-                }
-            )
-        },
-        containerColor = RevLensTheme.colors.background
-    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // Segmented Tabs
-            SegmentedTabs(
-                options = listOf("Pricing", "What-If", "Break-Even"),
-                selectedIndex = 0,
-                onOptionSelected = { index ->
-                    when (index) {
-                        1 -> onNavigateToWhatIf()
-                        2 -> onNavigateToBreakEven()
-                    }
-                }
-            )
+            
 
             if (profile != null) {
                 // Initialize selected plan if null
@@ -306,4 +273,4 @@ fun PricingSimulatorScreen(
             )
         }
     }
-}
+

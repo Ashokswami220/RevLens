@@ -29,7 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.revlens.domain.calc.PricingSimulationEngine
 import com.example.revlens.domain.calc.WhatIfEngine
 import com.example.revlens.model.Assumptions
@@ -47,13 +46,7 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WhatIfScreen(
-    viewModel: MainViewModel = hiltViewModel(),
-    onNavigateBack: () -> Unit,
-    onNavigateToMetrics: () -> Unit,
-    onNavigateToPricing: () -> Unit,
-    onNavigateToBreakEven: () -> Unit
-) {
+fun WhatIfScreen(viewModel: MainViewModel) {
     val profile by viewModel.profile.collectAsState()
 
     // Sliders state
@@ -84,43 +77,16 @@ fun WhatIfScreen(
         } ?: emptyList()
     }
 
-    Scaffold(
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = {
-            RevLensTopAppBar(
-                title = "What-If Analysis",
-                actions = {
-                    androidx.compose.material3.IconButton(onClick = onNavigateToMetrics) {
-                        androidx.compose.material3.Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ShowChart,
-                            contentDescription = "Metrics",
-                            tint = RevLensTheme.colors.textPrimary
-                        )
-                    }
-                }
-            )
-        },
-        containerColor = RevLensTheme.colors.background
-    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Segmented Tabs
-            SegmentedTabs(
-                options = listOf("Pricing", "What-If", "Break-Even"),
-                selectedIndex = 1,
-                onOptionSelected = { index ->
-                    when (index) {
-                        0 -> onNavigateToPricing()
-                        2 -> onNavigateToBreakEven()
-                    }
-                }
-            )
+            
 
             // Live Impact Section
             SectionCard(title = "Live Impact") {
@@ -216,7 +182,7 @@ fun WhatIfScreen(
                             )
                         }
                         showSaveDialog = false
-                        onNavigateBack() // Or navigate to Scenario builder directly
+                         // Or navigate to Scenario builder directly
                     }) {
                         Text("Save")
                     }
@@ -228,10 +194,10 @@ fun WhatIfScreen(
                 },
                 containerColor = RevLensTheme.colors.surface
             )
-        }
-    }
-}
 
+
+}
+}
 @Composable
 fun MetricResultRow(result: MetricResult) {
     Row(

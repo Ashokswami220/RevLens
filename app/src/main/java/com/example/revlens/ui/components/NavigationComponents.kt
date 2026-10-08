@@ -47,7 +47,7 @@ fun RevLensTopAppBar(
         title = {
             Text(
                 text = title,
-                style = RevLensTypography.titleLarge,
+                style = RevLensTypography.headlineMedium,
                 color = RevLensTheme.colors.textPrimary
             )
         },

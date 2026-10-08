@@ -25,12 +25,11 @@ import com.example.revlens.ui.screens.navbarscreens.ForecastScreen
 import com.example.revlens.ui.screens.detailscreens.GoalPlannerScreen
 import com.example.revlens.ui.screens.detailscreens.SaaSMetricsScreen
 import com.example.revlens.ui.onboarding.OnboardingScreen
-import com.example.revlens.ui.screens.navbarscreens.PricingSimulatorScreen
+import com.example.revlens.ui.screens.navbarscreens.SimulatorScreen
 import com.example.revlens.ui.screens.navbarscreens.ScenarioBuilderScreen
 import com.example.revlens.ui.screens.detailscreens.ScenarioComparisonScreen
 import com.example.revlens.ui.screens.navbarscreens.SettingsScreen
 import com.example.revlens.ui.screens.detailscreens.BusinessSetupScreen
-import com.example.revlens.ui.screens.detailscreens.WhatIfScreen
 
 @Composable
 fun RevLensNavGraph(
@@ -109,7 +108,7 @@ fun RevLensNavGraph(
                         navController.navigate(PricingSimulatorRoute)
                     },
                     onNavigateToBreakEven = {
-                        navController.navigate(BreakEvenRoute)
+                        navController.navigate(PricingSimulatorRoute)
                     },
                     onNavigateToSettings = {
                         navController.navigate(SettingsRoute)
@@ -127,27 +126,8 @@ fun RevLensNavGraph(
             }
 
             composable<PricingSimulatorRoute> {
-                PricingSimulatorScreen(
-                    onNavigateToWhatIf = { navController.navigate(WhatIfRoute) },
-                    onNavigateToBreakEven = { navController.navigate(BreakEvenRoute) },
+                SimulatorScreen(
                     onNavigateToMetrics = { navController.navigate(MetricsRoute) }
-                )
-            }
-
-            composable<WhatIfRoute> {
-                WhatIfScreen(
-                    onNavigateBack = { navController.popBackStack() },
-                    onNavigateToMetrics = { navController.navigate(MetricsRoute) },
-                    onNavigateToPricing = { navController.navigate(PricingSimulatorRoute) },
-                    onNavigateToBreakEven = { navController.navigate(BreakEvenRoute) }
-                )
-            }
-
-            composable<BreakEvenRoute> {
-                BreakEvenScreen(
-                    onNavigateBack = { navController.popBackStack() },
-                    onNavigateToPricing = { navController.navigate(PricingSimulatorRoute) },
-                    onNavigateToWhatIf = { navController.navigate(WhatIfRoute) }
                 )
             }
 

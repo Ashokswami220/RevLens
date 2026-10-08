@@ -12,9 +12,6 @@ object DashboardRoute
 object InputDataRoute
 
 @Serializable
-object WhatIfRoute
-
-@Serializable
 object PricingSimulatorRoute
 
 @Serializable
@@ -22,9 +19,6 @@ object ForecastRoute
 
 @Serializable
 object GoalPlannerRoute
-
-@Serializable
-object BreakEvenRoute
 
 @Serializable
 object ScenarioBuilderRoute

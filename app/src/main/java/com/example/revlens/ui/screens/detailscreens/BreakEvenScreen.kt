@@ -20,7 +20,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.revlens.domain.calc.BreakEvenCalculator
 import com.example.revlens.presentation.MainViewModel
 import com.example.revlens.ui.components.LabeledSlider
@@ -34,12 +33,7 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BreakEvenScreen(
-    viewModel: MainViewModel = hiltViewModel(),
-    onNavigateBack: () -> Unit,
-    onNavigateToPricing: () -> Unit,
-    onNavigateToWhatIf: () -> Unit
-) {
+fun BreakEvenScreen(viewModel: MainViewModel) {
     val profile by viewModel.profile.collectAsState()
 
     var cacSimulated by remember { mutableStateOf(profile?.cac?.toFloat() ?: 100f) }
@@ -72,33 +66,16 @@ fun BreakEvenScreen(
         simulatedProfile?.let { BreakEvenCalculator.calculateBreakEvenCustomers(it) }
     }
 
-    Scaffold(
-        topBar = {
-            RevLensTopAppBar(
-                title = "Break-Even Calculator"
-            )
-        },
-        containerColor = RevLensTheme.colors.background
-    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Segmented Tabs
-            SegmentedTabs(
-                options = listOf("Pricing", "What-If", "Break-Even"),
-                selectedIndex = 2,
-                onOptionSelected = { index ->
-                    when (index) {
-                        0 -> onNavigateToPricing()
-                        1 -> onNavigateToWhatIf()
-                    }
-                }
-            )
+            
 
             SectionCard(title = "Break-Even Results") {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -172,10 +149,10 @@ fun BreakEvenScreen(
                     )
                 }
             }
-        }
-    }
-}
 
+
+}
+}
 @Composable
 private fun ResultRow(label: String, value: String) {
     Column {

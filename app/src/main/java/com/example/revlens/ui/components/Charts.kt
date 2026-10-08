@@ -23,8 +23,10 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -41,6 +43,7 @@ fun RevLensLineChart(
     if (data.isEmpty() || data.all { it.isEmpty() }) return
 
     val gridColor = RevLensTheme.colors.chartGrid
+    val backgroundColor = RevLensTheme.colors.background
 
     Box(
         modifier = modifier
@@ -49,7 +52,9 @@ fun RevLensLineChart(
             .padding(vertical = 16.dp)
             .drawBehind {
                 val width = size.width
-                val height = size.height
+                val fullHeight = size.height
+                val labelPadding = 60f
+                val height = fullHeight - labelPadding
 
                 // Draw Grid (4 horizontal lines)
                 val gridSteps = 4
@@ -89,14 +94,89 @@ fun RevLensLineChart(
                         }
                     }
 
+                    // 1) Fill area under the line with gradient
+                    val fillPath = Path().apply {
+                        addPath(path)
+                        lineTo(width, height)
+                        lineTo(0f, height)
+                        close()
+                    }
+                    val fillBrush = Brush.verticalGradient(
+                        colors = listOf(color.copy(alpha = 0.3f), Color.Transparent),
+                        startY = 0f,
+                        endY = height
+                    )
+                    drawPath(path = fillPath, brush = fillBrush)
+
+                    // 2) Outer glow
+                    drawPath(
+                        path = path,
+                        color = color.copy(alpha = 0.15f),
+                        style = Stroke(width = 12.dp.toPx(), cap = StrokeCap.Round)
+                    )
+                    // 3) Inner glow
+                    drawPath(
+                        path = path,
+                        color = color.copy(alpha = 0.3f),
+                        style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round)
+                    )
+                    // 4) Core line
                     drawPath(
                         path = path,
                         color = color,
-                        style = Stroke(
-                            width = 3.dp.toPx(),
-                            cap = StrokeCap.Round
-                        )
+                        style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
                     )
+                    
+                    // 5) Draw points
+                    val shouldDrawAllPoints = data.size == 1
+                    seriesData.forEachIndexed { index, value ->
+                        val isFirstOrLast = index == 0 || index == seriesData.size - 1
+                        if (shouldDrawAllPoints || isFirstOrLast) {
+                            val x = index * stepX
+                            val y = height - ((value - min) / range * height)
+                            drawCircle(
+                                color = backgroundColor,
+                                radius = 4.dp.toPx(),
+                                center = Offset(x, y)
+                            )
+                            drawCircle(
+                                color = color,
+                                radius = 4.dp.toPx(),
+                                center = Offset(x, y),
+                                style = Stroke(width = 1.5.dp.toPx())
+                            )
+                            if (index == seriesData.size - 1) {
+                                drawCircle(
+                                    color = color,
+                                    radius = 2.dp.toPx(),
+                                    center = Offset(x, y)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // X-Axis Labels
+                val paint = android.graphics.Paint().apply {
+                    color = android.graphics.Color.parseColor("#888888")
+                    textSize = 32f
+                    textAlign = android.graphics.Paint.Align.CENTER
+                }
+                
+                val dataSize = if (data.isNotEmpty()) data[0].size else 0
+                if (dataSize > 0) {
+                    val labelStepX = width / (dataSize - 1).coerceAtLeast(1)
+                    for (i in 0 until dataSize) {
+                        // Skip some labels if there are too many
+                        if (dataSize > 12 && i % 2 != 0 && i != dataSize - 1) continue
+                        val label = "M${i}"
+                        drawContext.canvas.nativeCanvas.drawText(
+                            label,
+                            i * labelStepX,
+                            fullHeight - 10f,
+                            paint
+                        )
+                    }
                 }
             }
     )
@@ -117,7 +197,9 @@ fun RevLensBarChart(
             .padding(vertical = 16.dp)
             .drawBehind {
                 val width = size.width
-                val height = size.height
+                val fullHeight = size.height
+                val labelPadding = 60f
+                val height = fullHeight - labelPadding
                 
                 val max = data.maxOrNull()?.coerceAtLeast(0f) ?: 1f
                 val min = data.minOrNull()?.coerceAtMost(0f) ?: 0f
@@ -137,11 +219,34 @@ fun RevLensBarChart(
                     val fallbackColor = Color(0xFF06B6D4)
                     val color = colors.getOrElse(index % colors.size) { fallbackColor }
                     
+                    val gradient = Brush.verticalGradient(
+                        colors = listOf(color, color.copy(alpha = 0.2f)),
+                        startY = topY,
+                        endY = topY + barHeight
+                    )
                     drawRoundRect(
-                        color = color,
+                        brush = gradient,
                         topLeft = Offset(x, topY),
                         size = Size(barWidth, barHeight),
                         cornerRadius = CornerRadius(6.dp.toPx(), 6.dp.toPx())
+                    )
+                }
+                
+                // X-Axis Labels
+                val paint = android.graphics.Paint().apply {
+                    color = android.graphics.Color.parseColor("#888888")
+                    textSize = 32f
+                    textAlign = android.graphics.Paint.Align.CENTER
+                }
+                
+                data.forEachIndexed { i, _ ->
+                    if (data.size > 12 && i % 2 != 0 && i != data.size - 1) return@forEachIndexed
+                    val x = (i * spacing) + (spacing / 2)
+                    drawContext.canvas.nativeCanvas.drawText(
+                        "M${i}",
+                        x,
+                        fullHeight - 10f,
+                        paint
                     )
                 }
             }
@@ -220,6 +325,27 @@ fun Sparkline(
                     }
                 }
                 
+                // Fill area under sparkline
+                val fillPath = Path().apply {
+                    addPath(path)
+                    lineTo(width, height)
+                    lineTo(0f, height)
+                    close()
+                }
+                val fillBrush = Brush.verticalGradient(
+                    colors = listOf(color.copy(alpha = 0.4f), Color.Transparent),
+                    startY = 0f,
+                    endY = height
+                )
+                drawPath(path = fillPath, brush = fillBrush)
+
+                // Glow
+                drawPath(
+                    path = path,
+                    color = color.copy(alpha = 0.2f),
+                    style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round)
+                )
+                // Core
                 drawPath(
                     path = path,
                     color = color,
