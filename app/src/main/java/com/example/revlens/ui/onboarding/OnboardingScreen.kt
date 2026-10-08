@@ -31,7 +31,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.revlens.ui.components.PrimaryButton
@@ -72,7 +71,7 @@ fun OnboardingScreen(
                                 .size(if (isSelected) 10.dp else 8.dp)
                                 .clip(CircleShape)
                                 .background(
-                                    if (isSelected) RevLensTheme.colors.brandPrimary 
+                                    if (isSelected) RevLensTheme.colors.brandPrimary
                                     else RevLensTheme.colors.borderDefault
                                 )
                         )
@@ -95,7 +94,11 @@ fun OnboardingScreen(
             }
         }
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
             // Skip button
             if (pagerState.currentPage == 0) {
                 TextButton(
@@ -152,12 +155,27 @@ private fun WelcomePage() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Box(modifier = Modifier.width(120.dp).height(8.dp).background(RevLensTheme.colors.brandPrimary, CircleShape))
-                Box(modifier = Modifier.width(90.dp).height(8.dp).background(RevLensTheme.colors.brandSecondary, CircleShape))
-                Box(modifier = Modifier.width(60.dp).height(8.dp).background(RevLensTheme.colors.brandTertiary, CircleShape))
+                Box(
+                    modifier = Modifier
+                        .width(120.dp)
+                        .height(8.dp)
+                        .background(RevLensTheme.colors.brandPrimary, CircleShape)
+                )
+                Box(
+                    modifier = Modifier
+                        .width(90.dp)
+                        .height(8.dp)
+                        .background(RevLensTheme.colors.brandSecondary, CircleShape)
+                )
+                Box(
+                    modifier = Modifier
+                        .width(60.dp)
+                        .height(8.dp)
+                        .background(RevLensTheme.colors.brandTertiary, CircleShape)
+                )
             }
         }
-        
+
         Spacer(modifier = Modifier.height(48.dp))
 
         Text(
@@ -166,7 +184,7 @@ private fun WelcomePage() {
             color = RevLensTheme.colors.textPrimary,
             textAlign = TextAlign.Center
         )
-        
+
         Spacer(modifier = Modifier.height(32.dp))
 
         Column(
@@ -218,9 +236,9 @@ private fun CreateWorkspacePage(
             color = RevLensTheme.colors.textPrimary,
             textAlign = TextAlign.Center
         )
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         Text(
             text = "Let's get started by setting up your first workspace.",
             style = RevLensTypography.bodyLarge,
@@ -236,7 +254,7 @@ private fun CreateWorkspacePage(
             label = "Workspace Name",
             placeholder = "e.g. Acme Corp"
         )
-        
+
         Spacer(modifier = Modifier.height(24.dp))
 
         // Simple text field to mock dropdown for now

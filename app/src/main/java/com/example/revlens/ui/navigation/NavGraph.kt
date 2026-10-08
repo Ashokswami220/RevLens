@@ -44,7 +44,9 @@ fun RevLensNavGraph(
         BottomNavItem(
             "Dashboard", Icons.Filled.Dashboard, DashboardRoute::class.qualifiedName ?: ""
         ),
-        BottomNavItem("Simulator", Icons.Filled.Tune, PricingSimulatorRoute::class.qualifiedName ?: ""),
+        BottomNavItem(
+            "Simulator", Icons.Filled.Tune, PricingSimulatorRoute::class.qualifiedName ?: ""
+        ),
         BottomNavItem(
             "Scenarios", Icons.Filled.Layers, ScenarioBuilderRoute::class.qualifiedName ?: ""
         ),

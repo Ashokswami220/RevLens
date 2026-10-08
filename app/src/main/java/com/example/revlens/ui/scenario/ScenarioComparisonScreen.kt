@@ -30,9 +30,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.revlens.domain.calc.PricingSimulationEngine
 import com.example.revlens.domain.calc.BreakEvenCalculator
 import com.example.revlens.domain.calc.LtvCalculator
+import com.example.revlens.domain.calc.PricingSimulationEngine
 import com.example.revlens.model.BusinessProfile
 import com.example.revlens.model.Scenario
 import com.example.revlens.presentation.MainViewModel
@@ -41,10 +41,10 @@ import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
+import java.math.BigDecimal
 import java.text.NumberFormat
 import java.util.Currency
 import java.util.Locale
-import java.math.BigDecimal
 
 @Composable
 fun ScenarioComparisonScreen(
@@ -55,22 +55,25 @@ fun ScenarioComparisonScreen(
     val profile by viewModel.profile.collectAsState()
 
     val currencyFormatter = remember {
-        NumberFormat.getCurrencyInstance(Locale.US).apply {
-            currency = Currency.getInstance("USD")
-            maximumFractionDigits = 0
-        }
+        NumberFormat.getCurrencyInstance(Locale.US)
+            .apply {
+                currency = Currency.getInstance("USD")
+                maximumFractionDigits = 0
+            }
     }
 
     val percentFormatter = remember {
-        NumberFormat.getPercentInstance(Locale.US).apply {
-            minimumFractionDigits = 1
-            maximumFractionDigits = 1
-        }
+        NumberFormat.getPercentInstance(Locale.US)
+            .apply {
+                minimumFractionDigits = 1
+                maximumFractionDigits = 1
+            }
     }
 
     // Default to the first two scenarios
     val selectedScenarioIds = remember(scenarios) {
-        val initial = scenarios.take(3).map { it.id }
+        val initial = scenarios.take(3)
+            .map { it.id }
         val state = mutableStateListOf<String>()
         state.addAll(initial)
         state
@@ -218,13 +221,15 @@ private fun ComparisonTable(
                     val arr = result.currentMrr.multiply(BigDecimal(12))
                     val ltv = LtvCalculator.calculateLtv(result.arpu, result.monthlyChurnRate)
                     val payback = BreakEvenCalculator.calculateCacPaybackPeriod(result)
-                    
+
                     // Values
                     TableValue(currencyFormatter.format(result.currentMrr))
                     TableValue(currencyFormatter.format(arr))
                     TableValue(percentFormatter.format(result.monthlyChurnRate))
                     TableValue(currencyFormatter.format(ltv))
-                    TableValue(if (payback != null) String.format(Locale.US, "%.1f mo", payback) else "N/A")
+                    TableValue(
+                        if (payback != null) String.format(Locale.US, "%.1f mo", payback) else "N/A"
+                    )
                 }
             }
         }

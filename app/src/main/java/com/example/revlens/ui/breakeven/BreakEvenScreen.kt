@@ -25,9 +25,9 @@ import com.example.revlens.presentation.MainViewModel
 import com.example.revlens.ui.components.LabeledSlider
 import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SectionCard
+import com.example.revlens.ui.components.SegmentedTabs
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
-import com.example.revlens.ui.components.SegmentedTabs
 import java.math.BigDecimal
 import java.util.Locale
 

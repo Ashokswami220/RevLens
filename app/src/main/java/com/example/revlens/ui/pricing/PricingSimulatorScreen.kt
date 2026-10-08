@@ -66,19 +66,20 @@ fun PricingSimulatorScreen(
     val profile by viewModel.profile.collectAsState()
 
     var selectedPlanId by remember { mutableStateOf<String?>(null) }
-    
+
     // Sliders state
     var priceChangePercent by remember { mutableStateOf(0f) }
     var churnChangePercent by remember { mutableStateOf(0f) }
-    
+
     var showSaveDialog by remember { mutableStateOf(false) }
     var scenarioName by remember { mutableStateOf("") }
 
     val currencyFormatter = remember {
-        NumberFormat.getCurrencyInstance(Locale.US).apply {
-            currency = Currency.getInstance("USD")
-            maximumFractionDigits = 0
-        }
+        NumberFormat.getCurrencyInstance(Locale.US)
+            .apply {
+                currency = Currency.getInstance("USD")
+                maximumFractionDigits = 0
+            }
     }
 
     // Assumptions object for simulation
@@ -136,7 +137,10 @@ fun PricingSimulatorScreen(
                 }
 
                 // Plan Chips
-                Text("Plan", style = RevLensTypography.titleMedium, color = RevLensTheme.colors.textPrimary)
+                Text(
+                    "Plan", style = RevLensTypography.titleMedium,
+                    color = RevLensTheme.colors.textPrimary
+                )
                 Row(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -156,7 +160,7 @@ fun PricingSimulatorScreen(
                     SectionCard(title = "Price") {
                         val currentPrice = currentPlan.price.toDouble()
                         val newPrice = currentPrice * (1.0 + assumptions.priceChangePercent)
-                        
+
                         LabeledSlider(
                             label = "New price",
                             value = priceChangePercent,
@@ -173,7 +177,11 @@ fun PricingSimulatorScreen(
                             value = churnChangePercent,
                             onValueChange = { churnChangePercent = it },
                             valueRange = -10f..10f,
-                            valueString = "${String.format(Locale.US, "%.1f", churnChangePercent)}%",
+                            valueString = "${
+                                String.format(
+                                    Locale.US, "%.1f", churnChangePercent
+                                )
+                            }%",
                             caption = "Projected impact on churn"
                         )
                     }
@@ -193,22 +201,28 @@ fun PricingSimulatorScreen(
                         .padding(24.dp)
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Text("New MRR (12 mo)", style = RevLensTypography.bodyLarge, color = RevLensTheme.colors.textSecondary)
-                        
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Text(
+                            "New MRR (12 mo)", style = RevLensTypography.bodyLarge,
+                            color = RevLensTheme.colors.textSecondary
+                        )
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
                             Text(
                                 currencyFormatter.format(projected.currentMrr),
                                 style = RevLensTypography.displayLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = RevLensTheme.colors.textPrimary
                             )
-                            
+
                             val deltaType = when {
                                 mrrDelta > 0 -> DeltaType.POSITIVE
                                 mrrDelta < 0 -> DeltaType.NEGATIVE
                                 else -> DeltaType.NEUTRAL
                             }
-                            
+
                             val sign = if (mrrDelta > 0) "+" else ""
                             DeltaChip(
                                 delta = "$sign${String.format(Locale.US, "%.1f", mrrDelta)}%",
@@ -235,10 +249,13 @@ fun PricingSimulatorScreen(
                     onClick = { showSaveDialog = true }
                 )
             } else {
-                Text("No profile data available. Please set up your business baseline.", color = RevLensTheme.colors.textSecondary)
+                Text(
+                    "No profile data available. Please set up your business baseline.",
+                    color = RevLensTheme.colors.textSecondary
+                )
             }
         }
-        
+
         if (showSaveDialog) {
             AlertDialog(
                 onDismissRequest = { showSaveDialog = false },
