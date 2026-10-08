@@ -1,4 +1,4 @@
-package com.example.revlens.ui.breakeven
+package com.example.revlens.ui.screens.detailscreens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -75,8 +75,7 @@ fun BreakEvenScreen(
     Scaffold(
         topBar = {
             RevLensTopAppBar(
-                title = "Break-Even Calculator",
-                onBackClick = onNavigateBack
+                title = "Break-Even Calculator"
             )
         },
         containerColor = RevLensTheme.colors.background

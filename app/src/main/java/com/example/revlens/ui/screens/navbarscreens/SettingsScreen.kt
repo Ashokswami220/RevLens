@@ -1,4 +1,4 @@
-package com.example.revlens.ui.settings
+package com.example.revlens.ui.screens.navbarscreens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

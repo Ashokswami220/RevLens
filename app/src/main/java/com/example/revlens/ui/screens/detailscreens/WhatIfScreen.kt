@@ -1,4 +1,4 @@
-package com.example.revlens.ui.whatif
+package com.example.revlens.ui.screens.detailscreens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

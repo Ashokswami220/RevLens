@@ -1,4 +1,4 @@
-package com.example.revlens.ui.scenario
+package com.example.revlens.ui.screens.navbarscreens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

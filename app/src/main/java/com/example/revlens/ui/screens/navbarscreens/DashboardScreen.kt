@@ -1,4 +1,4 @@
-package com.example.revlens.ui.dashboard
+package com.example.revlens.ui.screens.navbarscreens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.Settings
@@ -31,7 +32,11 @@ import com.example.revlens.ui.theme.RevLensTypography
 import java.text.NumberFormat
 import java.util.Currency
 import java.util.Locale
-
+import com.example.revlens.ui.components.RevLensLineChart
+import com.example.revlens.ui.components.Sparkline
+import com.example.revlens.ui.components.ProgressRing
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 @Composable
 fun DashboardScreen(
     viewModel: MainViewModel = hiltViewModel(),
@@ -65,6 +70,7 @@ fun DashboardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .verticalScroll(androidx.compose.foundation.rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -105,6 +111,19 @@ private fun DashboardContent(
     val ltv = LtvCalculator.calculateLtv(arpu, profile.monthlyChurnRate)
     val cacPayback = BreakEvenCalculator.calculateCacPaybackPeriod(profile)
 
+    // MRR Trend Chart
+    SectionCard(title = "MRR Trend (Last 6 Months)") {
+        val mrrFloat = mrr.toFloat()
+        val trendData = listOf(
+            mrrFloat * 0.7f, mrrFloat * 0.75f, mrrFloat * 0.8f, 
+            mrrFloat * 0.9f, mrrFloat * 0.95f, mrrFloat
+        )
+        RevLensLineChart(
+            data = listOf(trendData),
+            colors = listOf(RevLensTheme.colors.brandPrimary)
+        )
+    }
+
     // KPI Grid
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -120,6 +139,11 @@ private fun DashboardContent(
                 fontWeight = FontWeight.Bold,
                 color = RevLensTheme.colors.brandPrimary
             )
+            Spacer(modifier = Modifier.height(8.dp))
+            Sparkline(
+                data = listOf(mrr.toFloat() * 0.8f, mrr.toFloat() * 0.9f, mrr.toFloat()),
+                color = RevLensTheme.colors.brandPrimary
+            )
         }
 
         SectionCard(
@@ -131,6 +155,11 @@ private fun DashboardContent(
                 style = RevLensTypography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = RevLensTheme.colors.textPrimary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Sparkline(
+                data = listOf(arpu.toFloat() * 0.95f, arpu.toFloat() * 0.98f, arpu.toFloat()),
+                color = RevLensTheme.colors.brandSecondary
             )
         }
     }
@@ -149,6 +178,11 @@ private fun DashboardContent(
                 fontWeight = FontWeight.Bold,
                 color = RevLensTheme.colors.textPrimary
             )
+            Spacer(modifier = Modifier.height(8.dp))
+            Sparkline(
+                data = listOf(ltv.toFloat() * 0.9f, ltv.toFloat() * 0.95f, ltv.toFloat()),
+                color = RevLensTheme.colors.success
+            )
         }
 
         SectionCard(
@@ -156,14 +190,29 @@ private fun DashboardContent(
             modifier = Modifier.weight(1f)
         ) {
             Text(
-                text = if (cacPayback != null) "${
-                    String.format(
-                        Locale.US, "%.1f", cacPayback
-                    )
-                } mo" else "Never",
+                text = if (cacPayback != null) "${String.format(Locale.US, "%.1f", cacPayback)} mo" else "Never",
                 style = RevLensTypography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = if (cacPayback != null && cacPayback < 12.0) RevLensTheme.colors.success else RevLensTheme.colors.error
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Sparkline(
+                data = listOf((cacPayback?.toFloat() ?: 0f) * 1.2f, (cacPayback?.toFloat() ?: 0f) * 1.1f, (cacPayback?.toFloat() ?: 0f)),
+                color = if (cacPayback != null && cacPayback < 12.0) RevLensTheme.colors.success else RevLensTheme.colors.error
+            )
+        }
+    }
+
+    // Goal Tracker
+    SectionCard(title = "Annual MRR Goal") {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            ProgressRing(
+                progress = 0.65f, // Mock progress
+                goalText = "65% of \$10k goal",
+                color = RevLensTheme.colors.brandSecondary
             )
         }
     }

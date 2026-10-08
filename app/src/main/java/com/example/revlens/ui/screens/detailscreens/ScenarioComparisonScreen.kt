@@ -1,4 +1,4 @@
-package com.example.revlens.ui.scenario
+package com.example.revlens.ui.screens.detailscreens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -39,6 +39,8 @@ import com.example.revlens.presentation.MainViewModel
 import com.example.revlens.ui.components.ChoiceChip
 import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SectionCard
+import com.example.revlens.ui.components.RevLensLineChart
+import com.example.revlens.ui.components.ChartLegend
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
 import java.math.BigDecimal
@@ -131,20 +133,43 @@ fun ScenarioComparisonScreen(
                 }
             }
 
-            // Chart Placeholder
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(RevLensTheme.colors.surfaceElevated),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Chart Placeholder (Overlay Line Chart)",
-                    color = RevLensTheme.colors.textSecondary,
-                    style = RevLensTypography.bodyMedium
+            if (profile != null) {
+                val availableColors = listOf(
+                    RevLensTheme.colors.brandPrimary,
+                    RevLensTheme.colors.brandSecondary,
+                    RevLensTheme.colors.brandTertiary
                 )
+                
+                val chartDataList = mutableListOf<List<Float>>()
+                val legendItems = mutableListOf<Pair<String, androidx.compose.ui.graphics.Color>>()
+                
+                val selectedScenarios = scenarios.filter { selectedScenarioIds.contains(it.id) }
+                selectedScenarios.forEachIndexed { index, scenario ->
+                    val color = availableColors[scenarios.indexOf(scenario) % availableColors.size]
+                    val result = PricingSimulationEngine.simulate(scenario.baselineProfile, scenario.assumptions)
+                    
+                    val mrr = result.currentMrr.toFloat()
+                    val growth = result.monthlyGrowthRate.toFloat()
+                    
+                    val projection = mutableListOf<Float>()
+                    var current = mrr
+                    for (i in 0..11) {
+                        projection.add(current)
+                        current *= (1f + growth)
+                    }
+                    chartDataList.add(projection)
+                    legendItems.add(scenario.name to color)
+                }
+
+                if (chartDataList.isNotEmpty()) {
+                    SectionCard(title = "MRR Projection (12 Months)") {
+                        RevLensLineChart(
+                            data = chartDataList,
+                            colors = legendItems.map { it.second }
+                        )
+                        ChartLegend(items = legendItems)
+                    }
+                }
             }
 
             // Comparison Table
