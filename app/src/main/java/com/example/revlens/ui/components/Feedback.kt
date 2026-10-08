@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
@@ -160,7 +161,7 @@ fun ConfirmDialog(
             )
         },
         containerColor = RevLensTheme.colors.surface,
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp)
+        shape = RectangleShape
     )
 }
 
