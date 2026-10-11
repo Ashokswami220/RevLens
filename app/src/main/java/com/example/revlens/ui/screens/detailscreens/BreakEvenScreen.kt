@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -23,9 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.example.revlens.domain.calc.BreakEvenCalculator
 import com.example.revlens.presentation.MainViewModel
 import com.example.revlens.ui.components.LabeledSlider
-import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SectionCard
-import com.example.revlens.ui.components.SegmentedTabs
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
 import java.math.BigDecimal
@@ -66,93 +63,96 @@ fun BreakEvenScreen(viewModel: MainViewModel) {
         simulatedProfile?.let { BreakEvenCalculator.calculateBreakEvenCustomers(it) }
     }
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Segmented Tabs
-            
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
 
-            SectionCard(title = "Break-Even Results") {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    val breakEven = breakEvenCustomers ?: 0
-                    val maxCustomers = if (breakEven > 0) breakEven * 2 else 100
-                    
-                    val revenueData = mutableListOf<Float>()
-                    val costData = mutableListOf<Float>()
-                    
-                    simulatedProfile?.let { p ->
-                        val arpu = p.currentMrr.toFloat() / (if (p.totalCustomers > 0) p.totalCustomers else 1)
-                        for (i in 0..10) {
-                            val customers = (maxCustomers * i / 10f).toInt()
-                            val revenue = arpu * customers
-                            val costs = p.fixedCosts.toFloat() + (p.variableCostPerCustomer.toFloat() * customers)
-                            revenueData.add(revenue)
-                            costData.add(costs)
-                        }
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Segmented Tabs
+
+
+        SectionCard(title = "Break-Even Results") {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                val breakEven = breakEvenCustomers ?: 0
+                val maxCustomers = if (breakEven > 0) breakEven * 2 else 100
+
+                val revenueData = mutableListOf<Float>()
+                val costData = mutableListOf<Float>()
+
+                simulatedProfile?.let { p ->
+                    val arpu =
+                        p.currentMrr.toFloat() / (if (p.totalCustomers > 0) p.totalCustomers else 1)
+                    for (i in 0..10) {
+                        val customers = (maxCustomers * i / 10f).toInt()
+                        val revenue = arpu * customers
+                        val costs =
+                            p.fixedCosts.toFloat() + (p.variableCostPerCustomer.toFloat() * customers)
+                        revenueData.add(revenue)
+                        costData.add(costs)
                     }
-
-                    if (revenueData.isNotEmpty()) {
-                        com.example.revlens.ui.components.RevLensLineChart(
-                            data = listOf(revenueData, costData),
-                            colors = listOf(RevLensTheme.colors.brandPrimary, RevLensTheme.colors.error)
-                        )
-                        com.example.revlens.ui.components.ChartLegend(
-                            items = listOf(
-                                "Revenue" to RevLensTheme.colors.brandPrimary,
-                                "Costs" to RevLensTheme.colors.error
-                            )
-                        )
-                        androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(16.dp))
-                    }
-
-                    val paybackStr =
-                        cacPayback?.let { String.format(Locale.US, "%.1f months", it) } ?: "Never"
-                    ResultRow(label = "CAC Payback Period", value = paybackStr)
-
-                    val customersStr = breakEvenCustomers?.let { "$it customers" } ?: "Never"
-                    ResultRow(label = "Break-Even Customers", value = customersStr)
                 }
-            }
 
-            SectionCard(title = "Simulate Costs") {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    LabeledSlider(
-                        label = "Simulated CAC",
-                        value = cacSimulated,
-                        onValueChange = { cacSimulated = it },
-                        valueRange = 0f..2000f,
-                        valueString = "$${cacSimulated.toInt()}",
-                        caption = "Cost to acquire a single customer"
+                if (revenueData.isNotEmpty()) {
+                    com.example.revlens.ui.components.RevLensLineChart(
+                        data = listOf(revenueData, costData),
+                        colors = listOf(RevLensTheme.colors.brandPrimary, RevLensTheme.colors.error)
                     )
-
-                    LabeledSlider(
-                        label = "Simulated Fixed Costs",
-                        value = fixedCostsSimulated,
-                        onValueChange = { fixedCostsSimulated = it },
-                        valueRange = 0f..50000f,
-                        valueString = "$${fixedCostsSimulated.toInt()}",
-                        caption = "Monthly base expenses"
+                    com.example.revlens.ui.components.ChartLegend(
+                        items = listOf(
+                            "Revenue" to RevLensTheme.colors.brandPrimary,
+                            "Costs" to RevLensTheme.colors.error
+                        )
                     )
-
-                    LabeledSlider(
-                        label = "Simulated Variable Cost",
-                        value = variableCostSimulated,
-                        onValueChange = { variableCostSimulated = it },
-                        valueRange = 0f..500f,
-                        valueString = "$${variableCostSimulated.toInt()}",
-                        caption = "Cost per customer"
-                    )
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(16.dp))
                 }
+
+                val paybackStr =
+                    cacPayback?.let { String.format(Locale.US, "%.1f months", it) } ?: "Never"
+                ResultRow(label = "CAC Payback Period", value = paybackStr)
+
+                val customersStr = breakEvenCustomers?.let { "$it customers" } ?: "Never"
+                ResultRow(label = "Break-Even Customers", value = customersStr)
             }
+        }
+
+        SectionCard(title = "Simulate Costs") {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                LabeledSlider(
+                    label = "Simulated CAC",
+                    value = cacSimulated,
+                    onValueChange = { cacSimulated = it },
+                    valueRange = 0f..2000f,
+                    valueString = "$${cacSimulated.toInt()}",
+                    caption = "Cost to acquire a single customer"
+                )
+
+                LabeledSlider(
+                    label = "Simulated Fixed Costs",
+                    value = fixedCostsSimulated,
+                    onValueChange = { fixedCostsSimulated = it },
+                    valueRange = 0f..50000f,
+                    valueString = "$${fixedCostsSimulated.toInt()}",
+                    caption = "Monthly base expenses"
+                )
+
+                LabeledSlider(
+                    label = "Simulated Variable Cost",
+                    value = variableCostSimulated,
+                    onValueChange = { variableCostSimulated = it },
+                    valueRange = 0f..500f,
+                    valueString = "$${variableCostSimulated.toInt()}",
+                    caption = "Cost per customer"
+                )
+            }
+        }
 
 
+    }
 }
-}
+
 @Composable
 private fun ResultRow(label: String, value: String) {
     Column {

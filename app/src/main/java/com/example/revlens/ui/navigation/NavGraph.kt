@@ -17,19 +17,18 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.revlens.ui.screens.detailscreens.BreakEvenScreen
 import com.example.revlens.ui.components.BottomNavItem
 import com.example.revlens.ui.components.RevLensBottomBar
-import com.example.revlens.ui.screens.navbarscreens.DashboardScreen
-import com.example.revlens.ui.screens.navbarscreens.ForecastScreen
+import com.example.revlens.ui.onboarding.OnboardingScreen
+import com.example.revlens.ui.screens.detailscreens.BusinessSetupScreen
 import com.example.revlens.ui.screens.detailscreens.GoalPlannerScreen
 import com.example.revlens.ui.screens.detailscreens.SaaSMetricsScreen
-import com.example.revlens.ui.onboarding.OnboardingScreen
-import com.example.revlens.ui.screens.navbarscreens.SimulatorScreen
-import com.example.revlens.ui.screens.navbarscreens.ScenarioBuilderScreen
 import com.example.revlens.ui.screens.detailscreens.ScenarioComparisonScreen
+import com.example.revlens.ui.screens.navbarscreens.DashboardScreen
+import com.example.revlens.ui.screens.navbarscreens.ForecastScreen
+import com.example.revlens.ui.screens.navbarscreens.ScenarioBuilderScreen
 import com.example.revlens.ui.screens.navbarscreens.SettingsScreen
-import com.example.revlens.ui.screens.detailscreens.BusinessSetupScreen
+import com.example.revlens.ui.screens.navbarscreens.SimulatorScreen
 
 @Composable
 fun RevLensNavGraph(
@@ -56,8 +55,8 @@ fun RevLensNavGraph(
         BottomNavItem("Profile", Icons.Filled.Person, SettingsRoute::class.qualifiedName ?: "")
     )
 
-    val showBottomBar = currentDestination?.route != OnboardingRoute::class.qualifiedName && 
-                        currentDestination?.route != InputDataRoute::class.qualifiedName
+    val showBottomBar = currentDestination?.route != OnboardingRoute::class.qualifiedName &&
+            currentDestination?.route != InputDataRoute::class.qualifiedName
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),

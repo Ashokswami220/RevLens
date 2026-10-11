@@ -3,6 +3,7 @@ package com.example.revlens.ui.screens.detailscreens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -22,6 +23,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.revlens.domain.calc.MrrGoalPlanner
 import com.example.revlens.presentation.MainViewModel
 import com.example.revlens.ui.components.LabeledSlider
+import com.example.revlens.ui.components.PrimaryButton
 import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.theme.RevLensTheme
@@ -127,9 +129,24 @@ fun GoalPlannerScreen(
                     }
                 }
             }
+
+            PrimaryButton(
+                text = "Save Goal",
+                onClick = {
+                    val currentProfile = profile
+                    if (currentProfile != null) {
+                        viewModel.updateProfile(
+                            currentProfile.copy(mrrGoal = BigDecimal(targetMrr.toString()))
+                        )
+                        onNavigateBack()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
+
 
 @Composable
 private fun ResultRow(label: String, value: String, caption: String? = null) {
@@ -150,3 +167,4 @@ private fun ResultRow(label: String, value: String, caption: String? = null) {
         }
     }
 }
+

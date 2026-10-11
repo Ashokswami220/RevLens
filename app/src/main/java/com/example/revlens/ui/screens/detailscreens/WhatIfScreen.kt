@@ -3,22 +3,17 @@ package com.example.revlens.ui.screens.detailscreens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -27,6 +22,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.revlens.domain.calc.PricingSimulationEngine
@@ -36,9 +32,7 @@ import com.example.revlens.model.MetricResult
 import com.example.revlens.presentation.MainViewModel
 import com.example.revlens.ui.components.LabeledSlider
 import com.example.revlens.ui.components.PrimaryButton
-import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SectionCard
-import com.example.revlens.ui.components.SegmentedTabs
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
 import java.math.BigDecimal
@@ -77,127 +71,128 @@ fun WhatIfScreen(viewModel: MainViewModel) {
         } ?: emptyList()
     }
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Segmented Tabs
-            
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
 
-            // Live Impact Section
-            SectionCard(title = "Live Impact") {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    val barData = results.map { (it.deltaPercent ?: 0.0).toFloat() }
-                    if (barData.any { it != 0f }) {
-                        com.example.revlens.ui.components.RevLensBarChart(
-                            data = barData,
-                            colors = results.map { if (it.isPositive) RevLensTheme.colors.success else RevLensTheme.colors.error }
-                        )
-                        androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(8.dp))
-                    }
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Segmented Tabs
 
-                    results.forEach { result ->
-                        MetricResultRow(result)
-                    }
+
+        // Live Impact Section
+        SectionCard(title = "Live Impact") {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                val barData = results.map { (it.deltaPercent ?: 0.0).toFloat() }
+                if (barData.any { it != 0f }) {
+                    com.example.revlens.ui.components.RevLensBarChart(
+                        data = barData,
+                        colors = results.map { if (it.isPositive) RevLensTheme.colors.success else RevLensTheme.colors.error }
+                    )
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(8.dp))
                 }
-            }
 
-            // Adjustments Section
-            SectionCard(title = "Assumptions") {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    LabeledSlider(
-                        label = "Price Change",
-                        value = priceChangePercent,
-                        onValueChange = { priceChangePercent = it },
-                        valueRange = -50f..100f,
-                        valueString = "${priceChangePercent.toInt()}%",
-                        caption = "Adjust pricing across all plans"
-                    )
-
-                    LabeledSlider(
-                        label = "Churn Change",
-                        value = churnChangePercent,
-                        onValueChange = { churnChangePercent = it },
-                        valueRange = -10f..10f,
-                        valueString = "${churnChangePercent.toInt()}%",
-                        caption = "Absolute change in churn rate"
-                    )
-
-                    LabeledSlider(
-                        label = "Growth Change",
-                        value = growthChangePercent,
-                        onValueChange = { growthChangePercent = it },
-                        valueRange = -20f..50f,
-                        valueString = "${growthChangePercent.toInt()}%",
-                        caption = "Absolute change in MRR growth rate"
-                    )
-
-                    LabeledSlider(
-                        label = "CAC Change",
-                        value = cacChange,
-                        onValueChange = { cacChange = it },
-                        valueRange = -500f..500f,
-                        valueString = "$${cacChange.toInt()}",
-                        caption = "Absolute dollar change in CAC"
-                    )
-
-                    PrimaryButton(
-                        text = "Save as Scenario",
-                        onClick = { showSaveDialog = true }
-                    )
+                results.forEach { result ->
+                    MetricResultRow(result)
                 }
             }
         }
 
-        if (showSaveDialog) {
-            AlertDialog(
-                shape = RectangleShape,
-                onDismissRequest = { showSaveDialog = false },
-                title = {
-                    Text(
-                        "Save Scenario", style = RevLensTypography.titleLarge,
-                        color = RevLensTheme.colors.textPrimary
-                    )
-                },
-                text = {
-                    TextField(
-                        value = scenarioName,
-                        onValueChange = { scenarioName = it },
-                        label = { Text("Scenario Name") }
-                    )
-                },
-                confirmButton = {
-                    TextButton(onClick = {
-                        profile?.let { p ->
-                            viewModel.saveScenario(
-                                com.example.revlens.model.Scenario(
-                                    name = scenarioName.ifEmpty { "New Scenario" },
-                                    baselineProfile = p,
-                                    assumptions = assumptions
-                                )
+        // Adjustments Section
+        SectionCard(title = "Assumptions") {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                LabeledSlider(
+                    label = "Price Change",
+                    value = priceChangePercent,
+                    onValueChange = { priceChangePercent = it },
+                    valueRange = -50f..100f,
+                    valueString = "${priceChangePercent.toInt()}%",
+                    caption = "Adjust pricing across all plans"
+                )
+
+                LabeledSlider(
+                    label = "Churn Change",
+                    value = churnChangePercent,
+                    onValueChange = { churnChangePercent = it },
+                    valueRange = -10f..10f,
+                    valueString = "${churnChangePercent.toInt()}%",
+                    caption = "Absolute change in churn rate"
+                )
+
+                LabeledSlider(
+                    label = "Growth Change",
+                    value = growthChangePercent,
+                    onValueChange = { growthChangePercent = it },
+                    valueRange = -20f..50f,
+                    valueString = "${growthChangePercent.toInt()}%",
+                    caption = "Absolute change in MRR growth rate"
+                )
+
+                LabeledSlider(
+                    label = "CAC Change",
+                    value = cacChange,
+                    onValueChange = { cacChange = it },
+                    valueRange = -500f..500f,
+                    valueString = "$${cacChange.toInt()}",
+                    caption = "Absolute dollar change in CAC"
+                )
+
+                PrimaryButton(
+                    text = "Save as Scenario",
+                    onClick = { showSaveDialog = true }
+                )
+            }
+        }
+    }
+
+    if (showSaveDialog) {
+        AlertDialog(
+            shape = RectangleShape,
+            onDismissRequest = { showSaveDialog = false },
+            title = {
+                Text(
+                    "Save Scenario", style = RevLensTypography.titleLarge,
+                    color = RevLensTheme.colors.textPrimary
+                )
+            },
+            text = {
+                TextField(
+                    value = scenarioName,
+                    onValueChange = { scenarioName = it },
+                    label = { Text("Scenario Name") }
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    profile?.let { p ->
+                        viewModel.saveScenario(
+                            com.example.revlens.model.Scenario(
+                                name = scenarioName.ifEmpty { "New Scenario" },
+                                baselineProfile = p,
+                                assumptions = assumptions
                             )
-                        }
-                        showSaveDialog = false
-                         // Or navigate to Scenario builder directly
-                    }) {
-                        Text("Save")
+                        )
                     }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showSaveDialog = false }) {
-                        Text("Cancel")
-                    }
-                },
-                containerColor = RevLensTheme.colors.surface
-            )
+                    showSaveDialog = false
+                    // Or navigate to Scenario builder directly
+                }) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSaveDialog = false }) {
+                    Text("Cancel")
+                }
+            },
+            containerColor = RevLensTheme.colors.surface
+        )
 
 
+    }
 }
-}
+
 @Composable
 fun MetricResultRow(result: MetricResult) {
     Row(

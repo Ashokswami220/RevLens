@@ -8,10 +8,8 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,11 +30,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.revlens.domain.calc.ForecastEngine
 import com.example.revlens.presentation.MainViewModel
+import com.example.revlens.ui.components.ChartLegend
 import com.example.revlens.ui.components.PrimaryButton
+import com.example.revlens.ui.components.RevLensLineChart
 import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SectionCard
-import com.example.revlens.ui.components.RevLensLineChart
-import com.example.revlens.ui.components.ChartLegend
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
 import java.text.NumberFormat
@@ -150,18 +148,20 @@ fun ForecastScreen(
             if (forecastData.isNotEmpty()) {
                 SectionCard(title = "MRR Forecast ($selectedMonths Months)") {
                     val baseMrrData = forecastData.map { it.mrr.toFloat() }
-                    val optimisticData = baseMrrData.mapIndexed { index, mrr -> mrr * (1f + (index * 0.015f)) }
-                    val conservativeData = baseMrrData.mapIndexed { index, mrr -> mrr * (1f - (index * 0.01f)) }
+                    val optimisticData =
+                        baseMrrData.mapIndexed { index, mrr -> mrr * (1f + (index * 0.015f)) }
+                    val conservativeData =
+                        baseMrrData.mapIndexed { index, mrr -> mrr * (1f - (index * 0.01f)) }
 
                     RevLensLineChart(
                         data = listOf(optimisticData, baseMrrData, conservativeData),
                         colors = listOf(
-                            RevLensTheme.colors.brandTertiary, 
+                            RevLensTheme.colors.brandTertiary,
                             RevLensTheme.colors.brandPrimary,
                             RevLensTheme.colors.brandSecondary
                         )
                     )
-                    
+
                     ChartLegend(
                         items = listOf(
                             "Optimistic" to RevLensTheme.colors.brandTertiary,

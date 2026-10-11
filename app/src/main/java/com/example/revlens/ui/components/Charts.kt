@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -22,13 +21,12 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.unit.dp
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
@@ -77,16 +75,17 @@ fun RevLensLineChart(
 
                 data.forEachIndexed { seriesIndex, seriesData ->
                     if (seriesData.isEmpty()) return@forEachIndexed
-                    
+
                     val stepX = width / (seriesData.size - 1).coerceAtLeast(1)
-                    val fallbackColor = Color(0xFF06B6D4) // fallback if out of bounds, shouldn't happen usually
+                    val fallbackColor =
+                        Color(0xFF06B6D4) // fallback if out of bounds, shouldn't happen usually
                     val color = colors.getOrElse(seriesIndex) { fallbackColor }
                     val path = Path()
-                    
+
                     seriesData.forEachIndexed { index, value ->
                         val x = index * stepX
                         val y = height - ((value - min) / range * height)
-                        
+
                         if (index == 0) {
                             path.moveTo(x, y)
                         } else {
@@ -126,7 +125,7 @@ fun RevLensLineChart(
                         color = color,
                         style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
                     )
-                    
+
                     // 5) Draw points
                     val shouldDrawAllPoints = data.size == 1
                     seriesData.forEachIndexed { index, value ->
@@ -157,12 +156,13 @@ fun RevLensLineChart(
                 }
 
                 // X-Axis Labels
-                val paint = android.graphics.Paint().apply {
-                    color = android.graphics.Color.parseColor("#888888")
-                    textSize = 32f
-                    textAlign = android.graphics.Paint.Align.CENTER
-                }
-                
+                val paint = android.graphics.Paint()
+                    .apply {
+                        color = android.graphics.Color.parseColor("#888888")
+                        textSize = 32f
+                        textAlign = android.graphics.Paint.Align.CENTER
+                    }
+
                 val dataSize = if (data.isNotEmpty()) data[0].size else 0
                 if (dataSize > 0) {
                     val labelStepX = width / (dataSize - 1).coerceAtLeast(1)
@@ -200,25 +200,27 @@ fun RevLensBarChart(
                 val fullHeight = size.height
                 val labelPadding = 60f
                 val height = fullHeight - labelPadding
-                
-                val max = data.maxOrNull()?.coerceAtLeast(0f) ?: 1f
-                val min = data.minOrNull()?.coerceAtMost(0f) ?: 0f
+
+                val max = data.maxOrNull()
+                    ?.coerceAtLeast(0f) ?: 1f
+                val min = data.minOrNull()
+                    ?.coerceAtMost(0f) ?: 0f
                 val range = (max - min).coerceAtLeast(1f)
-                
+
                 val barWidth = (width / data.size) * 0.6f
                 val spacing = (width / data.size)
-                
+
                 val zeroY = height - ((0f - min) / range * height)
-                
+
                 data.forEachIndexed { index, value ->
                     val x = (index * spacing) + (spacing - barWidth) / 2
                     val y = height - ((value - min) / range * height)
-                    
+
                     val barHeight = kotlin.math.abs(zeroY - y)
                     val topY = if (value >= 0) y else zeroY
                     val fallbackColor = Color(0xFF06B6D4)
                     val color = colors.getOrElse(index % colors.size) { fallbackColor }
-                    
+
                     val gradient = Brush.verticalGradient(
                         colors = listOf(color, color.copy(alpha = 0.2f)),
                         startY = topY,
@@ -231,14 +233,15 @@ fun RevLensBarChart(
                         cornerRadius = CornerRadius(6.dp.toPx(), 6.dp.toPx())
                     )
                 }
-                
+
                 // X-Axis Labels
-                val paint = android.graphics.Paint().apply {
-                    color = android.graphics.Color.parseColor("#888888")
-                    textSize = 32f
-                    textAlign = android.graphics.Paint.Align.CENTER
-                }
-                
+                val paint = android.graphics.Paint()
+                    .apply {
+                        color = android.graphics.Color.parseColor("#888888")
+                        textSize = 32f
+                        textAlign = android.graphics.Paint.Align.CENTER
+                    }
+
                 data.forEachIndexed { i, _ ->
                     if (data.size > 12 && i % 2 != 0 && i != data.size - 1) return@forEachIndexed
                     val x = (i * spacing) + (spacing / 2)
@@ -291,7 +294,7 @@ fun Sparkline(
     color: Color = RevLensTheme.colors.brandPrimary
 ) {
     if (data.isEmpty()) return
-    
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -300,22 +303,22 @@ fun Sparkline(
                 val max = data.maxOrNull() ?: 1f
                 val min = data.minOrNull() ?: 0f
                 val range = (max - min).coerceAtLeast(1f)
-                
+
                 val width = size.width
                 val height = size.height
                 val stepX = width / (data.size - 1).coerceAtLeast(1)
-                
+
                 val path = Path()
                 data.forEachIndexed { index, value ->
                     val x = index * stepX
                     val y = height - ((value - min) / range * height)
-                    
+
                     if (index == 0) {
                         path.moveTo(x, y)
                     } else {
                         path.lineTo(x, y)
                     }
-                    
+
                     if (index == data.size - 1) {
                         drawCircle(
                             color = color,
@@ -324,7 +327,7 @@ fun Sparkline(
                         )
                     }
                 }
-                
+
                 // Fill area under sparkline
                 val fillPath = Path().apply {
                     addPath(path)
@@ -371,7 +374,11 @@ fun ProgressRing(
             .padding(8.dp),
         contentAlignment = Alignment.Center
     ) {
-        Canvas(modifier = Modifier.fillMaxWidth().height(160.dp)) {
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(160.dp)
+        ) {
             drawArc(
                 color = color.copy(alpha = 0.1f),
                 startAngle = 135f,
@@ -387,7 +394,7 @@ fun ProgressRing(
                 style = Stroke(width = 14.dp.toPx(), cap = StrokeCap.Round)
             )
         }
-        
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

@@ -36,11 +36,11 @@ import com.example.revlens.domain.calc.PricingSimulationEngine
 import com.example.revlens.model.BusinessProfile
 import com.example.revlens.model.Scenario
 import com.example.revlens.presentation.MainViewModel
+import com.example.revlens.ui.components.ChartLegend
 import com.example.revlens.ui.components.ChoiceChip
+import com.example.revlens.ui.components.RevLensLineChart
 import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SectionCard
-import com.example.revlens.ui.components.RevLensLineChart
-import com.example.revlens.ui.components.ChartLegend
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
 import java.math.BigDecimal
@@ -139,18 +139,20 @@ fun ScenarioComparisonScreen(
                     RevLensTheme.colors.brandSecondary,
                     RevLensTheme.colors.brandTertiary
                 )
-                
+
                 val chartDataList = mutableListOf<List<Float>>()
                 val legendItems = mutableListOf<Pair<String, androidx.compose.ui.graphics.Color>>()
-                
+
                 val selectedScenarios = scenarios.filter { selectedScenarioIds.contains(it.id) }
                 selectedScenarios.forEachIndexed { index, scenario ->
                     val color = availableColors[scenarios.indexOf(scenario) % availableColors.size]
-                    val result = PricingSimulationEngine.simulate(scenario.baselineProfile, scenario.assumptions)
-                    
+                    val result = PricingSimulationEngine.simulate(
+                        scenario.baselineProfile, scenario.assumptions
+                    )
+
                     val mrr = result.currentMrr.toFloat()
                     val growth = result.monthlyGrowthRate.toFloat()
-                    
+
                     val projection = mutableListOf<Float>()
                     var current = mrr
                     for (i in 0..11) {

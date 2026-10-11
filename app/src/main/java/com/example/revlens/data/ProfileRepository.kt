@@ -34,17 +34,17 @@ class ProfileRepository @Inject constructor(
         )
     )
 
-    val profileFlow: Flow<BusinessProfile> = dataStore.data.map { preferences ->
+    val profileFlow: Flow<BusinessProfile?> = dataStore.data.map { preferences ->
         val profileJson = preferences[PROFILE_KEY]
         if (profileJson != null) {
             try {
                 json.decodeFromString(profileJson)
             } catch (e: Exception) {
                 e.printStackTrace()
-                defaultProfile
+                null
             }
         } else {
-            defaultProfile
+            null
         }
     }
 

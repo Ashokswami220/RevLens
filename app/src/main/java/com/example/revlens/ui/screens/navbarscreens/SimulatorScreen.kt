@@ -20,10 +20,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.revlens.presentation.MainViewModel
 import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SegmentedTabs
-import com.example.revlens.ui.theme.RevLensTheme
-import kotlinx.coroutines.launch
 import com.example.revlens.ui.screens.detailscreens.BreakEvenScreen
 import com.example.revlens.ui.screens.detailscreens.WhatIfScreen
+import com.example.revlens.ui.theme.RevLensTheme
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -1,23 +1,35 @@
 package com.example.revlens.ui.screens.navbarscreens
 
-import androidx.compose.ui.Alignment
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -26,29 +38,17 @@ import com.example.revlens.domain.calc.LtvCalculator
 import com.example.revlens.model.BusinessProfile
 import com.example.revlens.presentation.MainViewModel
 import com.example.revlens.ui.components.PrimaryButton
+import com.example.revlens.ui.components.ProgressRing
+import com.example.revlens.ui.components.RevLensLineChart
 import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SectionCard
+import com.example.revlens.ui.components.Sparkline
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
 import java.text.NumberFormat
 import java.util.Currency
 import java.util.Locale
-import com.example.revlens.ui.components.RevLensLineChart
-import com.example.revlens.ui.components.Sparkline
-import com.example.revlens.ui.components.ProgressRing
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.background
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
+
 @Composable
 fun DashboardScreen(
     viewModel: MainViewModel = hiltViewModel(),
@@ -94,12 +94,33 @@ fun DashboardScreen(
                     onNavigateToBreakEven = onNavigateToBreakEven
                 )
             } ?: run {
-                // Loading or null state
-                Text(
-                    text = "Loading profile...",
-                    color = RevLensTheme.colors.textPrimary,
-                    style = RevLensTypography.bodyLarge
-                )
+                // Empty state
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 40.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Welcome to RevLens!",
+                        style = RevLensTypography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = RevLensTheme.colors.textPrimary
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Add your business metrics and pricing plans to get started.",
+                        style = RevLensTypography.bodyLarge,
+                        color = RevLensTheme.colors.textSecondary,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(32.dp))
+                    PrimaryButton(
+                        text = "Add Data",
+                        onClick = onNavigateToInput,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }
@@ -119,10 +140,14 @@ private fun DashboardContent(
     ) {
         OutlinedButton(
             onClick = onNavigateToInput,
-            modifier = Modifier.fillMaxWidth().height(56.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
             shape = CircleShape,
             border = BorderStroke(1.dp, RevLensTheme.colors.borderDefault),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = RevLensTheme.colors.textPrimary)
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = RevLensTheme.colors.textPrimary
+            )
         ) {
             Icon(
                 imageVector = Icons.Filled.Edit,
@@ -132,39 +157,49 @@ private fun DashboardContent(
             Spacer(modifier = Modifier.width(8.dp))
             Text("Edit Data", style = RevLensTypography.labelLarge, fontWeight = FontWeight.Bold)
         }
-        
+
         Spacer(modifier = Modifier.height(12.dp))
-        
+
         Text(
             text = "Quick Actions",
             style = RevLensTypography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = RevLensTheme.colors.textSecondary
         )
-        
+
         Spacer(modifier = Modifier.height(12.dp))
-        
+
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             OutlinedButton(
                 onClick = onNavigateToWhatIf,
-                modifier = Modifier.weight(1f).height(56.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
                 border = BorderStroke(1.dp, RevLensTheme.colors.borderDefault),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = RevLensTheme.colors.textPrimary)
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = RevLensTheme.colors.textPrimary
+                )
             ) {
                 Text("What-If", style = RevLensTypography.labelLarge, fontWeight = FontWeight.Bold)
             }
             OutlinedButton(
                 onClick = onNavigateToBreakEven,
-                modifier = Modifier.weight(1f).height(56.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
                 border = BorderStroke(1.dp, RevLensTheme.colors.borderDefault),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = RevLensTheme.colors.textPrimary)
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = RevLensTheme.colors.textPrimary
+                )
             ) {
-                Text("Break-Even", style = RevLensTypography.labelLarge, fontWeight = FontWeight.Bold)
+                Text(
+                    "Break-Even", style = RevLensTypography.labelLarge, fontWeight = FontWeight.Bold
+                )
             }
         }
     }
@@ -182,9 +217,10 @@ private fun DashboardContent(
     // MRR Trend Chart
     SectionCard(title = "MRR Trend (Last 6 Months)") {
         val mrrFloat = mrr.toFloat()
+        val gRate = profile.monthlyGrowthRate.toFloat()
         val trendData = listOf(
-            mrrFloat * 0.7f, mrrFloat * 0.75f, mrrFloat * 0.8f, 
-            mrrFloat * 0.9f, mrrFloat * 0.95f, mrrFloat
+            mrrFloat * (1f - gRate * 5), mrrFloat * (1f - gRate * 4), mrrFloat * (1f - gRate * 3),
+            mrrFloat * (1f - gRate * 2), mrrFloat * (1f - gRate * 1), mrrFloat
         )
         RevLensLineChart(
             data = listOf(trendData),
@@ -197,23 +233,27 @@ private fun DashboardContent(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        val mrrGrowth = mrr.multiply(java.math.BigDecimal(profile.monthlyGrowthRate))
         KpiCard(
             title = "MRR",
             value = currencyFormatter.format(mrr),
-            subValue = "+12% net",
-            badgeText = "+69% Total",
+            subValue = "+${currencyFormatter.format(mrrGrowth)} net",
+            badgeText = "+${(profile.monthlyGrowthRate * 100).toInt()}% Total",
             chartColor = RevLensTheme.colors.brandPrimary,
-            chartData = listOf(mrr.toFloat() * 0.8f, mrr.toFloat() * 0.9f, mrr.toFloat()),
+            chartData = listOf(
+                mrr.toFloat() * (1f - profile.monthlyGrowthRate.toFloat() * 2),
+                mrr.toFloat() * (1f - profile.monthlyGrowthRate.toFloat()), mrr.toFloat()
+            ),
             modifier = Modifier.weight(1f)
         )
 
         KpiCard(
             title = "ARPU",
             value = currencyFormatter.format(arpu),
-            subValue = "+$5 net",
-            badgeText = "Stable",
+            subValue = if (profile.monthlyGrowthRate > 0) "Growing" else "Stable",
+            badgeText = "Avg/User",
             chartColor = RevLensTheme.colors.brandSecondary,
-            chartData = listOf(arpu.toFloat() * 0.95f, arpu.toFloat() * 0.98f, arpu.toFloat()),
+            chartData = listOf(arpu.toFloat() * 0.98f, arpu.toFloat() * 0.99f, arpu.toFloat()),
             modifier = Modifier.weight(1f)
         )
     }
@@ -222,11 +262,12 @@ private fun DashboardContent(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        val ltvGrowth = "+${(profile.monthlyGrowthRate * 50).toInt()}%"
         KpiCard(
             title = "LTV",
             value = currencyFormatter.format(ltv),
-            subValue = "+$150 net",
-            badgeText = "+5.4%",
+            subValue = "Lifetime",
+            badgeText = ltvGrowth,
             chartColor = RevLensTheme.colors.success,
             chartData = listOf(ltv.toFloat() * 0.9f, ltv.toFloat() * 0.95f, ltv.toFloat()),
             modifier = Modifier.weight(1f)
@@ -234,11 +275,18 @@ private fun DashboardContent(
 
         KpiCard(
             title = "CAC Payback",
-            value = if (cacPayback != null) "${String.format(Locale.US, "%.1f", cacPayback)} mo" else "Never",
+            value = if (cacPayback != null) "${
+                String.format(
+                    Locale.US, "%.1f", cacPayback
+                )
+            } mo" else "Never",
             subValue = "-1.2 mo",
             badgeText = "Optimal",
             chartColor = if (cacPayback != null && cacPayback < 12.0) RevLensTheme.colors.success else RevLensTheme.colors.error,
-            chartData = listOf((cacPayback?.toFloat() ?: 0f) * 1.2f, (cacPayback?.toFloat() ?: 0f) * 1.1f, (cacPayback?.toFloat() ?: 0f)),
+            chartData = listOf(
+                (cacPayback?.toFloat() ?: 0f) * 1.2f, (cacPayback?.toFloat() ?: 0f) * 1.1f,
+                (cacPayback?.toFloat() ?: 0f)
+            ),
             modifier = Modifier.weight(1f)
         )
     }
@@ -258,6 +306,7 @@ private fun DashboardContent(
     }
 
 }
+
 @Composable
 private fun KpiCard(
     title: String,
@@ -300,9 +349,9 @@ private fun KpiCard(
                 )
             }
         }
-        
+
         Spacer(modifier = Modifier.height(12.dp))
-        
+
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
                 text = value,
@@ -318,9 +367,9 @@ private fun KpiCard(
                 modifier = Modifier.padding(bottom = 3.dp)
             )
         }
-        
+
         Spacer(modifier = Modifier.height(12.dp))
-        
+
         Sparkline(
             data = chartData,
             color = chartColor

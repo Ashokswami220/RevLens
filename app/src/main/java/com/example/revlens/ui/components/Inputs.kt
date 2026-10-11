@@ -21,7 +21,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -75,7 +74,7 @@ fun RevLensTextField(
                 unfocusedContainerColor = RevLensTheme.colors.surfaceElevated,
                 focusedContainerColor = RevLensTheme.colors.surfaceElevated,
                 focusedBorderColor = RevLensTheme.colors.primaryAction,
-                unfocusedBorderColor = Color.Transparent,
+                unfocusedBorderColor = RevLensTheme.colors.borderDefault,
                 errorBorderColor = RevLensTheme.colors.error,
                 focusedTextColor = RevLensTheme.colors.textPrimary,
                 unfocusedTextColor = RevLensTheme.colors.textPrimary,

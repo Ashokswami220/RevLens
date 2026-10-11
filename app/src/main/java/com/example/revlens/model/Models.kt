@@ -47,7 +47,9 @@ data class BusinessProfile(
     val fixedCosts: BigDecimal,
     @Serializable(with = BigDecimalSerializer::class)
     val variableCostPerCustomer: BigDecimal,
-    val plans: List<Plan>
+    val plans: List<Plan>,
+    @Serializable(with = BigDecimalSerializer::class)
+    val mrrGoal: BigDecimal? = null
 ) {
     val totalCustomers: Int
         get() = plans.sumOf { it.customerCount }
