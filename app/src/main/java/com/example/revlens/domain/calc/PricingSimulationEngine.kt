@@ -49,7 +49,8 @@ object PricingSimulationEngine {
             cac = newCac,
             fixedCosts = newFixedCosts,
             variableCostPerCustomer = baseline.variableCostPerCustomer,
-            plans = newPlans
+            plans = newPlans,
+            currencyCode = baseline.currencyCode
         )
     }
 }

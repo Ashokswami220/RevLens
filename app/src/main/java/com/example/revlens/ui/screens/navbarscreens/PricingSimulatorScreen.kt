@@ -62,12 +62,8 @@ fun PricingSimulatorScreen(viewModel: MainViewModel) {
     var showSaveDialog by remember { mutableStateOf(false) }
     var scenarioName by remember { mutableStateOf("") }
 
-    val currencyFormatter = remember {
-        NumberFormat.getCurrencyInstance(Locale.US)
-            .apply {
-                currency = Currency.getInstance("USD")
-                maximumFractionDigits = 0
-            }
+    val currencyFormatter = remember(profile?.currencyCode) {
+        com.example.revlens.utils.CurrencyUtils.getFormatter(profile?.currencyCode)
     }
 
     // Assumptions object for simulation

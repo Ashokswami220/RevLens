@@ -28,6 +28,7 @@ class BusinessSetupViewModel @Inject constructor() : ViewModel() {
                 cacStr = profile.cac.toPlainString(),
                 fixedCostsStr = profile.fixedCosts.toPlainString(),
                 varCostsStr = profile.variableCostPerCustomer.toPlainString(),
+                currencyCode = profile.currencyCode,
                 editablePlans = profile.plans.map { plan ->
                     EditablePlan(
                         plan.id, plan.name, plan.price.toPlainString(),
@@ -38,6 +39,7 @@ class BusinessSetupViewModel @Inject constructor() : ViewModel() {
         }
     }
 
+    fun updateCurrencyCode(value: String) = _uiState.update { it.copy(currencyCode = value) }
     fun updateChurnRate(value: String) = _uiState.update { it.copy(churnRateStr = value) }
     fun updateGrowthRate(value: String) = _uiState.update { it.copy(growthRateStr = value) }
     fun updateCac(value: String) = _uiState.update { it.copy(cacStr = value) }
@@ -66,6 +68,7 @@ class BusinessSetupViewModel @Inject constructor() : ViewModel() {
 }
 
 data class BusinessSetupUiState(
+    val currencyCode: String = "USD",
     val churnRateStr: String = "",
     val growthRateStr: String = "",
     val cacStr: String = "",

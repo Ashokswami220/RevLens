@@ -12,7 +12,7 @@ object DashboardRoute
 object InputDataRoute
 
 @Serializable
-object PricingSimulatorRoute
+data class PricingSimulatorRoute(val initialTab: Int = 0)
 
 @Serializable
 object ForecastRoute

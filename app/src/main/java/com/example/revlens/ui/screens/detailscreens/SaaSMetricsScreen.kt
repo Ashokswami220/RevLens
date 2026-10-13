@@ -34,16 +34,13 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SaaSMetricsScreen(
-    viewModel: MainViewModel = hiltViewModel()
+    viewModel: MainViewModel = hiltViewModel(),
+    onNavigateBack: () -> Unit = {}
 ) {
     val profile by viewModel.profile.collectAsState()
 
-    val currencyFormatter = remember {
-        NumberFormat.getCurrencyInstance(Locale.US)
-            .apply {
-                currency = Currency.getInstance("USD")
-                maximumFractionDigits = 0
-            }
+    val currencyFormatter = remember(profile?.currencyCode) {
+        com.example.revlens.utils.CurrencyUtils.getFormatter(profile?.currencyCode)
     }
 
     val percentFormatter = remember {
@@ -55,7 +52,10 @@ fun SaaSMetricsScreen(
 
     Scaffold(
         topBar = {
-            RevLensTopAppBar(title = "SaaS Metrics Glossary")
+            RevLensTopAppBar(
+                title = "SaaS Metrics Glossary",
+                onBackClick = onNavigateBack
+            )
         },
         containerColor = RevLensTheme.colors.background
     ) { paddingValues ->

@@ -22,6 +22,10 @@ import androidx.compose.ui.unit.dp
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
+
 @Composable
 fun SegmentedTabs(
     options: List<String>,
@@ -32,27 +36,28 @@ fun SegmentedTabs(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(44.dp)
-            .clip(CircleShape)
-            .background(RevLensTheme.colors.surfaceElevated)
+            .height(46.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFF141923))
+            .border(1.dp, Color(0xFF222B3A), RoundedCornerShape(12.dp))
             .padding(4.dp)
     ) {
         options.forEachIndexed { index, option ->
             val isSelected = index == selectedIndex
-            val backgroundColor = if (isSelected) {
-                // Should ideally be surface in light mode, borderDefault in dark mode
-                // Using surface as a fallback for now based on theme
-                RevLensTheme.colors.surface
+            val backgroundColor = if (isSelected) Color(0xFF252F42) else Color.Transparent
+            val borderModifier = if (isSelected) {
+                Modifier.border(1.dp, Color(0xFF3B4861), RoundedCornerShape(8.dp))
             } else {
-                Color.Transparent
+                Modifier
             }
 
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .clip(CircleShape)
+                    .clip(RoundedCornerShape(8.dp))
                     .background(backgroundColor)
+                    .then(borderModifier)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
@@ -64,7 +69,7 @@ fun SegmentedTabs(
                     text = option,
                     style = RevLensTypography.labelLarge,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                    color = RevLensTheme.colors.textPrimary
+                    color = if (isSelected) RevLensTheme.colors.brandPrimary else Color(0xFF94A3B8)
                 )
             }
         }

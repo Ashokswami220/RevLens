@@ -28,11 +28,21 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SimulatorScreen(
+    initialTab: Int = 0,
     viewModel: MainViewModel = hiltViewModel(),
     onNavigateToMetrics: () -> Unit
 ) {
-    val pagerState = rememberPagerState(pageCount = { 3 })
+    val pagerState = rememberPagerState(
+        initialPage = initialTab.coerceIn(0, 2),
+        pageCount = { 3 }
+    )
     val coroutineScope = rememberCoroutineScope()
+
+    androidx.compose.runtime.LaunchedEffect(initialTab) {
+        if (pagerState.currentPage != initialTab) {
+            pagerState.scrollToPage(initialTab.coerceIn(0, 2))
+        }
+    }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),

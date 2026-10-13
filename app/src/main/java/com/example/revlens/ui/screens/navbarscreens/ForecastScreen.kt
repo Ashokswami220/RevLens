@@ -52,12 +52,8 @@ fun ForecastScreen(
 
     var selectedMonths by remember { mutableStateOf(12) }
 
-    val currencyFormatter = remember {
-        NumberFormat.getCurrencyInstance(Locale.US)
-            .apply {
-                currency = Currency.getInstance("USD")
-                maximumFractionDigits = 0
-            }
+    val currencyFormatter = remember(profile?.currencyCode) {
+        com.example.revlens.utils.CurrencyUtils.getFormatter(profile?.currencyCode)
     }
 
     val forecastData = remember(profile, selectedMonths) {

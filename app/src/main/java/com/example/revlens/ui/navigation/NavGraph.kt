@@ -1,5 +1,11 @@
 package com.example.revlens.ui.navigation
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -17,6 +23,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.example.revlens.ui.components.BottomNavItem
 import com.example.revlens.ui.components.RevLensBottomBar
 import com.example.revlens.ui.onboarding.OnboardingScreen
@@ -29,6 +36,9 @@ import com.example.revlens.ui.screens.navbarscreens.ForecastScreen
 import com.example.revlens.ui.screens.navbarscreens.ScenarioBuilderScreen
 import com.example.revlens.ui.screens.navbarscreens.SettingsScreen
 import com.example.revlens.ui.screens.navbarscreens.SimulatorScreen
+
+private const val ANIM_DURATION = 350
+private val ANIM_EASING = FastOutSlowInEasing
 
 @Composable
 fun RevLensNavGraph(
@@ -55,8 +65,17 @@ fun RevLensNavGraph(
         BottomNavItem("Profile", Icons.Filled.Person, SettingsRoute::class.qualifiedName ?: "")
     )
 
-    val showBottomBar = currentDestination?.route != OnboardingRoute::class.qualifiedName &&
-            currentDestination?.route != InputDataRoute::class.qualifiedName
+    val mainTabRoutes = setOf(
+        DashboardRoute::class.qualifiedName,
+        PricingSimulatorRoute::class.qualifiedName,
+        ScenarioBuilderRoute::class.qualifiedName,
+        ForecastRoute::class.qualifiedName,
+        SettingsRoute::class.qualifiedName
+    )
+
+    val showBottomBar = mainTabRoutes.any { prefix ->
+        prefix != null && currentDestination?.route?.startsWith(prefix) == true
+    }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -66,16 +85,19 @@ fun RevLensNavGraph(
                     items = bottomNavItems,
                     currentRoute = currentDestination?.route,
                     onNavigate = { route ->
-                        navController.navigate(route) {
-                            // Pop up to the start destination of the graph to
-                            // avoid building up a large stack of destinations
+                        val target: Any = when {
+                            route.contains("DashboardRoute") -> DashboardRoute
+                            route.contains("PricingSimulatorRoute") -> PricingSimulatorRoute(0)
+                            route.contains("ScenarioBuilderRoute") -> ScenarioBuilderRoute
+                            route.contains("ForecastRoute") -> ForecastRoute
+                            route.contains("SettingsRoute") -> SettingsRoute
+                            else -> DashboardRoute
+                        }
+                        navController.navigate(target) {
                             popUpTo(navController.graph.startDestinationId) {
                                 saveState = true
                             }
-                            // Avoid multiple copies of the same destination when
-                            // reselecting the same item
                             launchSingleTop = true
-                            // Restore state when reselecting a previously selected item
                             restoreState = true
                         }
                     }
@@ -86,7 +108,49 @@ fun RevLensNavGraph(
         NavHost(
             navController = navController,
             startDestination = OnboardingRoute,
-            modifier = modifier.padding(innerPadding)
+            modifier = modifier.padding(innerPadding),
+            enterTransition = {
+                val isTargetMainTab = mainTabRoutes.any { it != null && targetState.destination.route?.startsWith(it) == true }
+                val isInitialMainTab = mainTabRoutes.any { it != null && initialState.destination.route?.startsWith(it) == true }
+                if (isTargetMainTab && isInitialMainTab) {
+                    fadeIn(animationSpec = tween(ANIM_DURATION))
+                } else {
+                    slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = tween(ANIM_DURATION, easing = ANIM_EASING)
+                    )
+                }
+            },
+            exitTransition = {
+                val isTargetMainTab = mainTabRoutes.any { it != null && targetState.destination.route?.startsWith(it) == true }
+                val isInitialMainTab = mainTabRoutes.any { it != null && initialState.destination.route?.startsWith(it) == true }
+                if (isTargetMainTab && isInitialMainTab) {
+                    fadeOut(animationSpec = tween(ANIM_DURATION))
+                } else {
+                    slideOutHorizontally(
+                        targetOffsetX = { -it / 3 },
+                        animationSpec = tween(ANIM_DURATION, easing = ANIM_EASING)
+                    )
+                }
+            },
+            popEnterTransition = {
+                val isTargetMainTab = mainTabRoutes.any { it != null && targetState.destination.route?.startsWith(it) == true }
+                val isInitialMainTab = mainTabRoutes.any { it != null && initialState.destination.route?.startsWith(it) == true }
+                if (isTargetMainTab && isInitialMainTab) {
+                    fadeIn(animationSpec = tween(ANIM_DURATION))
+                } else {
+                    slideInHorizontally(
+                        initialOffsetX = { -it / 3 },
+                        animationSpec = tween(ANIM_DURATION, easing = ANIM_EASING)
+                    )
+                }
+            },
+            popExitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { it },
+                    animationSpec = tween(ANIM_DURATION, easing = ANIM_EASING)
+                )
+            }
         ) {
             composable<OnboardingRoute> {
                 OnboardingScreen(
@@ -103,11 +167,14 @@ fun RevLensNavGraph(
                     onNavigateToInput = {
                         navController.navigate(InputDataRoute)
                     },
+                    onNavigateToPricing = {
+                        navController.navigate(PricingSimulatorRoute(initialTab = 0))
+                    },
                     onNavigateToWhatIf = {
-                        navController.navigate(PricingSimulatorRoute)
+                        navController.navigate(PricingSimulatorRoute(initialTab = 1))
                     },
                     onNavigateToBreakEven = {
-                        navController.navigate(PricingSimulatorRoute)
+                        navController.navigate(PricingSimulatorRoute(initialTab = 2))
                     },
                     onNavigateToSettings = {
                         navController.navigate(SettingsRoute)
@@ -127,15 +194,17 @@ fun RevLensNavGraph(
                 )
             }
 
-            composable<PricingSimulatorRoute> {
+            composable<PricingSimulatorRoute> { backStackEntry ->
+                val route = backStackEntry.toRoute<PricingSimulatorRoute>()
                 SimulatorScreen(
+                    initialTab = route.initialTab,
                     onNavigateToMetrics = { navController.navigate(MetricsRoute) }
                 )
             }
 
             composable<ScenarioBuilderRoute> {
                 ScenarioBuilderScreen(
-                    onNavigateToCreate = { navController.navigate(PricingSimulatorRoute) },
+                    onNavigateToCreate = { navController.navigate(PricingSimulatorRoute(initialTab = 0)) },
                     onNavigateToCompare = { navController.navigate(ScenarioComparisonRoute) },
                     onNavigateToMetrics = { navController.navigate(MetricsRoute) }
                 )
@@ -161,7 +230,9 @@ fun RevLensNavGraph(
             }
 
             composable<MetricsRoute> {
-                SaaSMetricsScreen()
+                SaaSMetricsScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
             }
 
             composable<SettingsRoute> {

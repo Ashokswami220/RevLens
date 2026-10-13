@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -40,11 +41,10 @@ fun ScenarioBuilderScreen(
 ) {
     val scenarios by viewModel.scenarios.collectAsState()
 
-    val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.US)
-        .apply {
-            currency = Currency.getInstance("USD")
-            maximumFractionDigits = 0
-        }
+    val profile by viewModel.profile.collectAsState()
+    val currencyFormatter = remember(profile?.currencyCode) {
+        com.example.revlens.utils.CurrencyUtils.getFormatter(profile?.currencyCode)
+    }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),

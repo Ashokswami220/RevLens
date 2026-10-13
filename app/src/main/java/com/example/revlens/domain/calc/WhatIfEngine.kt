@@ -14,11 +14,7 @@ object WhatIfEngine {
      * Compares a baseline profile with a projected profile and returns a list of MetricResults.
      */
     fun compare(baseline: BusinessProfile, projected: BusinessProfile): List<MetricResult> {
-        val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.US)
-            .apply {
-                currency = Currency.getInstance("USD")
-                maximumFractionDigits = 0
-            }
+        val currencyFormatter = com.example.revlens.utils.CurrencyUtils.getFormatter(baseline.currencyCode)
         val percentFormatter = NumberFormat.getPercentInstance(Locale.US)
             .apply {
                 maximumFractionDigits = 1

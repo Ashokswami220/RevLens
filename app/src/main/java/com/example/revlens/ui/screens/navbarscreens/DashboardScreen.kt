@@ -23,7 +23,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.outlined.GroupAdd
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -80,6 +79,7 @@ private val TextSubtle = Color(0xFF64748B)
 fun DashboardScreen(
     viewModel: MainViewModel = hiltViewModel(),
     onNavigateToInput: () -> Unit,
+    onNavigateToPricing: () -> Unit = {},
     onNavigateToWhatIf: () -> Unit,
     onNavigateToBreakEven: () -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -138,12 +138,13 @@ fun DashboardScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             profile?.let { currentProfile ->
                 DashboardContent(
                     profile = currentProfile,
+                    onNavigateToPricing = onNavigateToPricing,
                     onNavigateToWhatIf = onNavigateToWhatIf,
                     onNavigateToBreakEven = onNavigateToBreakEven,
                     onNavigateToGoalPlanner = onNavigateToGoalPlanner
@@ -184,22 +185,34 @@ fun DashboardScreen(
 @Composable
 private fun DashboardContent(
     profile: BusinessProfile,
+    onNavigateToPricing: () -> Unit,
     onNavigateToWhatIf: () -> Unit,
     onNavigateToBreakEven: () -> Unit,
     onNavigateToGoalPlanner: () -> Unit
 ) {
-    val currencyFormatter = remember {
-        NumberFormat.getCurrencyInstance(Locale.US).apply {
-            currency = Currency.getInstance("USD")
-            maximumFractionDigits = 0
-        }
+    val currencyFormatter = remember(profile.currencyCode) {
+        com.example.revlens.utils.CurrencyUtils.getFormatter(profile.currencyCode)
     }
 
-    // 1. Top Compact Simulator & Break-Even Action Buttons
+    // 1. Top Compact Simulator Action Buttons (Pricing, What-If, Break-Even)
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
+        Button(
+            onClick = onNavigateToPricing,
+            modifier = Modifier
+                .weight(1f)
+                .height(38.dp),
+            shape = RoundedCornerShape(10.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = CardBg,
+                contentColor = TextWhite
+            )
+        ) {
+            Text("Pricing", color = TextWhite, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+        }
+
         Button(
             onClick = onNavigateToWhatIf,
             modifier = Modifier
@@ -256,7 +269,7 @@ private fun DashboardContent(
 
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         MetricKpiCard(
             title = "CUSTOMERS",
@@ -281,7 +294,7 @@ private fun DashboardContent(
 
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         MetricKpiCard(
             title = "USER CHURN",
@@ -304,20 +317,17 @@ private fun DashboardContent(
         )
     }
 
-    // 5. MRR Trajectory Chart Card (Borderless, Rounded 16.dp)
+    // 5. MRR Forward Projection Chart Card (Borderless, Rounded 16.dp)
     MrrTrajectoryChartCard(profile = profile, currencyFormatter = currencyFormatter)
 
-    // 6. Customer Count Trend Card (Borderless, Rounded 16.dp)
-    CustomerCountTrendCard(profile = profile)
-
-    // 7. Annual MRR Goal Tracker (Borderless, Rounded 16.dp)
+    // 6. Annual MRR Goal Tracker (Borderless, Rounded 16.dp)
     GoalTrackerCard(
         profile = profile,
         currencyFormatter = currencyFormatter,
         onNavigateToGoalPlanner = onNavigateToGoalPlanner
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(20.dp))
 }
 
 @Composable
@@ -482,33 +492,33 @@ private fun GrowthOptimizationCard(
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.weight(1f)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(30.dp)
-                        .background(CyanAccent.copy(alpha = 0.15f), RoundedCornerShape(6.dp)),
+                        .size(36.dp)
+                        .background(CyanAccent.copy(alpha = 0.15f), RoundedCornerShape(8.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Lightbulb,
                         contentDescription = null,
                         tint = CyanAccent,
-                        modifier = Modifier.size(17.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                 }
-                Column {
+                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Text(
                         text = "Growth Optimization",
                         color = CyanAccent,
-                        fontSize = 12.sp,
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
@@ -522,10 +532,10 @@ private fun GrowthOptimizationCard(
 
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
+                    .clip(RoundedCornerShape(8.dp))
                     .background(Color(0xFF222B3A))
                     .clickable(onClick = onSimulate)
-                    .padding(horizontal = 8.dp, vertical = 5.dp)
+                    .padding(horizontal = 10.dp, vertical = 7.dp)
             ) {
                 Text(
                     text = "Simulate ↗",
@@ -658,26 +668,22 @@ private fun MrrTrajectoryChartCard(
 ) {
     val mrr = profile.currentMrr
     val mrrFloat = mrr.toFloat()
-    val gRate = profile.monthlyGrowthRate.toFloat()
+    val gRate = profile.monthlyGrowthRate.coerceAtLeast(0.005).toFloat()
 
     val trendData = remember(mrrFloat, gRate) {
-        (5 downTo 0).map { monthsAgo ->
-            if (monthsAgo == 0) {
-                mrrFloat
-            } else {
-                (mrrFloat / Math.pow(1.0 + gRate.toDouble(), monthsAgo.toDouble())).toFloat()
-            }
+        (0..5).map { monthAhead ->
+            (mrrFloat * Math.pow(1.0 + gRate.toDouble(), monthAhead.toDouble())).toFloat()
         }
     }
+    val projected6M = trendData.last()
 
-    val past6Months = remember {
+    val forward6Months = remember {
         val cal = Calendar.getInstance()
         val fmt = SimpleDateFormat("MMM", Locale.US)
-        cal.add(Calendar.MONTH, -5)
-        (0 until 6).mapIndexed { idx, _ ->
+        (0 until 6).map { idx ->
             val name = fmt.format(cal.time)
             cal.add(Calendar.MONTH, 1)
-            if (idx == 5) "$name (Now)" else name
+            if (idx == 0) "$name (Now)" else name
         }
     }
 
@@ -697,13 +703,13 @@ private fun MrrTrajectoryChartCard(
             ) {
                 Column {
                     Text(
-                        text = "MRR Trajectory",
+                        text = "MRR Forward Projection",
                         color = TextWhite,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Trailed 6-Month Realized Growth",
+                        text = "6-Month Forecast (+${String.format(Locale.US, "%.1f", profile.monthlyGrowthRate * 100)}%/mo)",
                         color = TextMuted,
                         fontSize = 11.sp
                     )
@@ -714,7 +720,7 @@ private fun MrrTrajectoryChartCard(
                         .padding(horizontal = 7.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = "• ${currencyFormatter.format(trendData.first())} → ${currencyFormatter.format(mrr)}",
+                        text = "• Now: ${currencyFormatter.format(mrr)} → 6M: ${currencyFormatter.format(projected6M)}",
                         color = CyanAccent,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold
@@ -777,8 +783,8 @@ private fun MrrTrajectoryChartCard(
                     // Key milestone dots
                     val dots = listOf(
                         Offset(w * 0.05f, h * 0.85f),
-                        Offset(w * 0.45f, h * 0.65f),
-                        Offset(w * 0.75f, h * 0.38f),
+                        Offset(w * 0.35f, h * 0.72f),
+                        Offset(w * 0.65f, h * 0.45f),
                         Offset(w * 0.95f, h * 0.20f)
                     )
                     dots.forEach { pt ->
@@ -796,7 +802,7 @@ private fun MrrTrajectoryChartCard(
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Text(
-                        text = "Today: ${currencyFormatter.format(mrr)}",
+                        text = "6M Target: ${currencyFormatter.format(projected6M)}",
                         color = TextWhite,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold
@@ -809,7 +815,7 @@ private fun MrrTrajectoryChartCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                past6Months.forEach { m ->
+                forward6Months.forEach { m ->
                     val isCurrent = m.contains("(Now)")
                     Text(
                         text = m,
@@ -823,95 +829,6 @@ private fun MrrTrajectoryChartCard(
     }
 }
 
-@Composable
-private fun CustomerCountTrendCard(profile: BusinessProfile) {
-    val total = profile.totalCustomers.coerceAtLeast(1)
-    val gRate = profile.monthlyGrowthRate.coerceAtLeast(0.01)
-    val subsM1 = (total / (1.0 + gRate)).toInt().coerceAtLeast(1)
-    val subsM0 = (total / Math.pow(1.0 + gRate, 2.0)).toInt().coerceAtLeast(1)
-
-    Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = CardBg,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.GroupAdd,
-                        contentDescription = null,
-                        tint = EmeraldAccent,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Text(
-                        text = "Customer Count Trend",
-                        color = TextWhite,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                Text(
-                    text = "+${(profile.monthlyGrowthRate * 100).toInt()}% Trailing",
-                    color = EmeraldAccent,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            Canvas(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(45.dp)
-            ) {
-                val w = size.width
-                val h = size.height
-                val path = Path().apply {
-                    moveTo(0f, h * 0.8f)
-                    cubicTo(w * 0.4f, h * 0.75f, w * 0.7f, h * 0.65f, w, h * 0.15f)
-                }
-                val fillPath = Path().apply {
-                    addPath(path)
-                    lineTo(w, h)
-                    lineTo(0f, h)
-                    close()
-                }
-                drawPath(
-                    path = fillPath,
-                    brush = Brush.verticalGradient(
-                        colors = listOf(EmeraldAccent.copy(alpha = 0.25f), Color.Transparent)
-                    )
-                )
-                drawPath(
-                    path = path,
-                    color = EmeraldAccent,
-                    style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
-                )
-                drawCircle(color = BgDark, radius = 5.dp.toPx(), center = Offset(w, h * 0.15f))
-                drawCircle(color = EmeraldAccent, radius = 3.5.dp.toPx(), center = Offset(w, h * 0.15f))
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(text = "$subsM0 Subs (-2 Mo)", color = TextSubtle, fontSize = 10.sp)
-                Text(text = "$subsM1 Subs (-1 Mo)", color = TextSubtle, fontSize = 10.sp)
-                Text(text = "$total Subs (Now)", color = EmeraldAccent, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-            }
-        }
-    }
-}
 
 @Composable
 private fun GoalTrackerCard(
