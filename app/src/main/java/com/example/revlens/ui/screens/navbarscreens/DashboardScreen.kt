@@ -45,6 +45,7 @@ import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.components.Sparkline
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
+import java.math.BigDecimal
 import java.text.NumberFormat
 import java.util.Currency
 import java.util.Locale
@@ -56,7 +57,8 @@ fun DashboardScreen(
     onNavigateToWhatIf: () -> Unit,
     onNavigateToBreakEven: () -> Unit,
     onNavigateToSettings: () -> Unit,
-    onNavigateToMetrics: () -> Unit
+    onNavigateToMetrics: () -> Unit,
+    onNavigateToGoalPlanner: () -> Unit = {}
 ) {
     val profile by viewModel.profile.collectAsState()
 
@@ -91,7 +93,8 @@ fun DashboardScreen(
                     profile = currentProfile,
                     onNavigateToInput = onNavigateToInput,
                     onNavigateToWhatIf = onNavigateToWhatIf,
-                    onNavigateToBreakEven = onNavigateToBreakEven
+                    onNavigateToBreakEven = onNavigateToBreakEven,
+                    onNavigateToGoalPlanner = onNavigateToGoalPlanner
                 )
             } ?: run {
                 // Empty state
@@ -131,7 +134,8 @@ private fun DashboardContent(
     profile: BusinessProfile,
     onNavigateToInput: () -> Unit,
     onNavigateToWhatIf: () -> Unit,
-    onNavigateToBreakEven: () -> Unit
+    onNavigateToBreakEven: () -> Unit,
+    onNavigateToGoalPlanner: () -> Unit
 ) {
 
     // Quick Actions
@@ -292,16 +296,85 @@ private fun DashboardContent(
     }
 
     // Goal Tracker
+    val targetGoal = profile.mrrGoal
+    val hasGoal = targetGoal != null && targetGoal > BigDecimal.ZERO
+    val rawProgress = if (hasGoal) {
+        (mrr.toDouble() / targetGoal!!.toDouble()).toFloat()
+    } else {
+        0f
+    }
+
     SectionCard(title = "Annual MRR Goal") {
-        Row(
+        Column(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            ProgressRing(
-                progress = 0.65f, // Mock progress
-                goalText = "65% of \$10k goal",
-                color = RevLensTheme.colors.brandSecondary
-            )
+            if (hasGoal) {
+                val percentInt = (rawProgress * 100).toInt()
+                val goalText = "$percentInt% of ${currencyFormatter.format(targetGoal)} goal"
+                val ringColor = when {
+                    rawProgress >= 1f -> RevLensTheme.colors.success
+                    rawProgress >= 0.5f -> RevLensTheme.colors.brandSecondary
+                    else -> RevLensTheme.colors.brandPrimary
+                }
+
+                ProgressRing(
+                    progress = rawProgress.coerceIn(0f, 1f),
+                    goalText = goalText,
+                    color = ringColor
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Current: ${currencyFormatter.format(mrr)}",
+                            style = RevLensTypography.bodyMedium,
+                            color = RevLensTheme.colors.textSecondary
+                        )
+                        Text(
+                            text = "Target: ${currencyFormatter.format(targetGoal)}",
+                            style = RevLensTypography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = RevLensTheme.colors.textPrimary
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = onNavigateToGoalPlanner,
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, RevLensTheme.colors.borderDefault)
+                    ) {
+                        Text("Edit Goal", style = RevLensTypography.labelMedium)
+                    }
+                }
+            } else {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(vertical = 12.dp)
+                ) {
+                    Text(
+                        text = "No MRR goal set yet",
+                        style = RevLensTypography.bodyMedium,
+                        color = RevLensTheme.colors.textSecondary
+                    )
+                    OutlinedButton(
+                        onClick = onNavigateToGoalPlanner,
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, RevLensTheme.colors.brandPrimary)
+                    ) {
+                        Text(
+                            "Set MRR Goal",
+                            style = RevLensTypography.labelMedium,
+                            color = RevLensTheme.colors.brandPrimary
+                        )
+                    }
+                }
+            }
         }
     }
 

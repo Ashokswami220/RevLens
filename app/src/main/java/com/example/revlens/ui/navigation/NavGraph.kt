@@ -114,6 +114,9 @@ fun RevLensNavGraph(
                     },
                     onNavigateToMetrics = {
                         navController.navigate(MetricsRoute)
+                    },
+                    onNavigateToGoalPlanner = {
+                        navController.navigate(GoalPlannerRoute)
                     }
                 )
             }
