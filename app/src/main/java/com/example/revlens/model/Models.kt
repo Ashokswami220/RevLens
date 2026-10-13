@@ -80,7 +80,8 @@ data class Assumptions(
     val cacChange: BigDecimal = BigDecimal.ZERO,
     val growthChangePercent: Double = 0.0,
     @Serializable(with = BigDecimalSerializer::class)
-    val fixedCostChange: BigDecimal = BigDecimal.ZERO
+    val fixedCostChange: BigDecimal = BigDecimal.ZERO,
+    val targetPlanId: String? = null
 )
 
 @Serializable

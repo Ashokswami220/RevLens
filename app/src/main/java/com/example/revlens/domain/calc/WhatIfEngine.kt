@@ -57,8 +57,8 @@ object WhatIfEngine {
         )
 
         // 3. LTV (Lifetime Value)
-        val baseLtv = LtvCalculator.calculateLtv(baseArpu, baseline.monthlyChurnRate)
-        val projLtv = LtvCalculator.calculateLtv(projArpu, projected.monthlyChurnRate)
+        val baseLtv = LtvCalculator.calculateLtv(baseArpu, baseline.monthlyChurnRate, baseline.variableCostPerCustomer)
+        val projLtv = LtvCalculator.calculateLtv(projArpu, projected.monthlyChurnRate, projected.variableCostPerCustomer)
         val ltvDelta = calculatePercentDelta(baseLtv, projLtv)
 
         results.add(
@@ -78,17 +78,39 @@ object WhatIfEngine {
             ((projPayback - basePayback) / basePayback) * 100
         } else null
 
+        val isPaybackPositive = when {
+            projPayback == null -> false // Losing margin / Never recovering CAC is negative
+            basePayback == null -> true  // Recovered from Never to a viable payback period
+            paybackDelta == null -> true
+            else -> paybackDelta <= 0    // Lower or equal payback duration is better
+        }
+
         results.add(
             MetricResult(
                 label = "CAC Payback",
-                value = BigDecimal(projPayback ?: 0.0),
+                value = BigDecimal.valueOf(projPayback ?: 0.0),
                 formattedValue = if (projPayback != null) "${
                     String.format(
                         Locale.US, "%.1f", projPayback
                     )
                 } mo" else "Never",
                 deltaPercent = paybackDelta,
-                isPositive = paybackDelta == null || paybackDelta <= 0 // Lower payback is better
+                isPositive = isPaybackPositive
+            )
+        )
+
+        // 5. 12-Month Projected MRR
+        val base12Mo = ForecastEngine.forecast(baseline, 12).last().mrr
+        val proj12Mo = ForecastEngine.forecast(projected, 12).last().mrr
+        val forecastDelta = calculatePercentDelta(base12Mo, proj12Mo)
+
+        results.add(
+            MetricResult(
+                label = "12-Mo MRR",
+                value = proj12Mo,
+                formattedValue = currencyFormatter.format(proj12Mo),
+                deltaPercent = forecastDelta,
+                isPositive = forecastDelta == null || forecastDelta >= 0
             )
         )
 

@@ -71,11 +71,12 @@ fun PricingSimulatorScreen(viewModel: MainViewModel) {
     }
 
     // Assumptions object for simulation
-    val assumptions by remember {
+    val assumptions by remember(priceChangePercent, churnChangePercent, selectedPlanId) {
         derivedStateOf {
             Assumptions(
                 priceChangePercent = priceChangePercent / 100.0,
-                churnChangePercent = churnChangePercent / 100.0
+                churnChangePercent = churnChangePercent / 100.0,
+                targetPlanId = selectedPlanId
             )
         }
     }
@@ -149,9 +150,11 @@ fun PricingSimulatorScreen(viewModel: MainViewModel) {
             }
 
             // Result Hero Card
-            val projected = PricingSimulationEngine.simulate(profile!!, assumptions)
-            val mrrDelta = if (profile!!.currentMrr > BigDecimal.ZERO) {
-                ((projected.currentMrr - profile!!.currentMrr) / profile!!.currentMrr).toDouble() * 100
+            val projected = PricingSimulationEngine.simulate(profile!!, assumptions, selectedPlanId)
+            val mrrDelta = if (profile!!.currentMrr.compareTo(BigDecimal.ZERO) > 0) {
+                (projected.currentMrr - profile!!.currentMrr)
+                    .divide(profile!!.currentMrr, 4, java.math.RoundingMode.HALF_UP)
+                    .toDouble() * 100
             } else 0.0
 
             Box(
@@ -163,7 +166,7 @@ fun PricingSimulatorScreen(viewModel: MainViewModel) {
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Text(
-                        "New MRR (12 mo)", style = RevLensTypography.bodyLarge,
+                        "New Projected MRR", style = RevLensTypography.bodyLarge,
                         color = RevLensTheme.colors.textSecondary
                     )
 

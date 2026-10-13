@@ -96,9 +96,14 @@ fun BreakEvenScreen(viewModel: MainViewModel) {
                 }
 
                 if (revenueData.isNotEmpty()) {
+                    val customerLabels = remember(maxCustomers) {
+                        (0..10).map { "${(maxCustomers * it / 10f).toInt()}" }
+                    }
+
                     com.example.revlens.ui.components.RevLensLineChart(
                         data = listOf(revenueData, costData),
-                        colors = listOf(RevLensTheme.colors.brandPrimary, RevLensTheme.colors.error)
+                        colors = listOf(RevLensTheme.colors.brandPrimary, RevLensTheme.colors.error),
+                        xLabels = customerLabels
                     )
                     com.example.revlens.ui.components.ChartLegend(
                         items = listOf(

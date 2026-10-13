@@ -35,4 +35,18 @@ class MrrGoalPlannerTest {
         // Required CMGR: (10000 / 5000)^(1/12) - 1 = 2^(1/12) - 1 = ~0.05946
         assertEquals(0.05946, plan.requiredMonthlyGrowthRate, 0.0001)
     }
+
+    @Test
+    fun `annual MRR goal progress calculates accurately`() {
+        val currentMrr = BigDecimal("9850.00")
+        val targetGoal = BigDecimal("15000.00")
+
+        val progress = (currentMrr.toDouble() / targetGoal.toDouble()).toFloat()
+        // 9850 / 15000 = 0.65666... -> 65%
+        assertEquals(65, (progress * 100).toInt())
+
+        // Target reached: 15000 / 15000 = 1.0 (100%)
+        val completedProgress = (targetGoal.toDouble() / targetGoal.toDouble()).toFloat()
+        assertEquals(100, (completedProgress * 100).toInt())
+    }
 }

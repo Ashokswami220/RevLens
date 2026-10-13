@@ -164,10 +164,21 @@ fun ScenarioComparisonScreen(
                 }
 
                 if (chartDataList.isNotEmpty()) {
+                    val projectionMonths = remember {
+                        val cal = java.util.Calendar.getInstance()
+                        val fmt = java.text.SimpleDateFormat("MMM", java.util.Locale.US)
+                        (0 until 12).map {
+                            val name = fmt.format(cal.time)
+                            cal.add(java.util.Calendar.MONTH, 1)
+                            name
+                        }
+                    }
+
                     SectionCard(title = "MRR Projection (12 Months)") {
                         RevLensLineChart(
                             data = chartDataList,
-                            colors = legendItems.map { it.second }
+                            colors = legendItems.map { it.second },
+                            xLabels = projectionMonths
                         )
                         ChartLegend(items = legendItems)
                     }
@@ -246,7 +257,7 @@ private fun ComparisonTable(
                     }
 
                     val arr = result.currentMrr.multiply(BigDecimal(12))
-                    val ltv = LtvCalculator.calculateLtv(result.arpu, result.monthlyChurnRate)
+                    val ltv = LtvCalculator.calculateLtv(result.arpu, result.monthlyChurnRate, result.variableCostPerCustomer)
                     val payback = BreakEvenCalculator.calculateCacPaybackPeriod(result)
 
                     // Values

@@ -215,20 +215,35 @@ private fun DashboardContent(
 
     val mrr = profile.currentMrr
     val arpu = profile.arpu
-    val ltv = LtvCalculator.calculateLtv(arpu, profile.monthlyChurnRate)
+    val ltv = LtvCalculator.calculateLtv(arpu, profile.monthlyChurnRate, profile.variableCostPerCustomer)
     val cacPayback = BreakEvenCalculator.calculateCacPaybackPeriod(profile)
 
     // MRR Trend Chart
+    val past6Months = androidx.compose.runtime.remember {
+        val cal = java.util.Calendar.getInstance()
+        val fmt = java.text.SimpleDateFormat("MMM", java.util.Locale.US)
+        cal.add(java.util.Calendar.MONTH, -5)
+        (0 until 6).map {
+            val name = fmt.format(cal.time)
+            cal.add(java.util.Calendar.MONTH, 1)
+            name
+        }
+    }
+
     SectionCard(title = "MRR Trend (Last 6 Months)") {
         val mrrFloat = mrr.toFloat()
         val gRate = profile.monthlyGrowthRate.toFloat()
-        val trendData = listOf(
-            mrrFloat * (1f - gRate * 5), mrrFloat * (1f - gRate * 4), mrrFloat * (1f - gRate * 3),
-            mrrFloat * (1f - gRate * 2), mrrFloat * (1f - gRate * 1), mrrFloat
-        )
+        val trendData = (5 downTo 0).map { monthsAgo ->
+            if (monthsAgo == 0) {
+                mrrFloat
+            } else {
+                (mrrFloat / Math.pow(1.0 + gRate.toDouble(), monthsAgo.toDouble())).toFloat()
+            }
+        }
         RevLensLineChart(
             data = listOf(trendData),
-            colors = listOf(RevLensTheme.colors.brandPrimary)
+            colors = listOf(RevLensTheme.colors.brandPrimary),
+            xLabels = past6Months
         )
     }
 
@@ -266,13 +281,22 @@ private fun DashboardContent(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        val ltvGrowth = "+${(profile.monthlyGrowthRate * 50).toInt()}%"
+        val ltvToCac = if (profile.cac > BigDecimal.ZERO) {
+            ltv.toDouble() / profile.cac.toDouble()
+        } else 0.0
+        val ltvBadge = if (ltvToCac > 0) "${String.format(Locale.US, "%.1f", ltvToCac)}x CAC" else "Healthy"
+        val lifetimeMonths = if (profile.monthlyChurnRate > 0) {
+            "${(1.0 / profile.monthlyChurnRate).toInt()} mo lifespan"
+        } else {
+            "60+ mo lifespan"
+        }
+
         KpiCard(
             title = "LTV",
             value = currencyFormatter.format(ltv),
-            subValue = "Lifetime",
-            badgeText = ltvGrowth,
-            chartColor = RevLensTheme.colors.success,
+            subValue = lifetimeMonths,
+            badgeText = ltvBadge,
+            chartColor = if (ltvToCac >= 3.0 || ltvToCac == 0.0) RevLensTheme.colors.success else RevLensTheme.colors.brandSecondary,
             chartData = listOf(ltv.toFloat() * 0.9f, ltv.toFloat() * 0.95f, ltv.toFloat()),
             modifier = Modifier.weight(1f)
         )

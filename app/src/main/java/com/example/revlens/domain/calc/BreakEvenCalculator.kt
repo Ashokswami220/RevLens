@@ -36,4 +36,15 @@ object BreakEvenCalculator {
         val customersNeeded = profile.fixedCosts.divide(marginPerUser, 0, RoundingMode.CEILING)
         return customersNeeded.toInt()
     }
+
+    /**
+     * Calculates the monthly revenue required to reach profitability.
+     * 
+     * Formula: Break-Even Customers * ARPU
+     */
+    fun calculateBreakEvenMrr(profile: BusinessProfile): BigDecimal? {
+        val customersNeeded = calculateBreakEvenCustomers(profile) ?: return null
+        return profile.arpu.multiply(BigDecimal(customersNeeded))
+            .setScale(2, RoundingMode.HALF_UP)
+    }
 }

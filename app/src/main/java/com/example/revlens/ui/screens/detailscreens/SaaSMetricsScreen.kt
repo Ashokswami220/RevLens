@@ -68,7 +68,7 @@ fun SaaSMetricsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             profile?.let { p ->
-                val ltv = LtvCalculator.calculateLtv(p.arpu, p.monthlyChurnRate)
+                val ltv = LtvCalculator.calculateLtv(p.arpu, p.monthlyChurnRate, p.variableCostPerCustomer)
                 val payback = BreakEvenCalculator.calculateCacPaybackPeriod(p)
                 val ltvToCac = if (p.cac.toDouble() > 0) ltv.toDouble() / p.cac.toDouble() else 0.0
 

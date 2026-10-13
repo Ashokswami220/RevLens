@@ -36,7 +36,8 @@ fun RevLensLineChart(
     modifier: Modifier = Modifier,
     data: List<List<Float>>,
     colors: List<Color> = listOf(RevLensTheme.colors.brandPrimary),
-    dashedIndices: List<Int> = emptyList()
+    dashedIndices: List<Int> = emptyList(),
+    xLabels: List<String>? = null
 ) {
     if (data.isEmpty() || data.all { it.isEmpty() }) return
 
@@ -169,7 +170,7 @@ fun RevLensLineChart(
                     for (i in 0 until dataSize) {
                         // Skip some labels if there are too many
                         if (dataSize > 12 && i % 2 != 0 && i != dataSize - 1) continue
-                        val label = "M${i}"
+                        val label = xLabels?.getOrNull(i) ?: "M${i}"
                         drawContext.canvas.nativeCanvas.drawText(
                             label,
                             i * labelStepX,

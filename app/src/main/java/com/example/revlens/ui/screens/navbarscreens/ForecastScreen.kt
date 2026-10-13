@@ -153,13 +153,24 @@ fun ForecastScreen(
                     val conservativeData =
                         baseMrrData.mapIndexed { index, mrr -> mrr * (1f - (index * 0.01f)) }
 
+                    val forecastMonthLabels = remember(selectedMonths) {
+                        val cal = java.util.Calendar.getInstance()
+                        val fmt = java.text.SimpleDateFormat("MMM", java.util.Locale.US)
+                        (0..selectedMonths).map { index ->
+                            val label = if (index == 0) "Now" else fmt.format(cal.time)
+                            cal.add(java.util.Calendar.MONTH, 1)
+                            label
+                        }
+                    }
+
                     RevLensLineChart(
                         data = listOf(optimisticData, baseMrrData, conservativeData),
                         colors = listOf(
                             RevLensTheme.colors.brandTertiary,
                             RevLensTheme.colors.brandPrimary,
                             RevLensTheme.colors.brandSecondary
-                        )
+                        ),
+                        xLabels = forecastMonthLabels
                     )
 
                     ChartLegend(
