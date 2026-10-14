@@ -19,9 +19,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.material.icons.automirrored.outlined.CompareArrows
+import androidx.compose.material.icons.outlined.AddCircleOutline
 import com.example.revlens.domain.calc.PricingSimulationEngine
 import com.example.revlens.model.Scenario
 import com.example.revlens.presentation.MainViewModel
+import com.example.revlens.ui.components.ActionCardButton
 import com.example.revlens.ui.components.PrimaryButton
 import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SectionCard
@@ -70,14 +73,16 @@ fun ScenarioBuilderScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            PrimaryButton(
-                text = "+ Create New Scenario",
+            ActionCardButton(
+                text = "Create New Scenario",
+                icon = Icons.Outlined.AddCircleOutline,
                 onClick = onNavigateToCreate
             )
 
             if (scenarios.size >= 2) {
-                PrimaryButton(
+                ActionCardButton(
                     text = "Compare Scenarios",
+                    icon = Icons.AutoMirrored.Outlined.CompareArrows,
                     onClick = onNavigateToCompare
                 )
             }

@@ -274,7 +274,13 @@ fun RevLensNavGraph(
                     onNavigateToCreate = {
                         navController.navigate(
                             PricingSimulatorRoute(initialTab = 0)
-                        )
+                        ) {
+                            popUpTo(DashboardRoute) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     },
                     onNavigateToCompare = { navController.navigate(ScenarioComparisonRoute) },
                     onNavigateToMetrics = { navController.navigate(MetricsRoute) }

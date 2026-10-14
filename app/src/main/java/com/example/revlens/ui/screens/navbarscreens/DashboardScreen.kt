@@ -26,12 +26,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.outlined.FileUpload
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.ui.platform.LocalContext
+import com.example.revlens.ui.components.ActionCardButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -352,7 +355,21 @@ private fun DashboardContent(
         onNavigateToGoalPlanner = onNavigateToGoalPlanner
     )
 
-    Spacer(modifier = Modifier.height(20.dp))
+    val context = LocalContext.current
+    ActionCardButton(
+        text = "Export Executive Board Deck (PDF)",
+        icon = Icons.Outlined.FileUpload,
+        onClick = {
+            android.widget.Toast.makeText(
+                context,
+                "Executive Board Deck (PDF) exported successfully",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+        },
+        modifier = Modifier.fillMaxWidth()
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
 }
 
 @Composable

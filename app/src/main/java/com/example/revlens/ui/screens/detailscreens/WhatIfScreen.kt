@@ -30,6 +30,9 @@ import com.example.revlens.domain.calc.WhatIfEngine
 import com.example.revlens.model.Assumptions
 import com.example.revlens.model.MetricResult
 import com.example.revlens.presentation.MainViewModel
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.BookmarkAdd
+import com.example.revlens.ui.components.ActionCardButton
 import com.example.revlens.ui.components.LabeledSlider
 import com.example.revlens.ui.components.PrimaryButton
 import com.example.revlens.ui.components.SectionCard
@@ -139,8 +142,9 @@ fun WhatIfScreen(viewModel: MainViewModel) {
                     caption = "Absolute dollar change in CAC"
                 )
 
-                PrimaryButton(
+                ActionCardButton(
                     text = "Save as Scenario",
+                    icon = Icons.Outlined.BookmarkAdd,
                     onClick = { showSaveDialog = true }
                 )
             }

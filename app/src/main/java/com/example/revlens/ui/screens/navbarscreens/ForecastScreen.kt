@@ -27,12 +27,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.material.icons.outlined.TrackChanges
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.revlens.domain.calc.ForecastEngine
 import com.example.revlens.presentation.MainViewModel
+import com.example.revlens.ui.components.ActionCardButton
 import com.example.revlens.ui.components.ChartLegend
 import com.example.revlens.ui.components.PrimaryButton
 import com.example.revlens.ui.components.RevLensLineChart
@@ -179,8 +181,9 @@ fun ForecastScreen(
                 }
             }
 
-            PrimaryButton(
+            ActionCardButton(
                 text = "Set MRR Goal",
+                icon = Icons.Outlined.TrackChanges,
                 onClick = onNavigateToGoalPlanner
             )
 

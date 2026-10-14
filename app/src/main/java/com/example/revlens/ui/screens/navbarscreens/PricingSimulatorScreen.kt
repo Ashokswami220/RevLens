@@ -36,6 +36,9 @@ import androidx.compose.ui.unit.dp
 import com.example.revlens.domain.calc.PricingSimulationEngine
 import com.example.revlens.model.Assumptions
 import com.example.revlens.presentation.MainViewModel
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.BookmarkAdd
+import com.example.revlens.ui.components.ActionCardButton
 import com.example.revlens.ui.components.ChartLegend
 import com.example.revlens.ui.components.ChoiceChip
 import com.example.revlens.ui.components.DeltaChip
@@ -288,8 +291,9 @@ fun PricingSimulatorScreen(viewModel: MainViewModel) {
             }
 
             // 4. Save as Scenario Button
-            PrimaryButton(
+            ActionCardButton(
                 text = "Save as Scenario",
+                icon = Icons.Outlined.BookmarkAdd,
                 onClick = { showSaveDialog = true }
             )
         } else {
