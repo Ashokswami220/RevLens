@@ -1,24 +1,39 @@
 package com.example.revlens.ui.screens.navbarscreens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.outlined.TrackChanges
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -27,21 +42,30 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.material.icons.outlined.TrackChanges
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.revlens.domain.calc.ForecastEngine
+import com.example.revlens.domain.calc.MonthlyForecast
 import com.example.revlens.presentation.MainViewModel
 import com.example.revlens.ui.components.ActionCardButton
 import com.example.revlens.ui.components.ChartLegend
-import com.example.revlens.ui.components.PrimaryButton
 import com.example.revlens.ui.components.RevLensLineChart
 import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SectionCard
+import com.example.revlens.ui.components.SegmentedTabs
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
+import java.math.BigDecimal
+import java.math.RoundingMode
+import java.text.NumberFormat
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,6 +77,7 @@ fun ForecastScreen(
     val profile by viewModel.profile.collectAsState()
 
     var selectedMonths by remember { mutableStateOf(12) }
+    var isBreakdownExpanded by remember { mutableStateOf(false) }
 
     val currencyFormatter = remember(profile?.currencyCode) {
         com.example.revlens.utils.CurrencyUtils.getFormatter(profile?.currencyCode)
@@ -62,14 +87,27 @@ fun ForecastScreen(
         profile?.let { ForecastEngine.forecast(it, selectedMonths) } ?: emptyList()
     }
 
+    // Dynamic Calendar Month Labels (e.g. "Nov 2026", "Dec 2026")
+    val monthLabels = remember(selectedMonths) {
+        val cal = Calendar.getInstance()
+        val fmtFull = SimpleDateFormat("MMM yyyy", Locale.US)
+        val fmtShort = SimpleDateFormat("MMM", Locale.US)
+        (0..selectedMonths).map { index ->
+            val full = if (index == 0) "${fmtShort.format(cal.time)} (Now)" else fmtFull.format(cal.time)
+            val short = if (index == 0) "Now" else fmtShort.format(cal.time)
+            cal.add(Calendar.MONTH, 1)
+            Pair(full, short)
+        }
+    }
+
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             RevLensTopAppBar(
                 title = "Revenue Forecast",
                 actions = {
-                    androidx.compose.material3.IconButton(onClick = onNavigateToMetrics) {
-                        androidx.compose.material3.Icon(
+                    IconButton(onClick = onNavigateToMetrics) {
+                        Icon(
                             imageVector = Icons.AutoMirrored.Filled.ShowChart,
                             contentDescription = "Metrics",
                             tint = RevLensTheme.colors.textPrimary
@@ -84,155 +122,339 @@ fun ForecastScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(androidx.compose.foundation.rememberScrollState())
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Segmented Tabs / Chips for Duration
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                listOf(6, 12, 24).forEach { months ->
-                    FilterChip(
-                        selected = selectedMonths == months,
-                        onClick = { selectedMonths = months },
-                        label = { Text("$months Months", style = RevLensTypography.labelLarge) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = RevLensTheme.colors.brandPrimary,
-                            selectedLabelColor = RevLensTheme.colors.background,
-                            containerColor = RevLensTheme.colors.surface,
-                            labelColor = RevLensTheme.colors.textSecondary
-                        )
-                    )
-                }
-            }
+            // 1. Sleek Segmented Duration Switcher
+            val durationOptions = listOf("6 Months", "12 Months", "24 Months")
+            val durationValues = listOf(6, 12, 24)
+            val selectedIndex = durationValues.indexOf(selectedMonths).coerceAtLeast(0)
 
-            // Summary Card
+            SegmentedTabs(
+                options = durationOptions,
+                selectedIndex = selectedIndex,
+                onOptionSelected = { idx -> selectedMonths = durationValues[idx] }
+            )
+
+            // 2. Executive End of Period Summary Cards (2-Column KPI Grid)
             if (forecastData.isNotEmpty()) {
                 val finalMonth = forecastData.last()
-                SectionCard(title = "End of Period Summary (Month $selectedMonths)") {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text(
-                                "Projected MRR", style = RevLensTypography.bodySmall,
-                                color = RevLensTheme.colors.textSecondary
+                val currentMrr = profile?.currentMrr ?: BigDecimal.ZERO
+                val mrrGrowthPct = if (currentMrr > BigDecimal.ZERO) {
+                    (finalMonth.mrr - currentMrr)
+                        .divide(currentMrr, 4, RoundingMode.HALF_UP)
+                        .toDouble() * 100
+                } else 0.0
+                val netCustomers = finalMonth.customers - (profile?.totalCustomers ?: 0)
+
+                SectionCard(title = "End of Period Summary (${selectedMonths}M)") {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            ForecastKpiTile(
+                                label = "PROJECTED MRR",
+                                value = currencyFormatter.format(finalMonth.mrr),
+                                badge = "+${String.format(Locale.US, "%.1f", mrrGrowthPct)}%",
+                                badgeColor = RevLensTheme.colors.success,
+                                modifier = Modifier.weight(1f)
                             )
-                            Text(
-                                currencyFormatter.format(finalMonth.mrr),
-                                style = RevLensTypography.headlineMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = RevLensTheme.colors.brandPrimary
+                            ForecastKpiTile(
+                                label = "TOTAL SUBSCRIBERS",
+                                value = "${finalMonth.customers}",
+                                badge = "+$netCustomers net",
+                                badgeColor = RevLensTheme.colors.brandPrimary,
+                                modifier = Modifier.weight(1f)
                             )
                         }
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text(
-                                "Customers", style = RevLensTypography.bodySmall,
-                                color = RevLensTheme.colors.textSecondary
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            ForecastKpiTile(
+                                label = "CUMULATIVE REVENUE",
+                                value = currencyFormatter.format(finalMonth.cumulativeRevenue),
+                                badge = "${selectedMonths}M Total",
+                                badgeColor = RevLensTheme.colors.textSecondary,
+                                modifier = Modifier.weight(1f)
                             )
-                            Text(
-                                "${finalMonth.customers}", style = RevLensTypography.headlineMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = RevLensTheme.colors.textPrimary
+                            ForecastKpiTile(
+                                label = "ARR RUN-RATE",
+                                value = currencyFormatter.format(finalMonth.mrr.multiply(BigDecimal(12))),
+                                badge = "Annualized",
+                                badgeColor = RevLensTheme.colors.brandPrimary,
+                                modifier = Modifier.weight(1f)
                             )
                         }
                     }
                 }
             }
 
+            // 3. Forecast Trajectory Chart
             if (forecastData.isNotEmpty()) {
-                SectionCard(title = "MRR Forecast ($selectedMonths Months)") {
-                    val baseMrrData = forecastData.map { it.mrr.toFloat() }
-                    val optimisticData =
-                        baseMrrData.mapIndexed { index, mrr -> mrr * (1f + (index * 0.015f)) }
-                    val conservativeData =
-                        baseMrrData.mapIndexed { index, mrr -> mrr * (1f - (index * 0.01f)) }
+                SectionCard(title = "MRR Trajectory ($selectedMonths Months)") {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        val baseMrrData = forecastData.map { it.mrr.toFloat() }
+                        val optimisticData =
+                            baseMrrData.mapIndexed { index, mrr -> mrr * (1f + (index * 0.015f)) }
+                        val conservativeData =
+                            baseMrrData.mapIndexed { index, mrr -> mrr * (1f - (index * 0.01f)) }
 
-                    val forecastMonthLabels = remember(selectedMonths) {
-                        val cal = java.util.Calendar.getInstance()
-                        val fmt = java.text.SimpleDateFormat("MMM", java.util.Locale.US)
-                        (0..selectedMonths).map { index ->
-                            val label = if (index == 0) "Now" else fmt.format(cal.time)
-                            cal.add(java.util.Calendar.MONTH, 1)
-                            label
-                        }
-                    }
-
-                    RevLensLineChart(
-                        data = listOf(optimisticData, baseMrrData, conservativeData),
-                        colors = listOf(
-                            RevLensTheme.colors.brandTertiary,
-                            RevLensTheme.colors.brandPrimary,
-                            RevLensTheme.colors.brandSecondary
-                        ),
-                        xLabels = forecastMonthLabels
-                    )
-
-                    ChartLegend(
-                        items = listOf(
-                            "Optimistic" to RevLensTheme.colors.brandTertiary,
-                            "Baseline" to RevLensTheme.colors.brandPrimary,
-                            "Conservative" to RevLensTheme.colors.brandSecondary
+                        RevLensLineChart(
+                            data = listOf(optimisticData, baseMrrData, conservativeData),
+                            colors = listOf(
+                                RevLensTheme.colors.brandTertiary,
+                                RevLensTheme.colors.brandPrimary,
+                                RevLensTheme.colors.brandSecondary
+                            ),
+                            dashedIndices = listOf(0, 2),
+                            xLabels = monthLabels.map { it.second },
+                            chartHeight = 160.dp
                         )
-                    )
+
+                        ChartLegend(
+                            items = listOf(
+                                "Optimistic (+1.5%/mo)" to RevLensTheme.colors.brandTertiary,
+                                "Baseline" to RevLensTheme.colors.brandPrimary,
+                                "Conservative (-1.0%/mo)" to RevLensTheme.colors.brandSecondary
+                            )
+                        )
+                    }
                 }
             }
 
+            // 4. Set MRR Goal Action Card Button
             ActionCardButton(
                 text = "Set MRR Goal",
                 icon = Icons.Outlined.TrackChanges,
                 onClick = onNavigateToGoalPlanner
             )
 
-            Text(
-                "Month by Month Breakdown", style = RevLensTypography.titleMedium,
-                color = RevLensTheme.colors.textPrimary
-            )
+            // 5. Rich Month-by-Month Dynamic Breakdown
+            if (forecastData.isNotEmpty()) {
+                val displayList = if (isBreakdownExpanded || forecastData.size <= 6) {
+                    forecastData
+                } else {
+                    forecastData.take(6)
+                }
 
-            val isDark = isSystemInDarkTheme()
-            val rowBorder = if (isDark) Modifier else Modifier.border(
-                1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(8.dp)
-            )
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                forecastData.forEach { data ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(RevLensTheme.colors.surface)
-                            .then(rowBorder)
-                            .padding(12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = if (data.monthIndex == 0) "Today" else "Month ${data.monthIndex}",
-                            style = RevLensTypography.bodyMedium,
-                            color = RevLensTheme.colors.textPrimary,
-                            modifier = Modifier.weight(1f)
+                SectionCard(title = "Month-by-Month Breakdown") {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // Header labels
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 4.dp, vertical = 2.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "PERIOD",
+                                style = RevLensTypography.labelSmall,
+                                color = RevLensTheme.colors.textTertiary,
+                                modifier = Modifier.weight(1.1f)
+                            )
+                            Text(
+                                text = "PROJECTED MRR",
+                                style = RevLensTypography.labelSmall,
+                                color = RevLensTheme.colors.textTertiary,
+                                modifier = Modifier.weight(1.3f)
+                            )
+                            Text(
+                                text = "SUBSCRIBERS",
+                                style = RevLensTypography.labelSmall,
+                                color = RevLensTheme.colors.textTertiary,
+                                textAlign = TextAlign.End,
+                                modifier = Modifier.weight(1.1f)
+                            )
+                        }
+
+                        HorizontalDivider(
+                            color = RevLensTheme.colors.borderDefault.copy(alpha = 0.5f),
+                            thickness = 1.dp
                         )
-                        Text(
-                            text = currencyFormatter.format(data.mrr),
-                            style = RevLensTypography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = RevLensTheme.colors.brandPrimary,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Text(
-                            text = "${data.customers} users",
-                            style = RevLensTypography.bodyMedium,
-                            color = RevLensTheme.colors.textSecondary,
-                            modifier = Modifier.weight(1f)
-                        )
+
+                        // Data rows
+                        displayList.forEachIndexed { index, data ->
+                            val monthName = monthLabels.getOrNull(data.monthIndex)?.first
+                                ?: "Month ${data.monthIndex}"
+                            val prevMonth = if (data.monthIndex > 0) forecastData.getOrNull(data.monthIndex - 1) else null
+                            val monthlyGain = if (prevMonth != null) data.mrr.subtract(prevMonth.mrr) else BigDecimal.ZERO
+                            val netNewUsers = if (prevMonth != null) data.customers - prevMonth.customers else 0
+
+                            ForecastRowItem(
+                                monthTitle = monthName,
+                                monthSubtitle = if (data.monthIndex == 0) "Baseline" else "Month ${data.monthIndex}",
+                                mrrFormatted = currencyFormatter.format(data.mrr),
+                                mrrGainFormatted = if (data.monthIndex > 0) "+${currencyFormatter.format(monthlyGain)}" else "Current",
+                                usersFormatted = "${data.customers} users",
+                                usersGainFormatted = if (data.monthIndex > 0) "+$netNewUsers net" else "Active base",
+                                isCurrent = data.monthIndex == 0
+                            )
+
+                            if (index < displayList.lastIndex) {
+                                HorizontalDivider(
+                                    color = RevLensTheme.colors.borderDefault.copy(alpha = 0.3f),
+                                    thickness = 0.5.dp
+                                )
+                            }
+                        }
+
+                        // Expand / Collapse button if over 6 months
+                        if (forecastData.size > 6) {
+                            TextButton(
+                                onClick = { isBreakdownExpanded = !isBreakdownExpanded },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 4.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = if (isBreakdownExpanded) {
+                                            "Show Less (First 6 Months)"
+                                        } else {
+                                            "Show All ${forecastData.size} Months"
+                                        },
+                                        style = RevLensTypography.labelMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = RevLensTheme.colors.brandPrimary
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Icon(
+                                        imageVector = if (isBreakdownExpanded) {
+                                            Icons.Filled.KeyboardArrowUp
+                                        } else {
+                                            Icons.Filled.KeyboardArrowDown
+                                        },
+                                        contentDescription = null,
+                                        tint = RevLensTheme.colors.brandPrimary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ForecastKpiTile(
+    label: String,
+    value: String,
+    badge: String,
+    badgeColor: Color,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(RevLensTheme.colors.surfaceElevated.copy(alpha = 0.5f))
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = label,
+                style = RevLensTypography.labelSmall,
+                color = RevLensTheme.colors.textTertiary,
+                fontSize = 10.sp
+            )
+            Text(
+                text = badge,
+                style = RevLensTypography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = badgeColor,
+                fontSize = 11.sp
+            )
+        }
+        Text(
+            text = value,
+            style = RevLensTypography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = RevLensTheme.colors.textPrimary
+        )
+    }
+}
+
+@Composable
+private fun ForecastRowItem(
+    monthTitle: String,
+    monthSubtitle: String,
+    mrrFormatted: String,
+    mrrGainFormatted: String,
+    usersFormatted: String,
+    usersGainFormatted: String,
+    isCurrent: Boolean
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp, horizontal = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Column 1: Period
+        Column(modifier = Modifier.weight(1.1f)) {
+            Text(
+                text = monthTitle,
+                style = RevLensTypography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = if (isCurrent) RevLensTheme.colors.brandPrimary else RevLensTheme.colors.textPrimary
+            )
+            Text(
+                text = monthSubtitle,
+                style = RevLensTypography.labelSmall,
+                color = RevLensTheme.colors.textTertiary
+            )
+        }
+
+        // Column 2: Projected MRR
+        Column(modifier = Modifier.weight(1.3f)) {
+            Text(
+                text = mrrFormatted,
+                style = RevLensTypography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = RevLensTheme.colors.textPrimary
+            )
+            Text(
+                text = mrrGainFormatted,
+                style = RevLensTypography.labelSmall,
+                color = if (isCurrent) RevLensTheme.colors.textTertiary else RevLensTheme.colors.success,
+                fontWeight = if (isCurrent) FontWeight.Normal else FontWeight.SemiBold
+            )
+        }
+
+        // Column 3: Subscribers
+        Column(
+            modifier = Modifier.weight(1.1f),
+            horizontalAlignment = Alignment.End
+        ) {
+            Text(
+                text = usersFormatted,
+                style = RevLensTypography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = RevLensTheme.colors.textPrimary,
+                textAlign = TextAlign.End
+            )
+            Text(
+                text = usersGainFormatted,
+                style = RevLensTypography.labelSmall,
+                color = if (isCurrent) RevLensTheme.colors.textTertiary else RevLensTheme.colors.brandPrimary,
+                textAlign = TextAlign.End
+            )
         }
     }
 }

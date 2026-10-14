@@ -187,7 +187,8 @@ fun PricingSimulatorScreen(viewModel: MainViewModel) {
                         colors = listOf(
                             RevLensTheme.colors.textTertiary,
                             if (mrrDelta >= 0) RevLensTheme.colors.brandPrimary else RevLensTheme.colors.error
-                        )
+                        ),
+                        barWidth = 64.dp
                     )
                     ChartLegend(
                         items = listOf(

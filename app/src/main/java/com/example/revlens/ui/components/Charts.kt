@@ -2,7 +2,9 @@ package com.example.revlens.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,9 +26,11 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
@@ -37,34 +41,38 @@ fun RevLensLineChart(
     data: List<List<Float>>,
     colors: List<Color> = listOf(RevLensTheme.colors.brandPrimary),
     dashedIndices: List<Int> = emptyList(),
-    xLabels: List<String>? = null
+    xLabels: List<String>? = null,
+    chartHeight: Dp = 175.dp
 ) {
     if (data.isEmpty() || data.all { it.isEmpty() }) return
 
-    val gridColor = RevLensTheme.colors.chartGrid
+    val isDark = isSystemInDarkTheme()
+    val lineGridColor = if (isDark) Color(0xFF2E384D).copy(alpha = 0.55f) else Color(0xFFCBD5E1).copy(alpha = 0.75f)
     val backgroundColor = RevLensTheme.colors.background
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(240.dp)
-            .padding(vertical = 16.dp)
+            .height(chartHeight)
+            .padding(vertical = 12.dp)
             .drawBehind {
                 val width = size.width
                 val fullHeight = size.height
-                val labelPadding = 60f
+                val labelPadding = 48f
                 val height = fullHeight - labelPadding
 
-                // Draw Grid (4 horizontal lines)
+                // Draw Grid (5 horizontal lines, dashed break-break like Dashboard)
                 val gridSteps = 4
                 val stepY = height / gridSteps
+                val dashEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
                 for (i in 0..gridSteps) {
                     val y = i * stepY
                     drawLine(
-                        color = gridColor,
+                        color = lineGridColor,
                         start = Offset(0f, y),
                         end = Offset(width, y),
-                        strokeWidth = 1.dp.toPx()
+                        strokeWidth = 1.dp.toPx(),
+                        pathEffect = dashEffect
                     )
                 }
 
@@ -108,23 +116,32 @@ fun RevLensLineChart(
                     )
                     drawPath(path = fillPath, brush = fillBrush)
 
-                    // 2) Outer glow
-                    drawPath(
-                        path = path,
-                        color = color.copy(alpha = 0.15f),
-                        style = Stroke(width = 12.dp.toPx(), cap = StrokeCap.Round)
-                    )
-                    // 3) Inner glow
-                    drawPath(
-                        path = path,
-                        color = color.copy(alpha = 0.3f),
-                        style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round)
-                    )
+                    val isDashed = dashedIndices.contains(seriesIndex)
+                    val lineDashEffect = if (isDashed) PathEffect.dashPathEffect(floatArrayOf(10f, 8f), 0f) else null
+
+                    if (!isDashed) {
+                        // 2) Outer glow
+                        drawPath(
+                            path = path,
+                            color = color.copy(alpha = 0.15f),
+                            style = Stroke(width = 10.dp.toPx(), cap = StrokeCap.Round)
+                        )
+                        // 3) Inner glow
+                        drawPath(
+                            path = path,
+                            color = color.copy(alpha = 0.28f),
+                            style = Stroke(width = 5.dp.toPx(), cap = StrokeCap.Round)
+                        )
+                    }
                     // 4) Core line
                     drawPath(
                         path = path,
                         color = color,
-                        style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
+                        style = Stroke(
+                            width = (if (isDashed) 2.dp else 3.dp).toPx(),
+                            cap = StrokeCap.Round,
+                            pathEffect = lineDashEffect
+                        )
                     )
 
                     // 5) Draw points
@@ -187,71 +204,153 @@ fun RevLensLineChart(
 fun RevLensBarChart(
     modifier: Modifier = Modifier,
     data: List<Float>,
-    colors: List<Color> = listOf(RevLensTheme.colors.brandPrimary)
+    colors: List<Color> = listOf(RevLensTheme.colors.brandPrimary),
+    labels: List<String>? = null,
+    valueLabels: List<String>? = null,
+    barWidth: Dp? = null
 ) {
     if (data.isEmpty()) return
+
+    val isDark = isSystemInDarkTheme()
+    val axisColor = if (isDark) Color(0xFF334155) else Color(0xFFCBD5E1)
+    val textPaintColor = if (isDark) {
+        android.graphics.Color.parseColor("#94A3B8")
+    } else {
+        android.graphics.Color.parseColor("#64748B")
+    }
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(160.dp)
-            .padding(vertical = 16.dp)
+            .height(125.dp)
+            .padding(vertical = 4.dp)
             .drawBehind {
                 val width = size.width
                 val fullHeight = size.height
-                val labelPadding = 60f
-                val height = fullHeight - labelPadding
+                val labelHeight = if (labels != null) 34f else 0f
+                val valueLabelHeight = if (valueLabels != null) 26f else 0f
+                val chartHeight = (fullHeight - labelHeight - valueLabelHeight).coerceAtLeast(20f)
 
-                val max = data.maxOrNull()
-                    ?.coerceAtLeast(0f) ?: 1f
-                val min = data.minOrNull()
-                    ?.coerceAtMost(0f) ?: 0f
+                val rawMax = data.maxOrNull() ?: 0f
+                val rawMin = data.minOrNull() ?: 0f
+
+                val max = rawMax.coerceAtLeast(0.1f)
+                val min = rawMin.coerceAtMost(-0.1f)
                 val range = (max - min).coerceAtLeast(1f)
 
-                val barWidth = (width / data.size) * 0.6f
-                val spacing = (width / data.size)
+                val barCount = data.size
+                val spacing = width / barCount
+                val maxBarW = if (barCount <= 2) 64.dp.toPx() else 32.dp.toPx()
+                val calculatedBarWidth = (spacing * 0.52f).coerceAtMost(maxBarW)
+                val actualBarWidth = barWidth?.toPx() ?: calculatedBarWidth
 
-                val zeroY = height - ((0f - min) / range * height)
+                val zeroY = valueLabelHeight + (chartHeight - ((0f - min) / range * chartHeight))
+
+                // Draw horizontal zero baseline
+                drawLine(
+                    color = axisColor,
+                    start = Offset(0f, zeroY),
+                    end = Offset(width, zeroY),
+                    strokeWidth = 1.dp.toPx()
+                )
+
+                val cr = if (actualBarWidth > 40.dp.toPx()) 6.dp.toPx() else 4.dp.toPx()
+                val cornerRadius = CornerRadius(cr, cr)
+                val zeroCorner = CornerRadius(0f, 0f)
+
+                val textPaint = android.graphics.Paint().apply {
+                    color = textPaintColor
+                    textSize = 28f
+                    textAlign = android.graphics.Paint.Align.CENTER
+                    isAntiAlias = true
+                }
+
+                val valuePaint = android.graphics.Paint().apply {
+                    color = textPaintColor
+                    textSize = 24f
+                    textAlign = android.graphics.Paint.Align.CENTER
+                    isAntiAlias = true
+                }
 
                 data.forEachIndexed { index, value ->
-                    val x = (index * spacing) + (spacing - barWidth) / 2
-                    val y = height - ((value - min) / range * height)
+                    val centerX = (index * spacing) + (spacing / 2)
+                    val x = centerX - (actualBarWidth / 2)
+                    val y = valueLabelHeight + (chartHeight - ((value - min) / range * chartHeight))
 
-                    val barHeight = kotlin.math.abs(zeroY - y)
-                    val topY = if (value >= 0) y else zeroY
+                    val rawBarHeight = kotlin.math.abs(zeroY - y)
+                    val barHeight = if (value != 0f) rawBarHeight.coerceAtLeast(3.dp.toPx()) else 0f
+                    val topY = if (value >= 0) (zeroY - barHeight) else zeroY
+
                     val fallbackColor = Color(0xFF06B6D4)
                     val color = colors.getOrElse(index % colors.size) { fallbackColor }
 
-                    val gradient = Brush.verticalGradient(
-                        colors = listOf(color, color.copy(alpha = 0.2f)),
-                        startY = topY,
-                        endY = topY + barHeight
-                    )
-                    drawRoundRect(
-                        brush = gradient,
-                        topLeft = Offset(x, topY),
-                        size = Size(barWidth, barHeight),
-                        cornerRadius = CornerRadius(6.dp.toPx(), 6.dp.toPx())
-                    )
-                }
+                    if (barHeight > 0f) {
+                        val gradient = Brush.verticalGradient(
+                            colors = if (value >= 0) {
+                                listOf(color, color.copy(alpha = 0.45f))
+                            } else {
+                                listOf(color.copy(alpha = 0.45f), color)
+                            },
+                            startY = topY,
+                            endY = topY + barHeight
+                        )
 
-                // X-Axis Labels
-                val paint = android.graphics.Paint()
-                    .apply {
-                        color = android.graphics.Color.parseColor("#888888")
-                        textSize = 32f
-                        textAlign = android.graphics.Paint.Align.CENTER
+                        val roundRect = if (value >= 0) {
+                            RoundRect(
+                                left = x,
+                                top = topY,
+                                right = x + actualBarWidth,
+                                bottom = zeroY,
+                                topLeftCornerRadius = cornerRadius,
+                                topRightCornerRadius = cornerRadius,
+                                bottomLeftCornerRadius = zeroCorner,
+                                bottomRightCornerRadius = zeroCorner
+                            )
+                        } else {
+                            RoundRect(
+                                left = x,
+                                top = zeroY,
+                                right = x + actualBarWidth,
+                                bottom = topY + barHeight,
+                                topLeftCornerRadius = zeroCorner,
+                                topRightCornerRadius = zeroCorner,
+                                bottomLeftCornerRadius = cornerRadius,
+                                bottomRightCornerRadius = cornerRadius
+                            )
+                        }
+
+                        val path = Path().apply { addRoundRect(roundRect) }
+                        drawPath(path = path, brush = gradient)
+                    } else {
+                        // Subtle pill for 0%
+                        drawRoundRect(
+                            color = axisColor.copy(alpha = 0.7f),
+                            topLeft = Offset(x, zeroY - 1.5.dp.toPx()),
+                            size = Size(actualBarWidth, 3.dp.toPx()),
+                            cornerRadius = CornerRadius(1.5.dp.toPx(), 1.5.dp.toPx())
+                        )
                     }
 
-                data.forEachIndexed { i, _ ->
-                    if (data.size > 12 && i % 2 != 0 && i != data.size - 1) return@forEachIndexed
-                    val x = (i * spacing) + (spacing / 2)
-                    drawContext.canvas.nativeCanvas.drawText(
-                        "M${i}",
-                        x,
-                        fullHeight - 10f,
-                        paint
-                    )
+                    // Value label above or below the bar
+                    valueLabels?.getOrNull(index)?.let { vLabel ->
+                        val textY = if (value >= 0) {
+                            (topY - 5f).coerceAtLeast(20f)
+                        } else {
+                            (topY + barHeight + 22f).coerceAtMost(fullHeight - labelHeight)
+                        }
+                        drawContext.canvas.nativeCanvas.drawText(vLabel, centerX, textY, valuePaint)
+                    }
+
+                    // X-Axis Label below chart
+                    val label = labels?.getOrNull(index) ?: if (labels != null) "" else "M${index}"
+                    if (label.isNotEmpty()) {
+                        drawContext.canvas.nativeCanvas.drawText(
+                            label,
+                            centerX,
+                            fullHeight - 4f,
+                            textPaint
+                        )
+                    }
                 }
             }
     )

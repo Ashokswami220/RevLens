@@ -1,14 +1,19 @@
 package com.example.revlens.ui.screens.detailscreens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -35,6 +40,7 @@ import androidx.compose.material.icons.outlined.BookmarkAdd
 import com.example.revlens.ui.components.ActionCardButton
 import com.example.revlens.ui.components.LabeledSlider
 import com.example.revlens.ui.components.PrimaryButton
+import com.example.revlens.ui.components.RevLensBarChart
 import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
@@ -87,68 +93,103 @@ fun WhatIfScreen(viewModel: MainViewModel) {
 
         // Live Impact Section
         SectionCard(title = "Live Impact") {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                val barData = results.map { (it.deltaPercent ?: 0.0).toFloat() }
-                if (barData.any { it != 0f }) {
-                    com.example.revlens.ui.components.RevLensBarChart(
-                        data = barData,
-                        colors = results.map { if (it.isPositive) RevLensTheme.colors.success else RevLensTheme.colors.error }
-                    )
-                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(8.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                val chartDeltas = results.map { result ->
+                    val rawDelta = (result.deltaPercent ?: 0.0).toFloat()
+                    // Align direction: for CAC Payback, fewer months is positive business improvement (+)
+                    if (result.label == "CAC Payback") -rawDelta else rawDelta
+                }
+                val chartLabels = results.map { result ->
+                    when (result.label) {
+                        "CAC Payback" -> "Payback"
+                        "12-Month Projected MRR" -> "12-Mo"
+                        else -> result.label
+                    }
+                }
+                val chartValueLabels = chartDeltas.map { delta ->
+                    val sign = if (delta > 0) "+" else ""
+                    "$sign${String.format(Locale.US, "%.0f", delta)}%"
+                }
+                val chartColors = chartDeltas.map { delta ->
+                    if (delta >= 0f) RevLensTheme.colors.brandPrimary else RevLensTheme.colors.error
                 }
 
-                results.forEach { result ->
-                    MetricResultRow(result)
+                RevLensBarChart(
+                    data = chartDeltas,
+                    colors = chartColors,
+                    labels = chartLabels,
+                    valueLabels = chartValueLabels,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(115.dp)
+                )
+
+                // 2 numbers per row
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    results.chunked(2).forEach { pair ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            pair.forEach { metric ->
+                                CompactMetricItem(
+                                    result = metric,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            if (pair.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
                 }
             }
         }
 
         // Adjustments Section
         SectionCard(title = "Assumptions") {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 LabeledSlider(
                     label = "Price Change",
                     value = priceChangePercent,
                     onValueChange = { priceChangePercent = it },
                     valueRange = -50f..100f,
-                    valueString = "${priceChangePercent.toInt()}%",
-                    caption = "Adjust pricing across all plans"
+                    valueString = "${if (priceChangePercent > 0) "+" else ""}${priceChangePercent.toInt()}%"
                 )
 
                 LabeledSlider(
-                    label = "Churn Change",
+                    label = "Churn Rate",
                     value = churnChangePercent,
                     onValueChange = { churnChangePercent = it },
                     valueRange = -10f..10f,
-                    valueString = "${churnChangePercent.toInt()}%",
-                    caption = "Absolute change in churn rate"
+                    valueString = "${if (churnChangePercent > 0) "+" else ""}${String.format(Locale.US, "%.1f", churnChangePercent)}%"
                 )
 
                 LabeledSlider(
-                    label = "Growth Change",
+                    label = "Growth Rate",
                     value = growthChangePercent,
                     onValueChange = { growthChangePercent = it },
                     valueRange = -20f..50f,
-                    valueString = "${growthChangePercent.toInt()}%",
-                    caption = "Absolute change in MRR growth rate"
+                    valueString = "${if (growthChangePercent > 0) "+" else ""}${growthChangePercent.toInt()}%"
                 )
 
+                val cacInt = cacChange.toInt()
+                val cacFormatted = "${if (cacInt > 0) "+$" else if (cacInt < 0) "-$" else "$"}${kotlin.math.abs(cacInt)}"
                 LabeledSlider(
-                    label = "CAC Change",
+                    label = "CAC",
                     value = cacChange,
                     onValueChange = { cacChange = it },
                     valueRange = -500f..500f,
-                    valueString = "$${cacChange.toInt()}",
-                    caption = "Absolute dollar change in CAC"
-                )
-
-                ActionCardButton(
-                    text = "Save as Scenario",
-                    icon = Icons.Outlined.BookmarkAdd,
-                    onClick = { showSaveDialog = true }
+                    valueString = cacFormatted
                 )
             }
         }
+
+        ActionCardButton(
+            text = "Save as Scenario",
+            icon = Icons.Outlined.BookmarkAdd,
+            onClick = { showSaveDialog = true }
+        )
     }
 
     if (showSaveDialog) {
@@ -198,37 +239,49 @@ fun WhatIfScreen(viewModel: MainViewModel) {
 }
 
 @Composable
-fun MetricResultRow(result: MetricResult) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
+private fun CompactMetricItem(
+    result: MetricResult,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(RevLensTheme.colors.surfaceElevated.copy(alpha = 0.5f))
+            .padding(horizontal = 12.dp, vertical = 9.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Column {
-            Text(
-                text = result.label,
-                style = RevLensTypography.bodyLarge,
-                color = RevLensTheme.colors.textSecondary
-            )
+        Text(
+            text = result.label,
+            style = RevLensTypography.labelMedium,
+            color = RevLensTheme.colors.textTertiary
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
             Text(
                 text = result.formattedValue,
-                style = RevLensTypography.titleLarge,
+                style = RevLensTypography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = RevLensTheme.colors.textPrimary
             )
-        }
-
-        if (result.deltaPercent != null && result.deltaPercent != 0.0) {
-            val isPositiveIndicator = result.isPositive
-            val color =
-                if (isPositiveIndicator) RevLensTheme.colors.success else RevLensTheme.colors.error
-            val sign = if (result.deltaPercent > 0) "+" else ""
-            Text(
-                text = "$sign${String.format(Locale.US, "%.1f", result.deltaPercent)}%",
-                style = RevLensTypography.bodyLarge,
-                color = color,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 4.dp)
-            )
+            if (result.deltaPercent != null && result.deltaPercent != 0.0) {
+                val color = if (result.isPositive) RevLensTheme.colors.success else RevLensTheme.colors.error
+                val sign = if (result.deltaPercent > 0) "+" else ""
+                Text(
+                    text = "$sign${String.format(Locale.US, "%.1f", result.deltaPercent)}%",
+                    style = RevLensTypography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = color
+                )
+            }
         }
     }
+}
+
+@Composable
+fun MetricResultRow(result: MetricResult) {
+    CompactMetricItem(result)
 }

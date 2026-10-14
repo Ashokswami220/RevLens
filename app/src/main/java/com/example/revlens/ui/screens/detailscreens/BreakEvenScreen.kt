@@ -1,12 +1,17 @@
 package com.example.revlens.ui.screens.detailscreens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.draw.clip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -75,7 +80,7 @@ fun BreakEvenScreen(viewModel: MainViewModel) {
 
 
         SectionCard(title = "Break-Even Results") {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 val breakEven = breakEvenCustomers ?: 0
                 val maxCustomers = if (breakEven > 0) breakEven * 2 else 100
 
@@ -105,7 +110,8 @@ fun BreakEvenScreen(viewModel: MainViewModel) {
                         colors = listOf(
                             RevLensTheme.colors.brandPrimary, RevLensTheme.colors.error
                         ),
-                        xLabels = customerLabels
+                        xLabels = customerLabels,
+                        chartHeight = 150.dp
                     )
                     com.example.revlens.ui.components.ChartLegend(
                         items = listOf(
@@ -113,22 +119,36 @@ fun BreakEvenScreen(viewModel: MainViewModel) {
                             "Costs" to RevLensTheme.colors.error
                         )
                     )
-                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(16.dp))
                 }
 
                 val paybackStr =
                     cacPayback?.let { String.format(Locale.US, "%.1f months", it) } ?: "Never"
-                ResultRow(label = "CAC Payback Period", value = paybackStr)
-
                 val customersStr = breakEvenCustomers?.let { "$it customers" } ?: "Never"
-                ResultRow(label = "Break-Even Customers", value = customersStr)
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    ResultCard(
+                        label = "CAC Payback Period",
+                        value = paybackStr,
+                        modifier = Modifier.weight(1f)
+                    )
+                    ResultCard(
+                        label = "Break-Even Customers",
+                        value = customersStr,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
         }
 
         SectionCard(title = "Simulate Costs") {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 LabeledSlider(
-                    label = "Simulated CAC",
+                    label = "CAC",
                     value = cacSimulated,
                     onValueChange = { cacSimulated = it },
                     valueRange = 0f..2000f,
@@ -137,7 +157,7 @@ fun BreakEvenScreen(viewModel: MainViewModel) {
                 )
 
                 LabeledSlider(
-                    label = "Simulated Fixed Costs",
+                    label = "Fixed Costs",
                     value = fixedCostsSimulated,
                     onValueChange = { fixedCostsSimulated = it },
                     valueRange = 0f..50000f,
@@ -146,7 +166,7 @@ fun BreakEvenScreen(viewModel: MainViewModel) {
                 )
 
                 LabeledSlider(
-                    label = "Simulated Variable Cost",
+                    label = "Variable Cost",
                     value = variableCostSimulated,
                     onValueChange = { variableCostSimulated = it },
                     valueRange = 0f..500f,
@@ -161,18 +181,33 @@ fun BreakEvenScreen(viewModel: MainViewModel) {
 }
 
 @Composable
-private fun ResultRow(label: String, value: String) {
-    Column {
+private fun ResultCard(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(RevLensTheme.colors.surfaceElevated.copy(alpha = 0.5f))
+            .padding(horizontal = 12.dp, vertical = 9.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
         Text(
             text = label,
-            style = RevLensTypography.bodyLarge,
-            color = RevLensTheme.colors.textSecondary
+            style = RevLensTypography.labelMedium,
+            color = RevLensTheme.colors.textTertiary
         )
         Text(
             text = value,
-            style = RevLensTypography.titleLarge,
+            style = RevLensTypography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = RevLensTheme.colors.textPrimary
         )
     }
+}
+
+@Composable
+private fun ResultRow(label: String, value: String) {
+    ResultCard(label = label, value = value)
 }
