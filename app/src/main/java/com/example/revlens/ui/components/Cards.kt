@@ -1,8 +1,10 @@
 package com.example.revlens.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,11 +41,17 @@ fun SectionCard(
     trailingAction: @Composable (() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
+    val isDark = isSystemInDarkTheme()
+    val cardBorder = if (isDark) null else BorderStroke(1.dp, RevLensTheme.colors.borderDefault)
+    val borderModifier =
+        if (cardBorder != null) Modifier.border(cardBorder, RoundedCornerShape(16.dp)) else Modifier
+
     Column(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(RevLensTheme.colors.surfaceElevated)
+            .background(RevLensTheme.colors.surface)
+            .then(borderModifier)
             .padding(16.dp)
     ) {
         if (title != null || trailingAction != null) {
@@ -142,17 +150,22 @@ fun ScenarioCard(
     modifier: Modifier = Modifier,
     colorDot: Color? = null
 ) {
+    val isDark = isSystemInDarkTheme()
+    val defaultBorder = if (isDark) null else BorderStroke(1.dp, RevLensTheme.colors.borderDefault)
+    val borderModifier = if (selected) {
+        Modifier.border(2.dp, RevLensTheme.colors.primaryAction, RoundedCornerShape(16.dp))
+    } else if (defaultBorder != null) {
+        Modifier.border(defaultBorder, RoundedCornerShape(16.dp))
+    } else {
+        Modifier
+    }
+
     val cardModifier = modifier
         .fillMaxWidth()
         .clip(RoundedCornerShape(16.dp))
-        .background(RevLensTheme.colors.surfaceElevated)
+        .background(RevLensTheme.colors.surface)
+        .then(borderModifier)
         .clickable(onClick = onClick)
-        .then(
-            if (selected) Modifier.border(
-                2.dp, RevLensTheme.colors.primaryAction, RoundedCornerShape(16.dp)
-            )
-            else Modifier
-        )
         .padding(16.dp)
 
     Row(

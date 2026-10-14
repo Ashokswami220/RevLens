@@ -1,6 +1,9 @@
 package com.example.revlens.ui.onboarding
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -143,12 +146,19 @@ private fun WelcomePage() {
         verticalArrangement = Arrangement.Center
     ) {
         // Hero Illustration Mock
+        val isDark = isSystemInDarkTheme()
+        val cardBorder = if (isDark) null else BorderStroke(1.dp, RevLensTheme.colors.borderDefault)
+        val borderModifier = if (cardBorder != null) Modifier.border(
+            cardBorder, RoundedCornerShape(20.dp)
+        ) else Modifier
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(240.dp)
-                .clip(RoundedCornerShape(24.dp))
-                .background(RevLensTheme.colors.surfaceElevated),
+                .clip(RoundedCornerShape(20.dp))
+                .background(RevLensTheme.colors.surface)
+                .then(borderModifier),
             contentAlignment = Alignment.Center
         ) {
             Column(

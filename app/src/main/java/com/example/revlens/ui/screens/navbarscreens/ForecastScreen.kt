@@ -1,6 +1,8 @@
 package com.example.revlens.ui.screens.navbarscreens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -37,9 +40,6 @@ import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
-import java.text.NumberFormat
-import java.util.Currency
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -189,6 +189,10 @@ fun ForecastScreen(
                 color = RevLensTheme.colors.textPrimary
             )
 
+            val isDark = isSystemInDarkTheme()
+            val rowBorder = if (isDark) Modifier else Modifier.border(
+                1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(8.dp)
+            )
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -197,7 +201,9 @@ fun ForecastScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(RevLensTheme.colors.surface, RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(RevLensTheme.colors.surface)
+                            .then(rowBorder)
                             .padding(12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically

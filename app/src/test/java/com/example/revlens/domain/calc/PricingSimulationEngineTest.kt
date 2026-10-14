@@ -46,8 +46,11 @@ class PricingSimulationEngineTest {
 
     @Test
     fun `simulate modifies only target plan when targetPlanId is provided`() {
-        val starterPlan = Plan(id = "starter_1", name = "Starter", price = BigDecimal("29.00"), customerCount = 100)
-        val proPlan = Plan(id = "pro_2", name = "Pro", price = BigDecimal("99.00"), customerCount = 50)
+        val starterPlan = Plan(
+            id = "starter_1", name = "Starter", price = BigDecimal("29.00"), customerCount = 100
+        )
+        val proPlan =
+            Plan(id = "pro_2", name = "Pro", price = BigDecimal("99.00"), customerCount = 50)
         val baseline = BusinessProfile(
             monthlyChurnRate = 0.03,
             monthlyGrowthRate = 0.08,

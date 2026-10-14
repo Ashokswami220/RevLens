@@ -92,7 +92,9 @@ class BreakEvenCalculatorTest {
             fixedCosts = BigDecimal("1000.00"), // Fixed = 1000
             variableCostPerCustomer = BigDecimal("10.00"), // Var = 10
             plans = listOf(
-                Plan(name = "Basic", price = BigDecimal("40.00"), customerCount = 1) // ARPU = 40, margin = 30
+                Plan(
+                    name = "Basic", price = BigDecimal("40.00"), customerCount = 1
+                ) // ARPU = 40, margin = 30
             )
         )
 

@@ -5,7 +5,6 @@ import com.example.revlens.model.MetricResult
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.NumberFormat
-import java.util.Currency
 import java.util.Locale
 
 object WhatIfEngine {
@@ -14,7 +13,8 @@ object WhatIfEngine {
      * Compares a baseline profile with a projected profile and returns a list of MetricResults.
      */
     fun compare(baseline: BusinessProfile, projected: BusinessProfile): List<MetricResult> {
-        val currencyFormatter = com.example.revlens.utils.CurrencyUtils.getFormatter(baseline.currencyCode)
+        val currencyFormatter =
+            com.example.revlens.utils.CurrencyUtils.getFormatter(baseline.currencyCode)
         val percentFormatter = NumberFormat.getPercentInstance(Locale.US)
             .apply {
                 maximumFractionDigits = 1
@@ -53,8 +53,12 @@ object WhatIfEngine {
         )
 
         // 3. LTV (Lifetime Value)
-        val baseLtv = LtvCalculator.calculateLtv(baseArpu, baseline.monthlyChurnRate, baseline.variableCostPerCustomer)
-        val projLtv = LtvCalculator.calculateLtv(projArpu, projected.monthlyChurnRate, projected.variableCostPerCustomer)
+        val baseLtv = LtvCalculator.calculateLtv(
+            baseArpu, baseline.monthlyChurnRate, baseline.variableCostPerCustomer
+        )
+        val projLtv = LtvCalculator.calculateLtv(
+            projArpu, projected.monthlyChurnRate, projected.variableCostPerCustomer
+        )
         val ltvDelta = calculatePercentDelta(baseLtv, projLtv)
 
         results.add(
@@ -96,8 +100,10 @@ object WhatIfEngine {
         )
 
         // 5. 12-Month Projected MRR
-        val base12Mo = ForecastEngine.forecast(baseline, 12).last().mrr
-        val proj12Mo = ForecastEngine.forecast(projected, 12).last().mrr
+        val base12Mo = ForecastEngine.forecast(baseline, 12)
+            .last().mrr
+        val proj12Mo = ForecastEngine.forecast(projected, 12)
+            .last().mrr
         val forecastDelta = calculatePercentDelta(base12Mo, proj12Mo)
 
         results.add(

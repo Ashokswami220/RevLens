@@ -45,7 +45,6 @@ import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
 import java.math.BigDecimal
 import java.text.NumberFormat
-import java.util.Currency
 import java.util.Locale
 
 @Composable
@@ -253,7 +252,9 @@ private fun ComparisonTable(
                     }
 
                     val arr = result.currentMrr.multiply(BigDecimal(12))
-                    val ltv = LtvCalculator.calculateLtv(result.arpu, result.monthlyChurnRate, result.variableCostPerCustomer)
+                    val ltv = LtvCalculator.calculateLtv(
+                        result.arpu, result.monthlyChurnRate, result.variableCostPerCustomer
+                    )
                     val payback = BreakEvenCalculator.calculateCacPaybackPeriod(result)
 
                     // Values

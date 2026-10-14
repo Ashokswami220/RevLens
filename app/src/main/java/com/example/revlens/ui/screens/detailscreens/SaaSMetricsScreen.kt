@@ -28,7 +28,6 @@ import com.example.revlens.ui.components.Sparkline
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
 import java.text.NumberFormat
-import java.util.Currency
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,7 +67,9 @@ fun SaaSMetricsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             profile?.let { p ->
-                val ltv = LtvCalculator.calculateLtv(p.arpu, p.monthlyChurnRate, p.variableCostPerCustomer)
+                val ltv = LtvCalculator.calculateLtv(
+                    p.arpu, p.monthlyChurnRate, p.variableCostPerCustomer
+                )
                 val payback = BreakEvenCalculator.calculateCacPaybackPeriod(p)
                 val ltvToCac = if (p.cac.toDouble() > 0) ltv.toDouble() / p.cac.toDouble() else 0.0
 

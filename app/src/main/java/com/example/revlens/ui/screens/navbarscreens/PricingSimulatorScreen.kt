@@ -1,7 +1,10 @@
 package com.example.revlens.ui.screens.navbarscreens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,8 +47,6 @@ import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
 import java.math.BigDecimal
-import java.text.NumberFormat
-import java.util.Currency
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -153,12 +154,20 @@ fun PricingSimulatorScreen(viewModel: MainViewModel) {
                     .toDouble() * 100
             } else 0.0
 
+            val isDark = isSystemInDarkTheme()
+            val cardBorder =
+                if (isDark) null else BorderStroke(1.dp, RevLensTheme.colors.borderDefault)
+            val borderModifier = if (cardBorder != null) Modifier.border(
+                cardBorder, RoundedCornerShape(16.dp)
+            ) else Modifier
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(RevLensTheme.colors.surfaceElevated)
-                    .padding(24.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(RevLensTheme.colors.surface)
+                    .then(borderModifier)
+                    .padding(20.dp)
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Text(

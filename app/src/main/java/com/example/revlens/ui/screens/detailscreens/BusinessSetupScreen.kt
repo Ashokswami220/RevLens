@@ -1,7 +1,12 @@
 package com.example.revlens.ui.screens.detailscreens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,13 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.DropdownMenu
@@ -96,7 +96,9 @@ fun BusinessSetupScreen(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(10.dp))
                             .background(RevLensTheme.colors.surfaceElevated)
-                            .border(1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(10.dp))
+                            .border(
+                                1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(10.dp)
+                            )
                             .clickable { currencyDropdownExpanded = true }
                             .padding(horizontal = 14.dp, vertical = 12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -128,7 +130,9 @@ fun BusinessSetupScreen(
                         onDismissRequest = { currencyDropdownExpanded = false },
                         modifier = Modifier
                             .background(RevLensTheme.colors.surface)
-                            .border(1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(8.dp))
+                            .border(
+                                1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(8.dp)
+                            )
                     ) {
                         CurrencyUtils.supportedCurrencies.forEach { curr ->
                             DropdownMenuItem(

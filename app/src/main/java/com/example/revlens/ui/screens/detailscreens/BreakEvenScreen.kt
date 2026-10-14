@@ -102,7 +102,9 @@ fun BreakEvenScreen(viewModel: MainViewModel) {
 
                     com.example.revlens.ui.components.RevLensLineChart(
                         data = listOf(revenueData, costData),
-                        colors = listOf(RevLensTheme.colors.brandPrimary, RevLensTheme.colors.error),
+                        colors = listOf(
+                            RevLensTheme.colors.brandPrimary, RevLensTheme.colors.error
+                        ),
                         xLabels = customerLabels
                     )
                     com.example.revlens.ui.components.ChartLegend(

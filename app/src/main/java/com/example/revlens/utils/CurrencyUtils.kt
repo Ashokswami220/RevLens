@@ -32,9 +32,10 @@ object CurrencyUtils {
 
     fun getFormatter(code: String?): NumberFormat {
         val curr = getCurrency(code)
-        return NumberFormat.getCurrencyInstance(curr.locale).apply {
-            currency = Currency.getInstance(curr.code)
-            maximumFractionDigits = 0
-        }
+        return NumberFormat.getCurrencyInstance(curr.locale)
+            .apply {
+                currency = Currency.getInstance(curr.code)
+                maximumFractionDigits = 0
+            }
     }
 }

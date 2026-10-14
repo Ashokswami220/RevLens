@@ -1,5 +1,6 @@
 package com.example.revlens.ui.navigation
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -94,7 +95,7 @@ fun RevLensNavGraph(
                             else -> DashboardRoute
                         }
                         navController.navigate(target) {
-                            popUpTo(navController.graph.startDestinationId) {
+                            popUpTo(DashboardRoute) {
                                 saveState = true
                             }
                             launchSingleTop = true
@@ -105,13 +106,37 @@ fun RevLensNavGraph(
             }
         }
     ) { innerPadding ->
+        val currentRoute = currentDestination?.route
+        val isNonDashboardTab = currentRoute != null &&
+                mainTabRoutes.any {
+                    it != null && it != DashboardRoute::class.qualifiedName && currentRoute.startsWith(
+                        it
+                    )
+                }
+
+        BackHandler(enabled = isNonDashboardTab) {
+            navController.navigate(DashboardRoute) {
+                popUpTo(DashboardRoute) {
+                    inclusive = false
+                }
+                launchSingleTop = true
+            }
+        }
         NavHost(
             navController = navController,
             startDestination = OnboardingRoute,
             modifier = modifier.padding(innerPadding),
             enterTransition = {
-                val isTargetMainTab = mainTabRoutes.any { it != null && targetState.destination.route?.startsWith(it) == true }
-                val isInitialMainTab = mainTabRoutes.any { it != null && initialState.destination.route?.startsWith(it) == true }
+                val isTargetMainTab = mainTabRoutes.any {
+                    it != null && targetState.destination.route?.startsWith(
+                        it
+                    ) == true
+                }
+                val isInitialMainTab = mainTabRoutes.any {
+                    it != null && initialState.destination.route?.startsWith(
+                        it
+                    ) == true
+                }
                 if (isTargetMainTab && isInitialMainTab) {
                     fadeIn(animationSpec = tween(ANIM_DURATION))
                 } else {
@@ -122,8 +147,16 @@ fun RevLensNavGraph(
                 }
             },
             exitTransition = {
-                val isTargetMainTab = mainTabRoutes.any { it != null && targetState.destination.route?.startsWith(it) == true }
-                val isInitialMainTab = mainTabRoutes.any { it != null && initialState.destination.route?.startsWith(it) == true }
+                val isTargetMainTab = mainTabRoutes.any {
+                    it != null && targetState.destination.route?.startsWith(
+                        it
+                    ) == true
+                }
+                val isInitialMainTab = mainTabRoutes.any {
+                    it != null && initialState.destination.route?.startsWith(
+                        it
+                    ) == true
+                }
                 if (isTargetMainTab && isInitialMainTab) {
                     fadeOut(animationSpec = tween(ANIM_DURATION))
                 } else {
@@ -134,8 +167,16 @@ fun RevLensNavGraph(
                 }
             },
             popEnterTransition = {
-                val isTargetMainTab = mainTabRoutes.any { it != null && targetState.destination.route?.startsWith(it) == true }
-                val isInitialMainTab = mainTabRoutes.any { it != null && initialState.destination.route?.startsWith(it) == true }
+                val isTargetMainTab = mainTabRoutes.any {
+                    it != null && targetState.destination.route?.startsWith(
+                        it
+                    ) == true
+                }
+                val isInitialMainTab = mainTabRoutes.any {
+                    it != null && initialState.destination.route?.startsWith(
+                        it
+                    ) == true
+                }
                 if (isTargetMainTab && isInitialMainTab) {
                     fadeIn(animationSpec = tween(ANIM_DURATION))
                 } else {
@@ -146,10 +187,24 @@ fun RevLensNavGraph(
                 }
             },
             popExitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { it },
-                    animationSpec = tween(ANIM_DURATION, easing = ANIM_EASING)
-                )
+                val isTargetMainTab = mainTabRoutes.any {
+                    it != null && targetState.destination.route?.startsWith(
+                        it
+                    ) == true
+                }
+                val isInitialMainTab = mainTabRoutes.any {
+                    it != null && initialState.destination.route?.startsWith(
+                        it
+                    ) == true
+                }
+                if (isTargetMainTab && isInitialMainTab) {
+                    fadeOut(animationSpec = tween(ANIM_DURATION))
+                } else {
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = tween(ANIM_DURATION, easing = ANIM_EASING)
+                    )
+                }
             }
         ) {
             composable<OnboardingRoute> {
@@ -168,13 +223,25 @@ fun RevLensNavGraph(
                         navController.navigate(InputDataRoute)
                     },
                     onNavigateToPricing = {
-                        navController.navigate(PricingSimulatorRoute(initialTab = 0))
+                        navController.navigate(PricingSimulatorRoute(initialTab = 0)) {
+                            popUpTo(DashboardRoute) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     },
                     onNavigateToWhatIf = {
-                        navController.navigate(PricingSimulatorRoute(initialTab = 1))
+                        navController.navigate(PricingSimulatorRoute(initialTab = 1)) {
+                            popUpTo(DashboardRoute) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     },
                     onNavigateToBreakEven = {
-                        navController.navigate(PricingSimulatorRoute(initialTab = 2))
+                        navController.navigate(PricingSimulatorRoute(initialTab = 2)) {
+                            popUpTo(DashboardRoute) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     },
                     onNavigateToSettings = {
                         navController.navigate(SettingsRoute)
@@ -204,7 +271,11 @@ fun RevLensNavGraph(
 
             composable<ScenarioBuilderRoute> {
                 ScenarioBuilderScreen(
-                    onNavigateToCreate = { navController.navigate(PricingSimulatorRoute(initialTab = 0)) },
+                    onNavigateToCreate = {
+                        navController.navigate(
+                            PricingSimulatorRoute(initialTab = 0)
+                        )
+                    },
                     onNavigateToCompare = { navController.navigate(ScenarioComparisonRoute) },
                     onNavigateToMetrics = { navController.navigate(MetricsRoute) }
                 )

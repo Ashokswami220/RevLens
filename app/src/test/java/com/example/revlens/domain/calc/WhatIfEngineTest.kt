@@ -71,7 +71,9 @@ class WhatIfEngineTest {
         val results = WhatIfEngine.compare(baseline, projected)
         val paybackResult = results.find { it.label == "CAC Payback" }
         assertEquals("Never", paybackResult!!.formattedValue)
-        org.junit.Assert.assertFalse("Payback of Never must be marked negative", paybackResult.isPositive)
+        org.junit.Assert.assertFalse(
+            "Payback of Never must be marked negative", paybackResult.isPositive
+        )
     }
 
     @Test
@@ -94,7 +96,10 @@ class WhatIfEngineTest {
         val results = WhatIfEngine.compare(baseline, projected)
         val forecastResult = results.find { it.label == "12-Mo MRR" }
 
-        assertTrue("Projected 12-Mo MRR should expand significantly", forecastResult!!.deltaPercent!! > 50.0)
+        assertTrue(
+            "Projected 12-Mo MRR should expand significantly",
+            forecastResult!!.deltaPercent!! > 50.0
+        )
         assertTrue(forecastResult.isPositive)
     }
 

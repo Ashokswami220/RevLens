@@ -102,7 +102,10 @@ fun RevLensBottomBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             items.forEach { item ->
-                val isSelected = currentRoute == item.route
+                val isSelected =
+                    currentRoute != null && item.route.isNotEmpty() && (currentRoute == item.route || currentRoute.startsWith(
+                        item.route
+                    ))
                 val color = if (isSelected) RevLensTheme.colors.brandPrimary
                 else RevLensTheme.colors.textTertiary
 

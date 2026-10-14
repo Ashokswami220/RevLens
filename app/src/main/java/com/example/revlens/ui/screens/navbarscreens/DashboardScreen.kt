@@ -1,8 +1,11 @@
 package com.example.revlens.ui.screens.navbarscreens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -61,19 +64,22 @@ import java.math.BigDecimal
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Currency
 import java.util.Locale
 
-// --- COLOR PALETTE TOKENS ---
-private val BgDark = Color(0xFF0E131C)
-private val CardBg = Color(0xFF1C2028)
-private val CardBorder = Color(0xFF262F40)
-private val CyanAccent = Color(0xFF06B6D4)
-private val EmeraldAccent = Color(0xFF10B981)
-private val CoralAccent = Color(0xFFF43F5E)
-private val TextWhite = Color(0xFFF8FAFC)
-private val TextMuted = Color(0xFF94A3B8)
-private val TextSubtle = Color(0xFF64748B)
+// --- THEME-AWARE DYNAMIC COLOR TOKENS ---
+private val BgColor: Color @Composable get() = RevLensTheme.colors.background
+private val CardBg: Color @Composable get() = RevLensTheme.colors.surface
+private val CardBorder: Color @Composable get() = RevLensTheme.colors.borderDefault
+private val CyanAccent: Color @Composable get() = RevLensTheme.colors.brandPrimary
+private val EmeraldAccent: Color @Composable get() = RevLensTheme.colors.brandTertiary
+private val CoralAccent: Color @Composable get() = RevLensTheme.colors.error
+private val TextPrimary: Color @Composable get() = RevLensTheme.colors.textPrimary
+private val TextMuted: Color @Composable get() = RevLensTheme.colors.textSecondary
+private val TextSubtle: Color @Composable get() = RevLensTheme.colors.textTertiary
+
+@Composable
+private fun adaptiveCardBorder(): BorderStroke? =
+    if (isSystemInDarkTheme()) null else BorderStroke(1.dp, CardBorder)
 
 @Composable
 fun DashboardScreen(
@@ -110,7 +116,9 @@ fun DashboardScreen(
                     Spacer(modifier = Modifier.width(4.dp))
                     TextButton(
                         onClick = onNavigateToInput,
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                            horizontal = 8.dp, vertical = 4.dp
+                        ),
                         modifier = Modifier.height(36.dp)
                     ) {
                         Icon(
@@ -131,7 +139,7 @@ fun DashboardScreen(
                 }
             )
         },
-        containerColor = BgDark
+        containerColor = BgColor
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -161,7 +169,7 @@ fun DashboardScreen(
                         text = "Welcome to RevLens!",
                         style = RevLensTypography.headlineMedium,
                         fontWeight = FontWeight.Bold,
-                        color = TextWhite
+                        color = TextPrimary
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
@@ -195,6 +203,10 @@ private fun DashboardContent(
     }
 
     // 1. Top Compact Simulator Action Buttons (Pricing, What-If, Break-Even)
+    val isDark = isSystemInDarkTheme()
+    val buttonBorder = if (isDark) null else BorderStroke(1.dp, CardBorder)
+    val buttonBg = if (isDark) CardBg else RevLensTheme.colors.surfaceElevated
+
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         modifier = Modifier.fillMaxWidth()
@@ -205,12 +217,13 @@ private fun DashboardContent(
                 .weight(1f)
                 .height(38.dp),
             shape = RoundedCornerShape(10.dp),
+            border = buttonBorder,
             colors = ButtonDefaults.buttonColors(
-                containerColor = CardBg,
-                contentColor = TextWhite
+                containerColor = buttonBg,
+                contentColor = TextPrimary
             )
         ) {
-            Text("Pricing", color = TextWhite, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Text("Pricing", color = TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
         }
 
         Button(
@@ -219,12 +232,13 @@ private fun DashboardContent(
                 .weight(1f)
                 .height(38.dp),
             shape = RoundedCornerShape(10.dp),
+            border = buttonBorder,
             colors = ButtonDefaults.buttonColors(
-                containerColor = CardBg,
-                contentColor = TextWhite
+                containerColor = buttonBg,
+                contentColor = TextPrimary
             )
         ) {
-            Text("What-If", color = TextWhite, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Text("What-If", color = TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
         }
 
         Button(
@@ -233,19 +247,23 @@ private fun DashboardContent(
                 .weight(1f)
                 .height(38.dp),
             shape = RoundedCornerShape(10.dp),
+            border = buttonBorder,
             colors = ButtonDefaults.buttonColors(
-                containerColor = CardBg,
-                contentColor = TextWhite
+                containerColor = buttonBg,
+                contentColor = TextPrimary
             )
         ) {
-            Text("Break-Even", color = TextWhite, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Text(
+                "Break-Even", color = TextPrimary, fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 
-    // 2. Hero MRR & ARR Card (Borderless, Rounded 16.dp)
+    // 2. Hero MRR & ARR Card (Borderless in Dark, Subtle Border in Light, Rounded 16.dp)
     HeroRevenueCard(profile = profile, currencyFormatter = currencyFormatter)
 
-    // 3. Growth Optimization Banner (Borderless, Rounded 16.dp)
+    // 3. Growth Optimization Banner (Borderless in Dark, Subtle Border in Light, Rounded 16.dp)
     GrowthOptimizationCard(
         profile = profile,
         currencyFormatter = currencyFormatter,
@@ -256,11 +274,14 @@ private fun DashboardContent(
     val customersGrowth = (profile.totalCustomers * profile.monthlyGrowthRate).toInt()
     val growthPercent = (profile.monthlyGrowthRate * 100).toInt()
 
-    val ltv = LtvCalculator.calculateLtv(profile.arpu, profile.monthlyChurnRate, profile.variableCostPerCustomer)
+    val ltv = LtvCalculator.calculateLtv(
+        profile.arpu, profile.monthlyChurnRate, profile.variableCostPerCustomer
+    )
     val ltvToCac = if (profile.cac > BigDecimal.ZERO) {
         ltv.toDouble() / profile.cac.toDouble()
     } else 0.0
-    val ltvBadge = if (ltvToCac > 0) "${String.format(Locale.US, "%.1f", ltvToCac)}x CAC" else "Healthy"
+    val ltvBadge =
+        if (ltvToCac > 0) "${String.format(Locale.US, "%.1f", ltvToCac)}x CAC" else "Healthy"
     val lifetimeMonths = if (profile.monthlyChurnRate > 0) {
         "${(1.0 / profile.monthlyChurnRate).toInt()} mo"
     } else {
@@ -300,7 +321,11 @@ private fun DashboardContent(
             title = "USER CHURN",
             value = "${String.format(Locale.US, "%.1f", profile.monthlyChurnRate * 100)}%",
             subValue = "benchmark <3%",
-            badge = if (profile.monthlyChurnRate <= 0.03) "Low" else "${String.format(Locale.US, "%.1f", profile.monthlyChurnRate * 100)}%",
+            badge = if (profile.monthlyChurnRate <= 0.03) "Low" else "${
+                String.format(
+                    Locale.US, "%.1f", profile.monthlyChurnRate * 100
+                )
+            }%",
             badgeColor = EmeraldAccent,
             sparklineType = SparklineType.DOWNWARD_GREEN,
             modifier = Modifier.weight(1f)
@@ -317,10 +342,10 @@ private fun DashboardContent(
         )
     }
 
-    // 5. MRR Forward Projection Chart Card (Borderless, Rounded 16.dp)
+    // 5. MRR Forward Projection Chart Card (Borderless in Dark, Subtle Border in Light, Rounded 16.dp)
     MrrTrajectoryChartCard(profile = profile, currencyFormatter = currencyFormatter)
 
-    // 6. Annual MRR Goal Tracker (Borderless, Rounded 16.dp)
+    // 6. Annual MRR Goal Tracker (Borderless in Dark, Subtle Border in Light, Rounded 16.dp)
     GoalTrackerCard(
         profile = profile,
         currencyFormatter = currencyFormatter,
@@ -338,10 +363,13 @@ private fun HeroRevenueCard(
     val mrr = profile.currentMrr
     val arr = mrr.multiply(BigDecimal(12))
     val netNew = mrr.multiply(BigDecimal.valueOf(profile.monthlyGrowthRate))
+    val isDark = isSystemInDarkTheme()
+    val greenBadgeColor = if (isDark) EmeraldAccent else RevLensTheme.colors.brandTertiaryText
 
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = CardBg,
+        border = adaptiveCardBorder(),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
@@ -366,8 +394,12 @@ private fun HeroRevenueCard(
                         .padding(horizontal = 7.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = "↗ +${String.format(Locale.US, "%.1f", profile.monthlyGrowthRate * 100)}%",
-                        color = EmeraldAccent,
+                        text = "↗ +${
+                            String.format(
+                                Locale.US, "%.1f", profile.monthlyGrowthRate * 100
+                            )
+                        }%",
+                        color = greenBadgeColor,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -377,7 +409,7 @@ private fun HeroRevenueCard(
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
                     text = currencyFormatter.format(mrr),
-                    color = TextWhite,
+                    color = TextPrimary,
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -403,7 +435,7 @@ private fun HeroRevenueCard(
                 )
                 Text(
                     text = "+${currencyFormatter.format(netNew)} net new",
-                    color = EmeraldAccent,
+                    color = greenBadgeColor,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -486,9 +518,16 @@ private fun GrowthOptimizationCard(
 ) {
     val potentialGrowth = BigDecimal.valueOf(5L * profile.totalCustomers.coerceAtLeast(1))
 
+    val isDark = isSystemInDarkTheme()
+    val simBtnBg = if (isDark) Color(0xFF222B3A) else RevLensTheme.colors.surfaceElevated
+    val simBtnBorder =
+        if (isDark) Modifier else Modifier.border(1.dp, CardBorder, RoundedCornerShape(8.dp))
+    val optTitleColor = if (isDark) CyanAccent else RevLensTheme.colors.brandPrimaryText
+
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = CardBg,
+        border = adaptiveCardBorder(),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -510,19 +549,23 @@ private fun GrowthOptimizationCard(
                     Icon(
                         imageVector = Icons.Outlined.Lightbulb,
                         contentDescription = null,
-                        tint = CyanAccent,
+                        tint = optTitleColor,
                         modifier = Modifier.size(20.dp)
                     )
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Text(
                         text = "Growth Optimization",
-                        color = CyanAccent,
+                        color = optTitleColor,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "+$5 ARPU adds +${currencyFormatter.format(potentialGrowth)} MRR at current volume",
+                        text = "+$5 ARPU adds +${
+                            currencyFormatter.format(
+                                potentialGrowth
+                            )
+                        } MRR at current volume",
                         color = TextMuted,
                         fontSize = 11.sp,
                         maxLines = 1
@@ -533,13 +576,14 @@ private fun GrowthOptimizationCard(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0xFF222B3A))
+                    .background(simBtnBg)
+                    .then(simBtnBorder)
                     .clickable(onClick = onSimulate)
                     .padding(horizontal = 10.dp, vertical = 7.dp)
             ) {
                 Text(
                     text = "Simulate ↗",
-                    color = TextWhite,
+                    color = TextPrimary,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -563,6 +607,7 @@ private fun MetricKpiCard(
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = CardBg,
+        border = adaptiveCardBorder(),
         modifier = modifier
     ) {
         Column(
@@ -597,7 +642,7 @@ private fun MetricKpiCard(
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
                     text = value,
-                    color = TextWhite,
+                    color = TextPrimary,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -630,6 +675,7 @@ private fun MetricKpiCard(
                         path.moveTo(0f, h * 0.85f)
                         path.cubicTo(w * 0.35f, h * 0.80f, w * 0.65f, h * 0.55f, w, h * 0.15f)
                     }
+
                     SparklineType.DOWNWARD_GREEN -> {
                         path.moveTo(0f, h * 0.25f)
                         path.cubicTo(w * 0.35f, h * 0.30f, w * 0.65f, h * 0.70f, w, h * 0.80f)
@@ -668,7 +714,9 @@ private fun MrrTrajectoryChartCard(
 ) {
     val mrr = profile.currentMrr
     val mrrFloat = mrr.toFloat()
-    val gRate = profile.monthlyGrowthRate.coerceAtLeast(0.005).toFloat()
+    val gRate = profile.monthlyGrowthRate.coerceAtLeast(0.005)
+        .toFloat()
+    val isDark = isSystemInDarkTheme()
 
     val trendData = remember(mrrFloat, gRate) {
         (0..5).map { monthAhead ->
@@ -690,6 +738,7 @@ private fun MrrTrajectoryChartCard(
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = CardBg,
+        border = adaptiveCardBorder(),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
@@ -704,29 +753,45 @@ private fun MrrTrajectoryChartCard(
                 Column {
                     Text(
                         text = "MRR Forward Projection",
-                        color = TextWhite,
+                        color = TextPrimary,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "6-Month Forecast (+${String.format(Locale.US, "%.1f", profile.monthlyGrowthRate * 100)}%/mo)",
+                        text = "6-Month Forecast (+${
+                            String.format(
+                                Locale.US, "%.1f", profile.monthlyGrowthRate * 100
+                            )
+                        }%/mo)",
                         color = TextMuted,
                         fontSize = 11.sp
                     )
                 }
+                val badgeBg = if (isDark) Color(0xFF142436) else CyanAccent.copy(alpha = 0.12f)
+                val badgeColor = if (isDark) CyanAccent else RevLensTheme.colors.brandPrimaryText
                 Box(
                     modifier = Modifier
-                        .background(Color(0xFF142436), RoundedCornerShape(6.dp))
+                        .background(badgeBg, RoundedCornerShape(6.dp))
                         .padding(horizontal = 7.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = "• Now: ${currencyFormatter.format(mrr)} → 6M: ${currencyFormatter.format(projected6M)}",
-                        color = CyanAccent,
+                        text = "• Now: ${
+                            currencyFormatter.format(
+                                mrr
+                            )
+                        } → 6M: ${currencyFormatter.format(projected6M)}",
+                        color = badgeColor,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
             }
+
+            val chartCyan = CyanAccent
+            val chartCardBorder = CardBorder
+            val chartCardBg = CardBg
+            val gridColor = chartCardBorder.copy(alpha = if (isDark) 0.4f else 0.7f)
+            val fillGradColor = chartCyan.copy(alpha = if (isDark) 0.25f else 0.16f)
 
             // Chart Canvas
             Box(
@@ -742,7 +807,7 @@ private fun MrrTrajectoryChartCard(
                     for (i in 1..3) {
                         val y = h * (i * 0.25f)
                         drawLine(
-                            color = CardBorder.copy(alpha = 0.4f),
+                            color = gridColor,
                             start = Offset(0f, y),
                             end = Offset(w, y),
                             strokeWidth = 1.dp.toPx()
@@ -769,14 +834,14 @@ private fun MrrTrajectoryChartCard(
                     drawPath(
                         path = fillPath,
                         brush = Brush.verticalGradient(
-                            colors = listOf(CyanAccent.copy(alpha = 0.25f), Color.Transparent)
+                            colors = listOf(fillGradColor, Color.Transparent)
                         )
                     )
 
                     // Stroke line
                     drawPath(
                         path = path,
-                        color = CyanAccent,
+                        color = chartCyan,
                         style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round)
                     )
 
@@ -788,22 +853,29 @@ private fun MrrTrajectoryChartCard(
                         Offset(w * 0.95f, h * 0.20f)
                     )
                     dots.forEach { pt ->
-                        drawCircle(color = BgDark, radius = 5.dp.toPx(), center = pt)
-                        drawCircle(color = CyanAccent, radius = 3.5.dp.toPx(), center = pt)
+                        drawCircle(color = chartCardBg, radius = 5.dp.toPx(), center = pt)
+                        drawCircle(color = chartCyan, radius = 3.5.dp.toPx(), center = pt)
                     }
                 }
 
                 // Callout Tooltip Badge
+                val tooltipBg =
+                    if (isDark) Color(0xFF202C3D) else RevLensTheme.colors.surfaceElevated
+                val tooltipBorderModifier = if (isDark) Modifier else Modifier.border(
+                    1.dp, CardBorder, RoundedCornerShape(4.dp)
+                )
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(end = 12.dp)
-                        .background(Color(0xFF202C3D), RoundedCornerShape(4.dp))
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(tooltipBg)
+                        .then(tooltipBorderModifier)
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Text(
                         text = "6M Target: ${currencyFormatter.format(projected6M)}",
-                        color = TextWhite,
+                        color = TextPrimary,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -817,9 +889,11 @@ private fun MrrTrajectoryChartCard(
             ) {
                 forward6Months.forEach { m ->
                     val isCurrent = m.contains("(Now)")
+                    val monthColor =
+                        if (isCurrent) (if (isDark) CyanAccent else RevLensTheme.colors.brandPrimaryText) else TextSubtle
                     Text(
                         text = m,
-                        color = if (isCurrent) CyanAccent else TextSubtle,
+                        color = monthColor,
                         fontSize = 10.sp,
                         fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal
                     )
@@ -839,6 +913,7 @@ private fun GoalTrackerCard(
     val mrr = profile.currentMrr
     val targetGoal = profile.mrrGoal
     val hasGoal = targetGoal != null && targetGoal > BigDecimal.ZERO
+    val isDark = isSystemInDarkTheme()
     val rawProgress = if (hasGoal) {
         (mrr.toDouble() / targetGoal!!.toDouble()).toFloat()
     } else {
@@ -848,6 +923,7 @@ private fun GoalTrackerCard(
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = CardBg,
+        border = adaptiveCardBorder(),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
@@ -867,16 +943,19 @@ private fun GoalTrackerCard(
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 0.5.sp
                 )
+                val goalBtnBg = if (isDark) Color(0xFF222B3A) else CyanAccent.copy(alpha = 0.12f)
+                val goalBtnTextColor =
+                    if (isDark) CyanAccent else RevLensTheme.colors.brandPrimaryText
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
-                        .background(Color(0xFF222B3A))
+                        .background(goalBtnBg)
                         .clickable(onClick = onNavigateToGoalPlanner)
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
                         text = if (hasGoal) "Edit Goal ↗" else "Set Goal ↗",
-                        color = CyanAccent,
+                        color = goalBtnTextColor,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -906,7 +985,7 @@ private fun GoalTrackerCard(
                     Column {
                         Text(
                             text = "Current: ${currencyFormatter.format(mrr)}",
-                            color = TextWhite,
+                            color = TextPrimary,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -917,7 +996,8 @@ private fun GoalTrackerCard(
                         )
                     }
 
-                    val remaining = targetGoal!!.subtract(mrr).coerceAtLeast(BigDecimal.ZERO)
+                    val remaining = targetGoal!!.subtract(mrr)
+                        .coerceAtLeast(BigDecimal.ZERO)
                     Text(
                         text = "${currencyFormatter.format(remaining)} to go",
                         color = if (remaining > BigDecimal.ZERO) TextMuted else EmeraldAccent,
@@ -937,7 +1017,9 @@ private fun GoalTrackerCard(
                     colors = ButtonDefaults.buttonColors(containerColor = CyanAccent),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Set Your MRR Goal", color = Color(0xFF0A1118), fontWeight = FontWeight.Bold)
+                    Text(
+                        "Set Your MRR Goal", color = Color(0xFF0A1118), fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }

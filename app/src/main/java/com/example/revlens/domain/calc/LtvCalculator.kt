@@ -22,7 +22,8 @@ object LtvCalculator {
         variableCostPerCustomer: BigDecimal = BigDecimal.ZERO,
         maxMonthsHorizon: Int = 60
     ): BigDecimal {
-        val netMarginPerCustomer = arpu.subtract(variableCostPerCustomer).coerceAtLeast(BigDecimal.ZERO)
+        val netMarginPerCustomer = arpu.subtract(variableCostPerCustomer)
+            .coerceAtLeast(BigDecimal.ZERO)
         if (netMarginPerCustomer <= BigDecimal.ZERO) return BigDecimal.ZERO
 
         // If churn is 0 or negative (100% retention), cap to a realistic 5-year maximum horizon
