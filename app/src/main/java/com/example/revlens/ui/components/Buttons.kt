@@ -1,5 +1,7 @@
 package com.example.revlens.ui.components
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -29,6 +31,14 @@ fun PrimaryButton(
     enabled: Boolean = true,
     isLoading: Boolean = false
 ) {
+    val isDark = isSystemInDarkTheme()
+    val border = if (isDark) null else BorderStroke(1.dp, Color(0x33334155))
+    val elevation = if (isDark) {
+        ButtonDefaults.buttonElevation()
+    } else {
+        ButtonDefaults.buttonElevation(defaultElevation = 2.dp, pressedElevation = 0.dp)
+    }
+
     Button(
         onClick = onClick,
         modifier = modifier
@@ -36,6 +46,8 @@ fun PrimaryButton(
             .height(52.dp),
         enabled = enabled && !isLoading,
         shape = CircleShape, // Pill shape
+        border = border,
+        elevation = elevation,
         colors = ButtonDefaults.buttonColors(
             containerColor = RevLensTheme.colors.primaryAction,
             contentColor = RevLensTheme.colors.onPrimaryAction,

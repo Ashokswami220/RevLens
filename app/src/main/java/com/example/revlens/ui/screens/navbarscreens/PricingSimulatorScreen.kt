@@ -95,58 +95,34 @@ fun PricingSimulatorScreen(viewModel: MainViewModel) {
                 selectedPlanId = profile!!.plans.first().id
             }
 
-            // Plan Chips
-            Text(
-                "Plan", style = RevLensTypography.titleMedium,
-                color = RevLensTheme.colors.textPrimary
-            )
+            // Plan Selector Row
             Row(
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                profile!!.plans.forEach { plan ->
-                    ChoiceChip(
-                        text = plan.name,
-                        selected = selectedPlanId == plan.id,
-                        onClick = { selectedPlanId = plan.id }
-                    )
+                Text(
+                    text = "Plan",
+                    style = RevLensTypography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = RevLensTheme.colors.textPrimary
+                )
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    profile!!.plans.forEach { plan ->
+                        ChoiceChip(
+                            text = plan.name,
+                            selected = selectedPlanId == plan.id,
+                            onClick = { selectedPlanId = plan.id }
+                        )
+                    }
                 }
             }
 
-            val currentPlan = profile!!.plans.find { it.id == selectedPlanId }
-
-            if (currentPlan != null) {
-                SectionCard(title = "Price") {
-                    val currentPrice = currentPlan.price.toDouble()
-                    val newPrice = currentPrice * (1.0 + assumptions.priceChangePercent)
-
-                    LabeledSlider(
-                        label = "New price",
-                        value = priceChangePercent,
-                        onValueChange = { priceChangePercent = it },
-                        valueRange = -50f..100f,
-                        valueString = "$${newPrice.toInt()}",
-                        caption = "Current: $${currentPrice.toInt()}"
-                    )
-                }
-
-                SectionCard(title = "Assumptions") {
-                    LabeledSlider(
-                        label = "Churn change",
-                        value = churnChangePercent,
-                        onValueChange = { churnChangePercent = it },
-                        valueRange = -10f..10f,
-                        valueString = "${
-                            String.format(
-                                Locale.US, "%.1f", churnChangePercent
-                            )
-                        }%",
-                        caption = "Projected impact on churn"
-                    )
-                }
-            }
-
-            // Result Hero Card
+            // 1. New Projected MRR Hero Card (at the top)
             val projected = PricingSimulationEngine.simulate(profile!!, assumptions, selectedPlanId)
             val mrrDelta = if (profile!!.currentMrr.compareTo(BigDecimal.ZERO) > 0) {
                 (projected.currentMrr - profile!!.currentMrr)
@@ -219,6 +195,99 @@ fun PricingSimulatorScreen(viewModel: MainViewModel) {
                 }
             }
 
+            val currentPlan = profile!!.plans.find { it.id == selectedPlanId }
+
+            if (currentPlan != null) {
+                val currentPrice = currentPlan.price.toDouble()
+                val newPrice = currentPrice * (1.0 + assumptions.priceChangePercent)
+
+                // 2. Price Card (Compact, no redundant stacked labels)
+                SectionCard {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Price",
+                                style = RevLensTypography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = RevLensTheme.colors.textPrimary
+                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = "Current: $${currentPrice.toInt()}",
+                                    style = RevLensTypography.bodySmall,
+                                    color = RevLensTheme.colors.textTertiary
+                                )
+                                Text(
+                                    text = "→",
+                                    style = RevLensTypography.bodySmall,
+                                    color = RevLensTheme.colors.textTertiary
+                                )
+                                Text(
+                                    text = "$${newPrice.toInt()}",
+                                    style = RevLensTypography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = RevLensTheme.colors.textPrimary
+                                )
+                            }
+                        }
+
+                        LabeledSlider(
+                            label = "",
+                            value = priceChangePercent,
+                            onValueChange = { priceChangePercent = it },
+                            valueRange = -50f..100f,
+                            valueString = ""
+                        )
+                    }
+                }
+
+                // 3. Assumptions Card (Compact, no redundant stacked labels)
+                SectionCard {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Churn Impact",
+                                style = RevLensTypography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = RevLensTheme.colors.textPrimary
+                            )
+                            val churnSign = if (churnChangePercent > 0) "+" else ""
+                            val churnColor = when {
+                                churnChangePercent > 0 -> RevLensTheme.colors.error
+                                churnChangePercent < 0 -> RevLensTheme.colors.success
+                                else -> RevLensTheme.colors.textPrimary
+                            }
+                            Text(
+                                text = "$churnSign${String.format(Locale.US, "%.1f", churnChangePercent)}%",
+                                style = RevLensTypography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = churnColor
+                            )
+                        }
+
+                        LabeledSlider(
+                            label = "",
+                            value = churnChangePercent,
+                            onValueChange = { churnChangePercent = it },
+                            valueRange = -10f..10f,
+                            valueString = ""
+                        )
+                    }
+                }
+            }
+
+            // 4. Save as Scenario Button
             PrimaryButton(
                 text = "Save as Scenario",
                 onClick = { showSaveDialog = true }

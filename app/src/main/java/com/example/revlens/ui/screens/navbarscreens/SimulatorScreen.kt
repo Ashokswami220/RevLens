@@ -12,9 +12,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.revlens.presentation.MainViewModel
@@ -37,6 +39,7 @@ fun SimulatorScreen(
         pageCount = { 3 }
     )
     val coroutineScope = rememberCoroutineScope()
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     androidx.compose.runtime.LaunchedEffect(initialTab) {
         if (pagerState.currentPage != initialTab) {
@@ -45,48 +48,47 @@ fun SimulatorScreen(
     }
 
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            RevLensTopAppBar(
-                title = "Simulator",
-                actions = {
-                    IconButton(onClick = onNavigateToMetrics) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ShowChart,
-                            contentDescription = "Metrics",
-                            tint = RevLensTheme.colors.textPrimary
-                        )
+            Column {
+                RevLensTopAppBar(
+                    title = "Simulator",
+                    scrollBehavior = scrollBehavior,
+                    actions = {
+                        IconButton(onClick = onNavigateToMetrics) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ShowChart,
+                                contentDescription = "Metrics",
+                                tint = RevLensTheme.colors.textPrimary
+                            )
+                        }
                     }
-                }
-            )
+                )
+                SegmentedTabs(
+                    options = listOf("Pricing", "What-If", "Break-Even"),
+                    selectedIndex = pagerState.currentPage,
+                    onOptionSelected = { index ->
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(index)
+                        }
+                    },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                )
+            }
         },
         containerColor = RevLensTheme.colors.background
     ) { paddingValues ->
-        Column(
+        HorizontalPager(
+            state = pagerState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-        ) {
-            SegmentedTabs(
-                options = listOf("Pricing", "What-If", "Break-Even"),
-                selectedIndex = pagerState.currentPage,
-                onOptionSelected = { index ->
-                    coroutineScope.launch {
-                        pagerState.animateScrollToPage(index)
-                    }
-                },
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize()
-            ) { page ->
-                when (page) {
-                    0 -> PricingSimulatorScreen(viewModel = viewModel)
-                    1 -> WhatIfScreen(viewModel = viewModel)
-                    2 -> BreakEvenScreen(viewModel = viewModel)
-                }
+        ) { page ->
+            when (page) {
+                0 -> PricingSimulatorScreen(viewModel = viewModel)
+                1 -> WhatIfScreen(viewModel = viewModel)
+                2 -> BreakEvenScreen(viewModel = viewModel)
             }
         }
     }

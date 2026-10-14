@@ -56,25 +56,32 @@ fun LabeledSlider(
     val innerRadius = 3.dp
 
     Column(modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = label,
-                style = RevLensTypography.bodyLarge,
-                color = RevLensTheme.colors.textPrimary,
-                modifier = Modifier.weight(1f)
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = valueString,
-                style = RevLensTypography.bodyMedium,
-                color = RevLensTheme.colors.textPrimary
-            )
+        if (label.isNotEmpty() || valueString.isNotEmpty()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (label.isNotEmpty()) {
+                    Text(
+                        text = label,
+                        style = RevLensTypography.bodyLarge,
+                        color = RevLensTheme.colors.textPrimary,
+                        modifier = Modifier.weight(1f)
+                    )
+                } else {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+                if (valueString.isNotEmpty()) {
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(
+                        text = valueString,
+                        style = RevLensTypography.bodyMedium,
+                        color = RevLensTheme.colors.textPrimary
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(6.dp))
         }
-
-        Spacer(modifier = Modifier.height(6.dp))
 
         val fraction = if (valueRange.endInclusive > valueRange.start) {
             ((value - valueRange.start) / (valueRange.endInclusive - valueRange.start)).coerceIn(

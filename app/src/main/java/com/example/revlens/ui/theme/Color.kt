@@ -6,7 +6,7 @@ import androidx.compose.ui.graphics.Color
 val LightBackground = Color(0xFFFFFFFF)
 val LightSurface = Color(0xFFF8FAFC)
 val LightSurfaceElevated = Color(0xFFF1F5F9)
-val LightPrimaryAction = Color(0xFF0F172A)
+val LightPrimaryAction = Color(0xFF1E293B)
 val LightOnPrimaryAction = Color(0xFFFFFFFF)
 val LightAccentBlue = Color(0xFF2563EB)
 val LightSuccess = Color(0xFF059669)

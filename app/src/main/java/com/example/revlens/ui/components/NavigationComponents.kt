@@ -43,6 +43,24 @@ fun RevLensTopAppBar(
     onBackClick: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {}
 ) {
+    RevLensTopAppBar(
+        title = title,
+        scrollBehavior = null,
+        modifier = modifier,
+        onBackClick = onBackClick,
+        actions = actions
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RevLensTopAppBar(
+    title: String,
+    scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior?,
+    modifier: Modifier = Modifier,
+    onBackClick: (() -> Unit)? = null,
+    actions: @Composable RowScope.() -> Unit = {}
+) {
     TopAppBar(
         title = {
             Text(
@@ -64,6 +82,7 @@ fun RevLensTopAppBar(
             }
         },
         actions = actions,
+        scrollBehavior = scrollBehavior,
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = RevLensTheme.colors.background,
             scrolledContainerColor = RevLensTheme.colors.background,
