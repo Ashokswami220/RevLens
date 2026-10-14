@@ -46,6 +46,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -356,35 +357,42 @@ private fun ForecastKpiTile(
 ) {
     Column(
         modifier = modifier
+            .height(82.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(RevLensTheme.colors.surfaceElevated.copy(alpha = 0.5f))
             .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
             Text(
                 text = label,
                 style = RevLensTypography.labelSmall,
                 color = RevLensTheme.colors.textTertiary,
-                fontSize = 10.sp
+                fontSize = 10.sp,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false)
             )
+            Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = badge,
                 style = RevLensTypography.labelSmall,
                 fontWeight = FontWeight.Bold,
                 color = badgeColor,
-                fontSize = 11.sp
+                fontSize = 11.sp,
+                maxLines = 1
             )
         }
         Text(
             text = value,
             style = RevLensTypography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = RevLensTheme.colors.textPrimary
+            color = RevLensTheme.colors.textPrimary,
+            maxLines = 1
         )
     }
 }
