@@ -61,12 +61,10 @@ import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.components.SegmentedTabs
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
+import com.example.revlens.utils.CurrencyUtils
+import com.example.revlens.utils.DateUtils
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.text.NumberFormat
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,7 +79,7 @@ fun ForecastScreen(
     var isBreakdownExpanded by remember { mutableStateOf(false) }
 
     val currencyFormatter = remember(profile?.currencyCode) {
-        com.example.revlens.utils.CurrencyUtils.getFormatter(profile?.currencyCode)
+        CurrencyUtils.getFormatter(profile?.currencyCode)
     }
 
     val forecastData = remember(profile, selectedMonths) {
@@ -90,15 +88,7 @@ fun ForecastScreen(
 
     // Dynamic Calendar Month Labels (e.g. "Nov 2026", "Dec 2026")
     val monthLabels = remember(selectedMonths) {
-        val cal = Calendar.getInstance()
-        val fmtFull = SimpleDateFormat("MMM yyyy", Locale.US)
-        val fmtShort = SimpleDateFormat("MMM", Locale.US)
-        (0..selectedMonths).map { index ->
-            val full = if (index == 0) "${fmtShort.format(cal.time)} (Now)" else fmtFull.format(cal.time)
-            val short = if (index == 0) "Now" else fmtShort.format(cal.time)
-            cal.add(Calendar.MONTH, 1)
-            Pair(full, short)
-        }
+        DateUtils.getForecastMonthLabels(selectedMonths)
     }
 
     Scaffold(
@@ -158,7 +148,7 @@ fun ForecastScreen(
                             ForecastKpiTile(
                                 label = "PROJECTED MRR",
                                 value = currencyFormatter.format(finalMonth.mrr),
-                                badge = "+${String.format(Locale.US, "%.1f", mrrGrowthPct)}%",
+                                badge = "+${CurrencyUtils.formatPercent(mrrGrowthPct, isFraction = false, maxFractionDigits = 1)}",
                                 badgeColor = RevLensTheme.colors.success,
                                 modifier = Modifier.weight(1f)
                             )

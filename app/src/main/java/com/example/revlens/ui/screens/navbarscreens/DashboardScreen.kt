@@ -63,11 +63,11 @@ import com.example.revlens.ui.components.ProgressRing
 import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
+import com.example.revlens.utils.DateUtils
+import com.example.revlens.utils.RevLensFormatter
 import java.math.BigDecimal
-import java.text.NumberFormat
-import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.Locale
+import kotlin.math.pow
 
 // --- THEME-AWARE DYNAMIC COLOR TOKENS ---
 private val BgColor: Color @Composable get() = RevLensTheme.colors.background
@@ -375,7 +375,7 @@ private fun DashboardContent(
 @Composable
 private fun HeroRevenueCard(
     profile: BusinessProfile,
-    currencyFormatter: NumberFormat
+    currencyFormatter: RevLensFormatter
 ) {
     val mrr = profile.currentMrr
     val arr = mrr.multiply(BigDecimal(12))
@@ -530,7 +530,7 @@ private fun LegendItem(color: Color, label: String) {
 @Composable
 private fun GrowthOptimizationCard(
     profile: BusinessProfile,
-    currencyFormatter: NumberFormat,
+    currencyFormatter: RevLensFormatter,
     onSimulate: () -> Unit
 ) {
     val potentialGrowth = BigDecimal.valueOf(5L * profile.totalCustomers.coerceAtLeast(1))
@@ -727,7 +727,7 @@ private fun MetricKpiCard(
 @Composable
 private fun MrrTrajectoryChartCard(
     profile: BusinessProfile,
-    currencyFormatter: NumberFormat
+    currencyFormatter: RevLensFormatter
 ) {
     val mrr = profile.currentMrr
     val mrrFloat = mrr.toFloat()
@@ -737,19 +737,13 @@ private fun MrrTrajectoryChartCard(
 
     val trendData = remember(mrrFloat, gRate) {
         (0..5).map { monthAhead ->
-            (mrrFloat * Math.pow(1.0 + gRate.toDouble(), monthAhead.toDouble())).toFloat()
+            (mrrFloat * (1.0 + gRate.toDouble()).pow(monthAhead.toDouble())).toFloat()
         }
     }
     val projected6M = trendData.last()
 
     val forward6Months = remember {
-        val cal = Calendar.getInstance()
-        val fmt = SimpleDateFormat("MMM", Locale.US)
-        (0 until 6).map { idx ->
-            val name = fmt.format(cal.time)
-            cal.add(Calendar.MONTH, 1)
-            if (idx == 0) "$name (Now)" else name
-        }
+        DateUtils.getForwardMonthNames(6)
     }
 
     Surface(
@@ -924,7 +918,7 @@ private fun MrrTrajectoryChartCard(
 @Composable
 private fun GoalTrackerCard(
     profile: BusinessProfile,
-    currencyFormatter: NumberFormat,
+    currencyFormatter: RevLensFormatter,
     onNavigateToGoalPlanner: () -> Unit
 ) {
     val mrr = profile.currentMrr

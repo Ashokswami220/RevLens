@@ -27,8 +27,7 @@ import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.components.Sparkline
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
-import java.text.NumberFormat
-import java.util.Locale
+import com.example.revlens.utils.CurrencyUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,14 +38,11 @@ fun SaaSMetricsScreen(
     val profile by viewModel.profile.collectAsState()
 
     val currencyFormatter = remember(profile?.currencyCode) {
-        com.example.revlens.utils.CurrencyUtils.getFormatter(profile?.currencyCode)
+        CurrencyUtils.getFormatter(profile?.currencyCode)
     }
 
     val percentFormatter = remember {
-        NumberFormat.getPercentInstance(Locale.US)
-            .apply {
-                maximumFractionDigits = 1
-            }
+        CurrencyUtils.getPercentFormatter(1)
     }
 
     Scaffold(

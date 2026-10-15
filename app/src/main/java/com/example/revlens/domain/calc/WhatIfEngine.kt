@@ -2,10 +2,9 @@ package com.example.revlens.domain.calc
 
 import com.example.revlens.model.BusinessProfile
 import com.example.revlens.model.MetricResult
+import com.example.revlens.utils.CurrencyUtils
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.text.NumberFormat
-import java.util.Locale
 
 object WhatIfEngine {
 
@@ -13,12 +12,8 @@ object WhatIfEngine {
      * Compares a baseline profile with a projected profile and returns a list of MetricResults.
      */
     fun compare(baseline: BusinessProfile, projected: BusinessProfile): List<MetricResult> {
-        val currencyFormatter =
-            com.example.revlens.utils.CurrencyUtils.getFormatter(baseline.currencyCode)
-        val percentFormatter = NumberFormat.getPercentInstance(Locale.US)
-            .apply {
-                maximumFractionDigits = 1
-            }
+        val currencyFormatter = CurrencyUtils.getFormatter(baseline.currencyCode)
+        val percentFormatter = CurrencyUtils.getPercentFormatter(1)
 
         val results = mutableListOf<MetricResult>()
 
@@ -89,11 +84,7 @@ object WhatIfEngine {
             MetricResult(
                 label = "CAC Payback",
                 value = BigDecimal.valueOf(projPayback ?: 0.0),
-                formattedValue = if (projPayback != null) "${
-                    String.format(
-                        Locale.US, "%.1f", projPayback
-                    )
-                } mo" else "Never",
+                formattedValue = if (projPayback != null) "${CurrencyUtils.formatDecimal(projPayback, 1)} mo" else "Never",
                 deltaPercent = paybackDelta,
                 isPositive = isPaybackPositive
             )

@@ -43,9 +43,9 @@ import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
+import com.example.revlens.utils.CurrencyUtils
+import com.example.revlens.utils.RevLensFormatter
 import java.math.BigDecimal
-import java.text.NumberFormat
-import java.util.Locale
 
 @Composable
 fun ScenarioComparisonScreen(
@@ -56,15 +56,11 @@ fun ScenarioComparisonScreen(
     val profile by viewModel.profile.collectAsState()
 
     val currencyFormatter = remember(profile?.currencyCode) {
-        com.example.revlens.utils.CurrencyUtils.getFormatter(profile?.currencyCode)
+        CurrencyUtils.getFormatter(profile?.currencyCode)
     }
 
     val percentFormatter = remember {
-        NumberFormat.getPercentInstance(Locale.US)
-            .apply {
-                minimumFractionDigits = 1
-                maximumFractionDigits = 1
-            }
+        CurrencyUtils.getPercentFormatter(1)
     }
 
     // Default to the first two scenarios
@@ -198,8 +194,8 @@ fun ScenarioComparisonScreen(
 private fun ComparisonTable(
     profile: BusinessProfile,
     scenarios: List<Scenario>,
-    currencyFormatter: NumberFormat,
-    percentFormatter: NumberFormat
+    currencyFormatter: RevLensFormatter,
+    percentFormatter: RevLensFormatter
 ) {
     val results = scenarios.map { scenario ->
         PricingSimulationEngine.simulate(scenario.baselineProfile, scenario.assumptions)
@@ -263,7 +259,7 @@ private fun ComparisonTable(
                     TableValue(percentFormatter.format(result.monthlyChurnRate))
                     TableValue(currencyFormatter.format(ltv))
                     TableValue(
-                        if (payback != null) String.format(Locale.US, "%.1f mo", payback) else "N/A"
+                        if (payback != null) "${CurrencyUtils.formatDecimal(payback, 1)} mo" else "N/A"
                     )
                 }
             }

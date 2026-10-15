@@ -30,7 +30,7 @@ import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
-import java.text.NumberFormat
+import com.example.revlens.utils.RevLensFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -114,7 +114,7 @@ fun ScenarioBuilderScreen(
 @Composable
 fun ScenarioCard(
     scenario: Scenario,
-    currencyFormatter: NumberFormat,
+    currencyFormatter: RevLensFormatter,
     onDelete: () -> Unit
 ) {
     SectionCard(title = scenario.name) {
