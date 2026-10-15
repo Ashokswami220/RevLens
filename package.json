@@ -1,0 +1,11 @@
+{
+  "name": "revlens",
+  "version": "1.0.0",
+  "private": true,
+  "description": "RevLens Compose Multiplatform WebAssembly application",
+  "scripts": {
+    "build": "./gradlew wasmJsBrowserDistribution",
+    "serve": "python3 scripts/serve.py",
+    "deploy": "vercel --prod"
+  }
+}
