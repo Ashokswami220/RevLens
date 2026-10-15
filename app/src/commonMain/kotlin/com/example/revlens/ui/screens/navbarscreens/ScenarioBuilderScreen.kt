@@ -36,6 +36,7 @@ import com.example.revlens.utils.RevLensFormatter
 @Composable
 fun ScenarioBuilderScreen(
     viewModel: MainViewModel = koinViewModel(),
+    onNavigateBack: (() -> Unit)? = null,
     onNavigateToCreate: () -> Unit,
     onNavigateToCompare: () -> Unit,
     onNavigateToMetrics: () -> Unit
@@ -52,6 +53,7 @@ fun ScenarioBuilderScreen(
         topBar = {
             RevLensTopAppBar(
                 title = "Scenarios",
+                onBackClick = null,
                 actions = {
                     androidx.compose.material3.IconButton(onClick = onNavigateToMetrics) {
                         androidx.compose.material3.Icon(

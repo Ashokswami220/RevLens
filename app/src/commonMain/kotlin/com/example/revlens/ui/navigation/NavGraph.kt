@@ -23,6 +23,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.toRoute
 import com.example.revlens.ui.components.BottomNavItem
 import com.example.revlens.ui.components.RevLensBottomBar
@@ -37,8 +38,24 @@ import com.example.revlens.ui.screens.navbarscreens.ScenarioBuilderScreen
 import com.example.revlens.ui.screens.navbarscreens.SettingsScreen
 import com.example.revlens.ui.screens.navbarscreens.SimulatorScreen
 
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import com.example.revlens.ui.components.LocalAppNavigator
+import com.example.revlens.ui.components.LocalCurrentTab
+
 private const val ANIM_DURATION = 350
 private val ANIM_EASING = FastOutSlowInEasing
+
+private fun isMainTab(route: String?): Boolean {
+    if (route == null) return false
+    return route.contains("Dashboard") ||
+            route.contains("PricingSimulator") ||
+            route.contains("Simulator") ||
+            (route.contains("Scenario") && !route.contains("ScenarioComparison")) ||
+            (route.contains("Forecast") && !route.contains("GoalPlanner")) ||
+            route.contains("Settings") ||
+            route.contains("Profile")
+}
 
 @Composable
 fun RevLensNavGraph(
@@ -47,95 +64,134 @@ fun RevLensNavGraph(
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    val currentRoute = currentDestination?.route ?: ""
 
-    val bottomNavItems = listOf(
-        BottomNavItem(
-            "Dashboard", Icons.Filled.Dashboard, DashboardRoute::class.qualifiedName ?: ""
-        ),
-        BottomNavItem(
-            "Simulator", Icons.Filled.Tune, PricingSimulatorRoute::class.qualifiedName ?: ""
-        ),
-        BottomNavItem(
-            "Scenarios", Icons.Filled.Layers, ScenarioBuilderRoute::class.qualifiedName ?: ""
-        ),
-        BottomNavItem(
-            "Forecast", Icons.AutoMirrored.Filled.TrendingUp,
-            ForecastRoute::class.qualifiedName ?: ""
-        ),
-        BottomNavItem("Profile", Icons.Filled.Person, SettingsRoute::class.qualifiedName ?: "")
-    )
-
-    val mainTabRoutes = setOf(
-        DashboardRoute::class.qualifiedName,
-        PricingSimulatorRoute::class.qualifiedName,
-        ScenarioBuilderRoute::class.qualifiedName,
-        ForecastRoute::class.qualifiedName,
-        SettingsRoute::class.qualifiedName
-    )
-
-    val showBottomBar = mainTabRoutes.any { prefix ->
-        prefix != null && currentDestination?.route?.startsWith(prefix) == true
+    val currentTab = when {
+        currentDestination?.hasRoute<DashboardRoute>() == true || currentRoute.contains("Dashboard") -> "Home"
+        currentDestination?.hasRoute<PricingSimulatorRoute>() == true || currentRoute.contains("PricingSimulator") || currentRoute.contains("Simulator") -> "Simulator"
+        currentDestination?.hasRoute<ScenarioBuilderRoute>() == true || (currentRoute.contains("ScenarioBuilder") || (currentRoute.contains("Scenario") && !currentRoute.contains("ScenarioComparison"))) -> "Scenarios"
+        currentDestination?.hasRoute<ForecastRoute>() == true || (currentRoute.contains("Forecast") && !currentRoute.contains("GoalPlanner")) -> "Forecast"
+        currentDestination?.hasRoute<SettingsRoute>() == true || currentRoute.contains("Settings") || currentRoute.contains("Profile") -> "Profile"
+        else -> null
     }
 
-    Scaffold(
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        bottomBar = {
-            if (showBottomBar) {
-                RevLensBottomBar(
-                    items = bottomNavItems,
-                    currentRoute = currentDestination?.route,
-                    onNavigate = { route ->
-                        val target: Any = when {
-                            route.contains("DashboardRoute") -> DashboardRoute
-                            route.contains("PricingSimulatorRoute") -> PricingSimulatorRoute(0)
-                            route.contains("ScenarioBuilderRoute") -> ScenarioBuilderRoute
-                            route.contains("ForecastRoute") -> ForecastRoute
-                            route.contains("SettingsRoute") -> SettingsRoute
-                            else -> DashboardRoute
-                        }
-                        navController.navigate(target) {
-                            popUpTo(DashboardRoute) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                )
-            }
-        }
-    ) { innerPadding ->
-        val currentRoute = currentDestination?.route
-        val isNonDashboardTab = currentRoute != null &&
-                mainTabRoutes.any {
-                    it != null && it != DashboardRoute::class.qualifiedName && currentRoute.startsWith(
-                        it
-                    )
-                }
+    val showBottomBar = currentTab != null
 
-        PlatformBackHandler(enabled = isNonDashboardTab) {
-            navController.navigate(DashboardRoute) {
-                popUpTo(DashboardRoute) {
-                    inclusive = false
-                }
+    val bottomNavItems = listOf(
+        BottomNavItem("Home", Icons.Filled.Dashboard, "Home"),
+        BottomNavItem("Simulator", Icons.Filled.Tune, "Simulator"),
+        BottomNavItem("Scenarios", Icons.Filled.Layers, "Scenarios"),
+        BottomNavItem("Forecast", Icons.AutoMirrored.Filled.TrendingUp, "Forecast"),
+        BottomNavItem("Profile", Icons.Filled.Person, "Profile")
+    )
+
+    val navigateToTab: (String) -> Unit = { tabKey ->
+        if (tabKey == "Home" || tabKey == "Dashboard") {
+            navController.popBackStack(DashboardRoute, inclusive = false)
+            BrowserRouter.updateUrl("home")
+        } else {
+            val target: Any = when (tabKey) {
+                "Simulator" -> PricingSimulatorRoute(0)
+                "Scenarios" -> ScenarioBuilderRoute
+                "Forecast" -> ForecastRoute
+                "Profile", "Settings" -> SettingsRoute
+                else -> DashboardRoute
+            }
+            navController.navigate(target) {
                 launchSingleTop = true
             }
+            val slug = when (tabKey) {
+                "Simulator" -> "simulator"
+                "Scenarios" -> "scenarios"
+                "Forecast" -> "forecast"
+                "Profile", "Settings" -> "settings"
+                else -> "home"
+            }
+            BrowserRouter.updateUrl(slug)
         }
-        NavHost(
-            navController = navController,
-            startDestination = OnboardingRoute,
-            modifier = modifier.padding(innerPadding),
+    }
+
+    LaunchedEffect(currentRoute) {
+        val slug = when {
+            currentDestination?.hasRoute<DashboardRoute>() == true || currentRoute.contains("Dashboard") -> "home"
+            currentDestination?.hasRoute<PricingSimulatorRoute>() == true || currentRoute.contains("Simulator") -> "simulator"
+            currentDestination?.hasRoute<ScenarioBuilderRoute>() == true || currentRoute.contains("ScenarioBuilder") -> "scenarios"
+            currentDestination?.hasRoute<ForecastRoute>() == true || currentRoute.contains("Forecast") -> "forecast"
+            currentDestination?.hasRoute<SettingsRoute>() == true || currentRoute.contains("Settings") -> "settings"
+            currentDestination?.hasRoute<MetricsRoute>() == true || currentRoute.contains("Metrics") -> "metrics"
+            currentDestination?.hasRoute<GoalPlannerRoute>() == true || currentRoute.contains("GoalPlanner") -> "goals"
+            currentDestination?.hasRoute<InputDataRoute>() == true || currentRoute.contains("InputData") -> "input"
+            currentDestination?.hasRoute<ScenarioComparisonRoute>() == true || currentRoute.contains("Comparison") -> "compare"
+            else -> null
+        }
+        if (slug != null) {
+            BrowserRouter.updateUrl(slug)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        val initial = BrowserRouter.getInitialRoute()
+        if (initial != null) {
+            when (initial.lowercase()) {
+                "simulator" -> navController.navigate(PricingSimulatorRoute(0)) { launchSingleTop = true }
+                "scenarios" -> navController.navigate(ScenarioBuilderRoute) { launchSingleTop = true }
+                "forecast" -> navController.navigate(ForecastRoute) { launchSingleTop = true }
+                "settings", "profile" -> navController.navigate(SettingsRoute) { launchSingleTop = true }
+                "metrics" -> navController.navigate(MetricsRoute) { launchSingleTop = true }
+                "goals", "goalplanner" -> navController.navigate(GoalPlannerRoute) { launchSingleTop = true }
+                "input" -> navController.navigate(InputDataRoute) { launchSingleTop = true }
+                "compare" -> navController.navigate(ScenarioComparisonRoute) { launchSingleTop = true }
+                "home", "dashboard" -> navController.popBackStack(DashboardRoute, inclusive = false)
+            }
+        }
+        BrowserRouter.onUrlChange { newRoute ->
+            when (newRoute.lowercase()) {
+                "simulator" -> navController.navigate(PricingSimulatorRoute(0)) { launchSingleTop = true }
+                "scenarios" -> navController.navigate(ScenarioBuilderRoute) { launchSingleTop = true }
+                "forecast" -> navController.navigate(ForecastRoute) { launchSingleTop = true }
+                "settings", "profile" -> navController.navigate(SettingsRoute) { launchSingleTop = true }
+                "metrics" -> navController.navigate(MetricsRoute) { launchSingleTop = true }
+                "goals", "goalplanner" -> navController.navigate(GoalPlannerRoute) { launchSingleTop = true }
+                "input" -> navController.navigate(InputDataRoute) { launchSingleTop = true }
+                "compare" -> navController.navigate(ScenarioComparisonRoute) { launchSingleTop = true }
+                "home", "dashboard" -> navController.popBackStack(DashboardRoute, inclusive = false)
+            }
+        }
+    }
+
+    CompositionLocalProvider(
+        LocalAppNavigator provides navigateToTab,
+        LocalCurrentTab provides (currentTab ?: "Home")
+    ) {
+        Scaffold(
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
+            bottomBar = {
+                if (showBottomBar) {
+                    RevLensBottomBar(
+                        items = bottomNavItems,
+                        currentRoute = currentTab,
+                        onNavigate = navigateToTab
+                    )
+                }
+            }
+        ) { innerPadding ->
+            val isNonDashboardTab = currentTab != null && currentTab != "Home" && currentTab != "Dashboard"
+
+            PlatformBackHandler(enabled = isNonDashboardTab) {
+                navController.navigate(DashboardRoute) {
+                    popUpTo(DashboardRoute) {
+                        inclusive = false
+                    }
+                    launchSingleTop = true
+                }
+            }
+            NavHost(
+                navController = navController,
+                startDestination = DashboardRoute,
+                modifier = modifier.padding(innerPadding),
             enterTransition = {
-                val isTargetMainTab = mainTabRoutes.any {
-                    it != null && targetState.destination.route?.startsWith(
-                        it
-                    ) == true
-                }
-                val isInitialMainTab = mainTabRoutes.any {
-                    it != null && initialState.destination.route?.startsWith(
-                        it
-                    ) == true
-                }
+                val isTargetMainTab = isMainTab(targetState.destination.route)
+                val isInitialMainTab = isMainTab(initialState.destination.route)
                 if (isTargetMainTab && isInitialMainTab) {
                     fadeIn(animationSpec = tween(ANIM_DURATION))
                 } else {
@@ -146,16 +202,8 @@ fun RevLensNavGraph(
                 }
             },
             exitTransition = {
-                val isTargetMainTab = mainTabRoutes.any {
-                    it != null && targetState.destination.route?.startsWith(
-                        it
-                    ) == true
-                }
-                val isInitialMainTab = mainTabRoutes.any {
-                    it != null && initialState.destination.route?.startsWith(
-                        it
-                    ) == true
-                }
+                val isTargetMainTab = isMainTab(targetState.destination.route)
+                val isInitialMainTab = isMainTab(initialState.destination.route)
                 if (isTargetMainTab && isInitialMainTab) {
                     fadeOut(animationSpec = tween(ANIM_DURATION))
                 } else {
@@ -166,16 +214,8 @@ fun RevLensNavGraph(
                 }
             },
             popEnterTransition = {
-                val isTargetMainTab = mainTabRoutes.any {
-                    it != null && targetState.destination.route?.startsWith(
-                        it
-                    ) == true
-                }
-                val isInitialMainTab = mainTabRoutes.any {
-                    it != null && initialState.destination.route?.startsWith(
-                        it
-                    ) == true
-                }
+                val isTargetMainTab = isMainTab(targetState.destination.route)
+                val isInitialMainTab = isMainTab(initialState.destination.route)
                 if (isTargetMainTab && isInitialMainTab) {
                     fadeIn(animationSpec = tween(ANIM_DURATION))
                 } else {
@@ -186,16 +226,8 @@ fun RevLensNavGraph(
                 }
             },
             popExitTransition = {
-                val isTargetMainTab = mainTabRoutes.any {
-                    it != null && targetState.destination.route?.startsWith(
-                        it
-                    ) == true
-                }
-                val isInitialMainTab = mainTabRoutes.any {
-                    it != null && initialState.destination.route?.startsWith(
-                        it
-                    ) == true
-                }
+                val isTargetMainTab = isMainTab(targetState.destination.route)
+                val isInitialMainTab = isMainTab(initialState.destination.route)
                 if (isTargetMainTab && isInitialMainTab) {
                     fadeOut(animationSpec = tween(ANIM_DURATION))
                 } else {
@@ -223,23 +255,17 @@ fun RevLensNavGraph(
                     },
                     onNavigateToPricing = {
                         navController.navigate(PricingSimulatorRoute(initialTab = 0)) {
-                            popUpTo(DashboardRoute) { saveState = true }
                             launchSingleTop = true
-                            restoreState = true
                         }
                     },
                     onNavigateToWhatIf = {
                         navController.navigate(PricingSimulatorRoute(initialTab = 1)) {
-                            popUpTo(DashboardRoute) { saveState = true }
                             launchSingleTop = true
-                            restoreState = true
                         }
                     },
                     onNavigateToBreakEven = {
                         navController.navigate(PricingSimulatorRoute(initialTab = 2)) {
-                            popUpTo(DashboardRoute) { saveState = true }
                             launchSingleTop = true
-                            restoreState = true
                         }
                     },
                     onNavigateToSettings = {
@@ -271,14 +297,8 @@ fun RevLensNavGraph(
             composable<ScenarioBuilderRoute> {
                 ScenarioBuilderScreen(
                     onNavigateToCreate = {
-                        navController.navigate(
-                            PricingSimulatorRoute(initialTab = 0)
-                        ) {
-                            popUpTo(DashboardRoute) {
-                                saveState = true
-                            }
+                        navController.navigate(PricingSimulatorRoute(initialTab = 0)) {
                             launchSingleTop = true
-                            restoreState = true
                         }
                     },
                     onNavigateToCompare = { navController.navigate(ScenarioComparisonRoute) },
@@ -312,10 +332,11 @@ fun RevLensNavGraph(
             }
 
             composable<SettingsRoute> {
-                SettingsScreen(
-                    onNavigateBack = { navController.popBackStack() }
-                )
+                SettingsScreen()
             }
         }
     }
 }
+}
+
+

@@ -32,6 +32,7 @@ import kotlinx.coroutines.launch
 fun SimulatorScreen(
     initialTab: Int = 0,
     viewModel: MainViewModel = koinViewModel(),
+    onNavigateBack: (() -> Unit)? = null,
     onNavigateToMetrics: () -> Unit
 ) {
     val pagerState = rememberPagerState(
@@ -55,6 +56,7 @@ fun SimulatorScreen(
                 RevLensTopAppBar(
                     title = "Simulator",
                     scrollBehavior = scrollBehavior,
+                    onBackClick = null,
                     actions = {
                         IconButton(onClick = onNavigateToMetrics) {
                             Icon(

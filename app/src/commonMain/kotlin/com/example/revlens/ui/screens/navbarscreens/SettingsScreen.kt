@@ -42,14 +42,17 @@ import com.example.revlens.ui.theme.RevLensTypography
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: (() -> Unit)? = null
 ) {
     var darkModeEnabled by remember { mutableStateOf(true) }
     var notificationsEnabled by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
-            RevLensTopAppBar(title = "Settings")
+            RevLensTopAppBar(
+                title = "Settings",
+                onBackClick = null
+            )
         },
         containerColor = RevLensTheme.colors.background
     ) { paddingValues ->

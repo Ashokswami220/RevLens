@@ -70,6 +70,7 @@ import com.example.revlens.model.RoundingMode
 @Composable
 fun ForecastScreen(
     viewModel: MainViewModel = koinViewModel(),
+    onNavigateBack: (() -> Unit)? = null,
     onNavigateToGoalPlanner: () -> Unit,
     onNavigateToMetrics: () -> Unit
 ) {
@@ -96,6 +97,7 @@ fun ForecastScreen(
         topBar = {
             RevLensTopAppBar(
                 title = "Revenue Forecast",
+                onBackClick = null,
                 actions = {
                     IconButton(onClick = onNavigateToMetrics) {
                         Icon(

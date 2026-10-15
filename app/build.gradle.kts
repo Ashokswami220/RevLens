@@ -50,6 +50,13 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
+
+        val androidInstrumentedTest by getting {
+            dependencies {
+                implementation(libs.androidx.junit)
+                implementation(libs.androidx.espresso.core)
+            }
+        }
     }
 }
 
