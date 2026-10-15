@@ -6,6 +6,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -16,6 +19,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -25,9 +29,11 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.toRoute
+import com.example.revlens.presentation.MainViewModel
 import com.example.revlens.ui.components.BottomNavItem
 import com.example.revlens.ui.components.RevLensBottomBar
-import com.example.revlens.ui.onboarding.OnboardingScreen
+import com.example.revlens.ui.onboarding.IntroScreen
+import com.example.revlens.ui.onboarding.OnboardingDataScreen
 import com.example.revlens.ui.screens.detailscreens.BusinessSetupScreen
 import com.example.revlens.ui.screens.detailscreens.GoalPlannerScreen
 import com.example.revlens.ui.screens.detailscreens.SaaSMetricsScreen
@@ -37,6 +43,8 @@ import com.example.revlens.ui.screens.navbarscreens.ForecastScreen
 import com.example.revlens.ui.screens.navbarscreens.ScenarioBuilderScreen
 import com.example.revlens.ui.screens.navbarscreens.SettingsScreen
 import com.example.revlens.ui.screens.navbarscreens.SimulatorScreen
+import com.example.revlens.ui.theme.RevLensTheme
+import org.koin.compose.viewmodel.koinViewModel
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -60,8 +68,20 @@ private fun isMainTab(route: String?): Boolean {
 @Composable
 fun RevLensNavGraph(
     modifier: Modifier = Modifier,
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    viewModel: MainViewModel = koinViewModel()
 ) {
+    val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsState()
+
+    if (isOnboardingCompleted == null) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(RevLensTheme.colors.background)
+        )
+        return
+    }
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val currentRoute = currentDestination?.route ?: ""
@@ -113,6 +133,8 @@ fun RevLensNavGraph(
 
     LaunchedEffect(currentRoute) {
         val slug = when {
+            currentDestination?.hasRoute<IntroRoute>() == true -> "intro"
+            currentDestination?.hasRoute<OnboardingRoute>() == true -> "onboarding"
             currentDestination?.hasRoute<DashboardRoute>() == true || currentRoute.contains("Dashboard") -> "home"
             currentDestination?.hasRoute<PricingSimulatorRoute>() == true || currentRoute.contains("Simulator") -> "simulator"
             currentDestination?.hasRoute<ScenarioBuilderRoute>() == true || currentRoute.contains("ScenarioBuilder") -> "scenarios"
@@ -131,7 +153,7 @@ fun RevLensNavGraph(
 
     LaunchedEffect(Unit) {
         val initial = BrowserRouter.getInitialRoute()
-        if (initial != null) {
+        if (initial != null && isOnboardingCompleted == true) {
             when (initial.lowercase()) {
                 "simulator" -> navController.navigate(PricingSimulatorRoute(0)) { launchSingleTop = true }
                 "scenarios" -> navController.navigate(ScenarioBuilderRoute) { launchSingleTop = true }
@@ -145,16 +167,18 @@ fun RevLensNavGraph(
             }
         }
         BrowserRouter.onUrlChange { newRoute ->
-            when (newRoute.lowercase()) {
-                "simulator" -> navController.navigate(PricingSimulatorRoute(0)) { launchSingleTop = true }
-                "scenarios" -> navController.navigate(ScenarioBuilderRoute) { launchSingleTop = true }
-                "forecast" -> navController.navigate(ForecastRoute) { launchSingleTop = true }
-                "settings", "profile" -> navController.navigate(SettingsRoute) { launchSingleTop = true }
-                "metrics" -> navController.navigate(MetricsRoute) { launchSingleTop = true }
-                "goals", "goalplanner" -> navController.navigate(GoalPlannerRoute) { launchSingleTop = true }
-                "input" -> navController.navigate(InputDataRoute) { launchSingleTop = true }
-                "compare" -> navController.navigate(ScenarioComparisonRoute) { launchSingleTop = true }
-                "home", "dashboard" -> navController.popBackStack(DashboardRoute, inclusive = false)
+            if (isOnboardingCompleted == true) {
+                when (newRoute.lowercase()) {
+                    "simulator" -> navController.navigate(PricingSimulatorRoute(0)) { launchSingleTop = true }
+                    "scenarios" -> navController.navigate(ScenarioBuilderRoute) { launchSingleTop = true }
+                    "forecast" -> navController.navigate(ForecastRoute) { launchSingleTop = true }
+                    "settings", "profile" -> navController.navigate(SettingsRoute) { launchSingleTop = true }
+                    "metrics" -> navController.navigate(MetricsRoute) { launchSingleTop = true }
+                    "goals", "goalplanner" -> navController.navigate(GoalPlannerRoute) { launchSingleTop = true }
+                    "input" -> navController.navigate(InputDataRoute) { launchSingleTop = true }
+                    "compare" -> navController.navigate(ScenarioComparisonRoute) { launchSingleTop = true }
+                    "home", "dashboard" -> navController.popBackStack(DashboardRoute, inclusive = false)
+                }
             }
         }
     }
@@ -187,7 +211,7 @@ fun RevLensNavGraph(
             }
             NavHost(
                 navController = navController,
-                startDestination = DashboardRoute,
+                startDestination = if (isOnboardingCompleted == true) DashboardRoute else IntroRoute,
                 modifier = modifier.padding(innerPadding),
             enterTransition = {
                 val isTargetMainTab = isMainTab(targetState.destination.route)
@@ -238,12 +262,25 @@ fun RevLensNavGraph(
                 }
             }
         ) {
+            composable<IntroRoute> {
+                IntroScreen(
+                    onGetStarted = {
+                        navController.navigate(OnboardingRoute)
+                    }
+                )
+            }
+
             composable<OnboardingRoute> {
-                OnboardingScreen(
-                    onFinishOnboarding = {
+                OnboardingDataScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onFinishOnboarding = { newProfile ->
+                        viewModel.completeOnboarding(newProfile)
                         navController.navigate(DashboardRoute) {
-                            popUpTo(OnboardingRoute) { inclusive = true }
+                            popUpTo(IntroRoute) { inclusive = true }
                         }
+                        BrowserRouter.updateUrl("home")
                     }
                 )
             }

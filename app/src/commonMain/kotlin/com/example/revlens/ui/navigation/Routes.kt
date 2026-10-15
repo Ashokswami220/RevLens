@@ -3,6 +3,9 @@ package com.example.revlens.ui.navigation
 import kotlinx.serialization.Serializable
 
 @Serializable
+object IntroRoute
+
+@Serializable
 object OnboardingRoute
 
 @Serializable

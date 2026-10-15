@@ -2,6 +2,7 @@ package com.example.revlens.data
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.revlens.model.BusinessProfile
@@ -16,6 +17,7 @@ class DataStoreProfileRepository(
 ) : ProfileRepository {
     companion object {
         val PROFILE_KEY = stringPreferencesKey("business_profile")
+        val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_completed")
     }
 
     private val json = Json { ignoreUnknownKeys = true }
@@ -38,6 +40,16 @@ class DataStoreProfileRepository(
         dataStore.edit { preferences ->
             val profileJson = json.encodeToString(profile)
             preferences[PROFILE_KEY] = profileJson
+        }
+    }
+
+    override val isOnboardingCompletedFlow: Flow<Boolean> = dataStore.data.map { preferences ->
+        (preferences[ONBOARDING_COMPLETED_KEY] == true) && (preferences[PROFILE_KEY] != null)
+    }
+
+    override suspend fun setOnboardingCompleted(completed: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[ONBOARDING_COMPLETED_KEY] = completed
         }
     }
 }

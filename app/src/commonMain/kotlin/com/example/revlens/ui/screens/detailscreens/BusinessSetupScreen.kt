@@ -13,16 +13,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,6 +53,7 @@ import com.example.revlens.model.toBigDecimalOrNull
 import com.example.revlens.presentation.MainViewModel
 import com.example.revlens.ui.components.NumberField
 import com.example.revlens.ui.components.PrimaryButton
+import com.example.revlens.ui.components.RevLensTextField
 import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.theme.RevLensTheme
@@ -219,13 +227,40 @@ fun BusinessSetupScreen(
             }
 
             SectionCard(title = "Pricing Plans") {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     uiState.editablePlans.forEachIndexed { index, plan ->
                         SectionCard(
-                            title = plan.name,
+                            title = if (plan.name.isNotBlank()) plan.name else "Plan ${index + 1}",
+                            trailingAction = if (uiState.editablePlans.size > 1) {
+                                {
+                                    IconButton(
+                                        onClick = { setupViewModel.removePlan(index) },
+                                        modifier = Modifier.size(28.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.DeleteOutline,
+                                            contentDescription = "Remove Plan",
+                                            tint = RevLensTheme.colors.error,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+                            } else null,
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                RevLensTextField(
+                                    value = plan.name,
+                                    onValueChange = { newVal ->
+                                        setupViewModel.updatePlanName(index, newVal)
+                                    },
+                                    label = "Plan Name",
+                                    placeholder = when (index) {
+                                        0 -> "e.g. Starter"
+                                        1 -> "e.g. Pro"
+                                        else -> "e.g. Plan ${index + 1}"
+                                    }
+                                )
                                 NumberField(
                                     value = plan.priceStr,
                                     onValueChange = { newVal ->
@@ -234,6 +269,7 @@ fun BusinessSetupScreen(
                                         )
                                     },
                                     label = "Monthly Price",
+                                    placeholder = "e.g. 29",
                                     suffix = currentCurrency.symbol
                                 )
                                 NumberField(
@@ -244,10 +280,30 @@ fun BusinessSetupScreen(
                                         )
                                     },
                                     label = "Active Customers",
-                                    suffix = ""
+                                    placeholder = "e.g. 100",
+                                    suffix = "users"
                                 )
                             }
                         }
+                    }
+
+                    Button(
+                        onClick = { setupViewModel.addPlan() },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = RevLensTheme.colors.surfaceElevated,
+                            contentColor = RevLensTheme.colors.brandPrimary
+                        ),
+                        border = BorderStroke(1.dp, RevLensTheme.colors.borderDefault)
+                    ) {
+                        Icon(imageVector = Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Add Another Plan",
+                            style = RevLensTypography.labelMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
                 }
             }
@@ -275,6 +331,7 @@ fun BusinessSetupScreen(
                                     currentProfile.plans.find { it.id == editablePlan.id }
                                 if (originalPlan != null) {
                                     originalPlan.copy(
+                                        name = editablePlan.name.ifEmpty { originalPlan.name },
                                         price = editablePlan.priceStr.toBigDecimalOrNull()
                                             ?: originalPlan.price,
                                         customerCount = editablePlan.customerCountStr.toIntOrNull()

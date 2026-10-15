@@ -159,34 +159,6 @@ fun DashboardScreen(
                     onNavigateToBreakEven = onNavigateToBreakEven,
                     onNavigateToGoalPlanner = onNavigateToGoalPlanner
                 )
-            } ?: run {
-                // Empty state
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 40.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Welcome to RevLens!",
-                        style = RevLensTypography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Add your business metrics and pricing plans to get started.",
-                        style = RevLensTypography.bodyLarge,
-                        color = TextMuted,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(32.dp))
-                    PrimaryButton(
-                        text = "Add Data",
-                        onClick = onNavigateToInput,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
             }
         }
     }

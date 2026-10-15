@@ -48,6 +48,11 @@ fun ActionCardButton(
     val borderColor = if (isDark) Color(0xFF2E3646) else RevLensTheme.colors.borderDefault
     val backgroundColor = if (isDark) Color(0xFF1E232E) else RevLensTheme.colors.surface
 
+    val actualBg = if (enabled) backgroundColor else backgroundColor.copy(alpha = 0.4f)
+    val actualBorder = if (enabled) borderColor else borderColor.copy(alpha = 0.3f)
+    val textColor = if (enabled) RevLensTheme.colors.textPrimary else RevLensTheme.colors.textTertiary
+    val iconColor = if (enabled) RevLensTheme.colors.brandPrimary else RevLensTheme.colors.textTertiary
+
     Surface(
         onClick = onClick,
         modifier = modifier
@@ -55,8 +60,8 @@ fun ActionCardButton(
             .height(46.dp),
         enabled = enabled && !isLoading,
         shape = RoundedCornerShape(12.dp),
-        color = backgroundColor,
-        border = BorderStroke(1.dp, borderColor)
+        color = actualBg,
+        border = BorderStroke(1.dp, actualBorder)
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
@@ -74,7 +79,7 @@ fun ActionCardButton(
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
-                        tint = RevLensTheme.colors.brandPrimary,
+                        tint = iconColor,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(10.dp))
@@ -83,7 +88,7 @@ fun ActionCardButton(
                     text = text,
                     style = RevLensTypography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = RevLensTheme.colors.textPrimary
+                    color = textColor
                 )
             }
         }

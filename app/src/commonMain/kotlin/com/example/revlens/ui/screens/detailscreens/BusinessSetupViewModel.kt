@@ -43,6 +43,16 @@ class BusinessSetupViewModel : ViewModel() {
     fun updateFixedCosts(value: String) = _uiState.update { it.copy(fixedCostsStr = value) }
     fun updateVarCosts(value: String) = _uiState.update { it.copy(varCostsStr = value) }
 
+    fun updatePlanName(index: Int, name: String) {
+        _uiState.update { state ->
+            val newPlans = state.editablePlans.toMutableList()
+            if (index in newPlans.indices) {
+                newPlans[index] = newPlans[index].copy(name = name)
+            }
+            state.copy(editablePlans = newPlans)
+        }
+    }
+
     fun updatePlanPrice(index: Int, priceStr: String) {
         _uiState.update { state ->
             val newPlans = state.editablePlans.toMutableList()
@@ -58,6 +68,33 @@ class BusinessSetupViewModel : ViewModel() {
             val newPlans = state.editablePlans.toMutableList()
             if (index in newPlans.indices) {
                 newPlans[index] = newPlans[index].copy(customerCountStr = customersStr)
+            }
+            state.copy(editablePlans = newPlans)
+        }
+    }
+
+    fun addPlan() {
+        _uiState.update { state ->
+            val newPlans = state.editablePlans.toMutableList()
+            val newId = (newPlans.maxOfOrNull { it.id.toIntOrNull() ?: 0 } ?: 0) + 1
+            newPlans.add(
+                EditablePlan(
+                    id = newId.toString(),
+                    name = "Plan ${newPlans.size + 1}",
+                    priceStr = "",
+                    customerCountStr = ""
+                )
+            )
+            state.copy(editablePlans = newPlans)
+        }
+    }
+
+    fun removePlan(index: Int) {
+        _uiState.update { state ->
+            if (state.editablePlans.size <= 1) return@update state
+            val newPlans = state.editablePlans.toMutableList()
+            if (index in newPlans.indices) {
+                newPlans.removeAt(index)
             }
             state.copy(editablePlans = newPlans)
         }

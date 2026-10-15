@@ -29,16 +29,16 @@ data class AppCurrency(
 
 object CurrencyUtils {
     val supportedCurrencies = listOf(
-        AppCurrency("USD", "US Dollar ($)", "$"),
-        AppCurrency("INR", "Indian Rupee (₹)", "₹"),
-        AppCurrency("EUR", "Euro (€)", "€", symbolOnLeft = false),
-        AppCurrency("GBP", "British Pound (£)", "£"),
-        AppCurrency("JPY", "Japanese Yen (¥)", "¥"),
-        AppCurrency("CNY", "Chinese Yuan (¥)", "¥"),
-        AppCurrency("CAD", "Canadian Dollar (CA$)", "CA$"),
-        AppCurrency("AUD", "Australian Dollar (A$)", "A$"),
-        AppCurrency("CHF", "Swiss Franc (CHF)", "CHF"),
-        AppCurrency("AED", "UAE Dirham (AED)", "AED")
+        AppCurrency("USD", "US Dollar", "$"),
+        AppCurrency("INR", "Indian Rupee", "₹"),
+        AppCurrency("EUR", "Euro", "€", symbolOnLeft = false),
+        AppCurrency("GBP", "British Pound", "£"),
+        AppCurrency("JPY", "Japanese Yen", "¥"),
+        AppCurrency("CNY", "Chinese Yuan", "¥"),
+        AppCurrency("CAD", "Canadian Dollar", "CA$"),
+        AppCurrency("AUD", "Australian Dollar", "A$"),
+        AppCurrency("CHF", "Swiss Franc", "CHF"),
+        AppCurrency("AED", "UAE Dirham", "AED")
     )
 
     fun getCurrency(code: String?): AppCurrency {

@@ -136,6 +136,7 @@ fun NumberField(
     onValueChange: (String) -> Unit,
     label: String,
     modifier: Modifier = Modifier,
+    placeholder: String = "",
     prefix: String? = null,
     suffix: String? = null,
     isError: Boolean = false,
@@ -145,12 +146,13 @@ fun NumberField(
         value = value,
         onValueChange = {
             // Simple validation to only allow numbers and decimal point
-            if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d*\$"))) {
+            if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d*$"))) {
                 onValueChange(it)
             }
         },
         label = label,
         modifier = modifier,
+        placeholder = placeholder,
         isError = isError,
         errorMessage = errorMessage,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),

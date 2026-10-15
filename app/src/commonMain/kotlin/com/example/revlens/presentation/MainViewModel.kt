@@ -33,9 +33,23 @@ class MainViewModel(
             initialValue = emptyList()
         )
 
+    val isOnboardingCompleted: StateFlow<Boolean?> = repository.isOnboardingCompletedFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = null
+        )
+
     fun updateProfile(updatedProfile: BusinessProfile) {
         viewModelScope.launch {
             repository.saveProfile(updatedProfile)
+        }
+    }
+
+    fun completeOnboarding(profile: BusinessProfile) {
+        viewModelScope.launch {
+            repository.saveProfile(profile)
+            repository.setOnboardingCompleted(true)
         }
     }
 
