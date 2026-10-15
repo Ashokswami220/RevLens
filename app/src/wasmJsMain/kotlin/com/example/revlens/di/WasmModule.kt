@@ -2,42 +2,27 @@ package com.example.revlens.di
 
 import com.example.revlens.data.ProfileRepository
 import com.example.revlens.data.ScenarioRepository
-import com.example.revlens.model.BillingPeriod
+import com.example.revlens.model.BigDecimal
 import com.example.revlens.model.BusinessProfile
 import com.example.revlens.model.Plan
 import com.example.revlens.model.Scenario
-import com.example.revlens.model.BigDecimal
 import com.example.revlens.presentation.MainViewModel
 import com.example.revlens.ui.screens.detailscreens.BusinessSetupViewModel
 import kotlinx.browser.window
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 class WasmProfileRepository : ProfileRepository {
     private val json = Json { ignoreUnknownKeys = true }
-    private val defaultProfile = BusinessProfile(
-        monthlyChurnRate = 0.035,
-        monthlyGrowthRate = 0.08,
-        cac = BigDecimal("150.00"),
-        fixedCosts = BigDecimal("4500.00"),
-        variableCostPerCustomer = BigDecimal("12.00"),
-        plans = listOf(
-            Plan(id = "1", name = "Starter", price = BigDecimal("29.00"), customerCount = 120),
-            Plan(id = "2", name = "Pro", price = BigDecimal("79.00"), customerCount = 65)
-        ),
-        mrrGoal = BigDecimal("25000.00"),
-        currencyCode = "USD"
-    )
 
-    private val _flow = MutableStateFlow<BusinessProfile?>(loadFromStorage())
+    private val _flow = MutableStateFlow(loadFromStorage())
     override val profileFlow: Flow<BusinessProfile?> = _flow.asStateFlow()
 
-    private val _onboardingFlow = MutableStateFlow<Boolean>(loadOnboardingCompleted())
+    private val _onboardingFlow = MutableStateFlow(loadOnboardingCompleted())
     override val isOnboardingCompletedFlow: Flow<Boolean> = _onboardingFlow.asStateFlow()
 
     private fun loadOnboardingCompleted(): Boolean {
@@ -54,7 +39,8 @@ class WasmProfileRepository : ProfileRepository {
         _onboardingFlow.value = completed
         try {
             window.localStorage.setItem("revlens_onboarding_completed", completed.toString())
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+        }
     }
 
     private fun loadFromStorage(): BusinessProfile? {
@@ -66,8 +52,14 @@ class WasmProfileRepository : ProfileRepository {
                 if (profile.plans.any { it.name.equals("Enterprise", ignoreCase = true) }) {
                     val sanitized = profile.copy(
                         plans = listOf(
-                            Plan(id = "1", name = "Starter", price = BigDecimal("29.00"), customerCount = 120),
-                            Plan(id = "2", name = "Pro", price = BigDecimal("79.00"), customerCount = 65)
+                            Plan(
+                                id = "1", name = "Starter", price = BigDecimal("29.00"),
+                                customerCount = 120
+                            ),
+                            Plan(
+                                id = "2", name = "Pro", price = BigDecimal("79.00"),
+                                customerCount = 65
+                            )
                         )
                     )
                     window.localStorage.setItem("revlens_profile", json.encodeToString(sanitized))
@@ -85,13 +77,14 @@ class WasmProfileRepository : ProfileRepository {
         _flow.value = profile
         try {
             window.localStorage.setItem("revlens_profile", json.encodeToString(profile))
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+        }
     }
 }
 
 class WasmScenarioRepository : ScenarioRepository {
     private val json = Json { ignoreUnknownKeys = true }
-    private val _flow = MutableStateFlow<List<Scenario>>(loadFromStorage() ?: emptyList())
+    private val _flow = MutableStateFlow(loadFromStorage() ?: emptyList())
     override val scenariosFlow: Flow<List<Scenario>> = _flow.asStateFlow()
 
     private fun loadFromStorage(): List<Scenario>? {
@@ -110,7 +103,8 @@ class WasmScenarioRepository : ScenarioRepository {
         _flow.value = list
         try {
             window.localStorage.setItem("revlens_scenarios", json.encodeToString(list))
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+        }
     }
 
     override suspend fun deleteScenario(scenarioId: String) {
@@ -118,7 +112,8 @@ class WasmScenarioRepository : ScenarioRepository {
         _flow.value = list
         try {
             window.localStorage.setItem("revlens_scenarios", json.encodeToString(list))
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+        }
     }
 }
 

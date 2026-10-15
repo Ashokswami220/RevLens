@@ -19,8 +19,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import org.koin.compose.viewmodel.koinViewModel
 import com.example.revlens.domain.calc.MrrGoalPlanner
+import com.example.revlens.model.BigDecimal
 import com.example.revlens.presentation.MainViewModel
 import com.example.revlens.ui.components.LabeledSlider
 import com.example.revlens.ui.components.PrimaryButton
@@ -28,8 +28,8 @@ import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
-import com.example.revlens.model.BigDecimal
 import com.example.revlens.utils.CurrencyUtils
+import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,7 +55,7 @@ fun GoalPlannerScreen(
     }
 
     val currencyFormatter = remember(profile?.currencyCode) {
-        com.example.revlens.utils.CurrencyUtils.getFormatter(profile?.currencyCode)
+        CurrencyUtils.getFormatter(profile?.currencyCode)
     }
 
     Scaffold(
@@ -100,7 +100,11 @@ fun GoalPlannerScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         ResultRow(
                             label = "Required Monthly Growth (CMGR)",
-                            value = "${CurrencyUtils.formatDecimal(goalPlan.requiredMonthlyGrowthRate * 100, 1)}%"
+                            value = "${
+                                CurrencyUtils.formatDecimal(
+                                    goalPlan.requiredMonthlyGrowthRate * 100, 1
+                                )
+                            }%"
                         )
 
                         ResultRow(

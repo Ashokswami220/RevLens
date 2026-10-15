@@ -18,7 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import org.koin.compose.viewmodel.koinViewModel
 import com.example.revlens.domain.calc.BreakEvenCalculator
 import com.example.revlens.domain.calc.LtvCalculator
 import com.example.revlens.presentation.MainViewModel
@@ -28,6 +27,7 @@ import com.example.revlens.ui.components.Sparkline
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
 import com.example.revlens.utils.CurrencyUtils
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -108,7 +108,11 @@ fun SaaSMetricsScreen(
                     ),
                     desc1 = "The ratio of lifetime value to acquisition cost. Aim for 3.0x or higher for a healthy SaaS business.",
                     title2 = "CAC Payback Period",
-                    val2 = if (payback != null) "${CurrencyUtils.formatDecimal(payback, 1)} mo" else "Never",
+                    val2 = if (payback != null) "${
+                        CurrencyUtils.formatDecimal(
+                            payback, 1
+                        )
+                    } mo" else "Never",
                     sparklineData2 = listOf(
                         (payback?.toFloat() ?: 0f) * 1.2f, (payback?.toFloat() ?: 0f) * 1.1f,
                         (payback?.toFloat() ?: 0f)

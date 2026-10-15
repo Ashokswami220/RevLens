@@ -16,8 +16,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -31,10 +29,6 @@ import androidx.compose.ui.unit.dp
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
 
-/**
- * Sleek card-style action button with rounded corners, elevated surface background,
- * and a prominent cyan accent icon on the left, matching the executive card action design.
- */
 @Composable
 fun ActionCardButton(
     text: String,
@@ -50,8 +44,10 @@ fun ActionCardButton(
 
     val actualBg = if (enabled) backgroundColor else backgroundColor.copy(alpha = 0.4f)
     val actualBorder = if (enabled) borderColor else borderColor.copy(alpha = 0.3f)
-    val textColor = if (enabled) RevLensTheme.colors.textPrimary else RevLensTheme.colors.textTertiary
-    val iconColor = if (enabled) RevLensTheme.colors.brandPrimary else RevLensTheme.colors.textTertiary
+    val textColor =
+        if (enabled) RevLensTheme.colors.textPrimary else RevLensTheme.colors.textTertiary
+    val iconColor =
+        if (enabled) RevLensTheme.colors.brandPrimary else RevLensTheme.colors.textTertiary
 
     Surface(
         onClick = onClick,
@@ -213,29 +209,6 @@ fun TextLinkButton(
             style = RevLensTypography.labelLarge,
             fontWeight = FontWeight.Bold,
             color = RevLensTheme.colors.accentBlue
-        )
-    }
-}
-
-@Composable
-fun RevLensIconButton(
-    icon: ImageVector,
-    contentDescription: String?,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    IconButton(
-        onClick = onClick,
-        modifier = modifier.size(40.dp),
-        colors = IconButtonDefaults.iconButtonColors(
-            containerColor = RevLensTheme.colors.surfaceElevated,
-            contentColor = RevLensTheme.colors.textPrimary
-        )
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = contentDescription,
-            modifier = Modifier.size(24.dp)
         )
     }
 }

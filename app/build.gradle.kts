@@ -29,7 +29,6 @@ kotlin {
             implementation(compose.material3)
             implementation(compose.materialIconsExtended)
             implementation(compose.ui)
-            implementation(compose.components.resources)
             implementation(libs.jetbrains.navigation.compose)
             implementation(libs.koin.core)
             implementation(libs.koin.compose)

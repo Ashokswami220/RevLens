@@ -38,11 +38,6 @@ import com.example.revlens.ui.components.ActionCardButton
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
 
-/**
- * Dedicated Intro / Welcome Screen.
- * Features an enlarged upper card containing the revenue graphic, title, and subtitle
- * with balanced, centered alignment, followed by feature highlights and a Get Started CTA.
- */
 @Composable
 fun IntroScreen(
     onGetStarted: () -> Unit
@@ -154,7 +149,9 @@ fun IntroScreen(
             ) {
                 IntroFeatureItem("Simulate price & churn impact", RevLensTheme.colors.brandPrimary)
                 IntroFeatureItem("Compare growth scenarios", RevLensTheme.colors.brandSecondary)
-                IntroFeatureItem("Plan MRR targets and unit economics", RevLensTheme.colors.brandTertiary)
+                IntroFeatureItem(
+                    "Plan MRR targets and unit economics", RevLensTheme.colors.brandTertiary
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))

@@ -41,10 +41,6 @@ val BrandPrimary = Color(0xFF06B6D4)    // cyan    -> M3 primary
 val BrandSecondary = Color(0xFF6366F1)  // indigo  -> M3 secondary
 val BrandTertiary = Color(0xFF10B981)   // emerald -> M3 tertiary
 
-// Soft tints (12% alpha) for selected backgrounds / chart fills
-val BrandPrimarySoft = Color(0x1F06B6D4)
-val BrandSecondarySoft = Color(0x1F6366F1)
-val BrandTertiarySoft = Color(0x1F10B981)
 
 // Text-safe variants (optional, small colored text only)
 val LightBrandPrimaryText = Color(0xFF0E7490)

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -63,11 +64,10 @@ fun StepProgressBar(
 @Composable
 fun ProgressRing(
     progress: Float,
-    label: String,
     modifier: Modifier = Modifier
 ) {
     Box(contentAlignment = Alignment.Center, modifier = modifier.size(160.dp)) {
-        androidx.compose.material3.CircularProgressIndicator(
+        CircularProgressIndicator(
             progress = { progress },
             modifier = Modifier.fillMaxSize(),
             color = RevLensTheme.colors.brandPrimary,

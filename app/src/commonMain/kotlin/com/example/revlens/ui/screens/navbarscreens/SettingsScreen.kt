@@ -42,7 +42,6 @@ import com.example.revlens.ui.theme.RevLensTypography
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    onNavigateBack: (() -> Unit)? = null
 ) {
     var darkModeEnabled by remember { mutableStateOf(true) }
     var notificationsEnabled by remember { mutableStateOf(false) }

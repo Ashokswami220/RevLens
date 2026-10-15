@@ -6,7 +6,6 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.revlens.model.BusinessProfile
-import com.example.revlens.model.Plan
 import com.example.revlens.model.Scenario
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -82,8 +81,9 @@ class DataStoreScenarioRepository(
             val currentJson = preferences[SCENARIOS_KEY]
             val currentList = if (currentJson != null) {
                 try {
-                    json.decodeFromString<List<Scenario>>(currentJson).toMutableList()
-                } catch (e: Exception) {
+                    json.decodeFromString<List<Scenario>>(currentJson)
+                        .toMutableList()
+                } catch (_: Exception) {
                     mutableListOf()
                 }
             } else {
@@ -106,7 +106,8 @@ class DataStoreScenarioRepository(
             val currentJson = preferences[SCENARIOS_KEY]
             if (currentJson != null) {
                 try {
-                    val currentList = json.decodeFromString<List<Scenario>>(currentJson).toMutableList()
+                    val currentList = json.decodeFromString<List<Scenario>>(currentJson)
+                        .toMutableList()
                     currentList.removeAll { it.id == scenarioId }
                     preferences[SCENARIOS_KEY] = json.encodeToString(currentList)
                 } catch (e: Exception) {

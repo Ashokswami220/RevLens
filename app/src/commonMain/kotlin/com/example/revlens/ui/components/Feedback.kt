@@ -9,13 +9,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
@@ -68,7 +73,7 @@ fun EmptyState(
             text = description,
             style = RevLensTypography.bodyMedium,
             color = RevLensTheme.colors.textSecondary,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            textAlign = TextAlign.Center
         )
 
         if (actionText != null && onActionClick != null) {
@@ -98,7 +103,7 @@ fun ErrorState(
             text = message,
             style = RevLensTypography.bodyMedium,
             color = RevLensTheme.colors.textSecondary,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(24.dp))
         SecondaryButton(
@@ -117,7 +122,7 @@ fun ConfirmDialog(
     onDismiss: () -> Unit,
     isDestructive: Boolean = false
 ) {
-    androidx.compose.material3.AlertDialog(
+    AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
@@ -177,15 +182,15 @@ fun RevLensSnackbar(
         if (isError) RevLensTheme.colors.error else RevLensTheme.colors.primaryAction
     val textColor = if (isError) Color.White else RevLensTheme.colors.onPrimaryAction
 
-    androidx.compose.material3.Snackbar(
+    Snackbar(
         modifier = modifier.padding(16.dp),
         containerColor = backgroundColor,
         contentColor = textColor,
         actionContentColor = RevLensTheme.colors.accentBlue,
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(12.dp),
         action = if (actionText != null) {
             {
-                androidx.compose.material3.TextButton(onClick = { onAction?.invoke() }) {
+                TextButton(onClick = { onAction?.invoke() }) {
                     Text(
                         text = actionText, style = RevLensTypography.labelLarge,
                         color = RevLensTheme.colors.accentBlue

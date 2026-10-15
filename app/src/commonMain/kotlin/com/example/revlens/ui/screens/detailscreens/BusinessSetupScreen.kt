@@ -1,5 +1,6 @@
 package com.example.revlens.ui.screens.detailscreens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,7 +19,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -47,8 +47,9 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import org.koin.compose.viewmodel.koinViewModel
 import com.example.revlens.model.BigDecimal
+import com.example.revlens.model.BusinessProfile
+import com.example.revlens.model.Plan
 import com.example.revlens.model.toBigDecimalOrNull
 import com.example.revlens.presentation.MainViewModel
 import com.example.revlens.ui.components.NumberField
@@ -59,6 +60,7 @@ import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
 import com.example.revlens.utils.CurrencyUtils
+import org.koin.compose.viewmodel.koinViewModel
 
 data class EditablePlan(
     val id: String,
@@ -146,10 +148,13 @@ fun BusinessSetupScreen(
                             modifier = Modifier
                                 .background(RevLensTheme.colors.surface)
                                 .border(
-                                    1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(8.dp)
+                                    1.dp, RevLensTheme.colors.borderDefault,
+                                    RoundedCornerShape(8.dp)
                                 )
                         ) {
-                            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                            CompositionLocalProvider(
+                                LocalLayoutDirection provides LayoutDirection.Ltr
+                            ) {
                                 CurrencyUtils.supportedCurrencies.forEach { curr ->
                                     DropdownMenuItem(
                                         text = {
@@ -230,7 +235,7 @@ fun BusinessSetupScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     uiState.editablePlans.forEachIndexed { index, plan ->
                         SectionCard(
-                            title = if (plan.name.isNotBlank()) plan.name else "Plan ${index + 1}",
+                            title = plan.name.ifBlank { "Plan ${index + 1}" },
                             trailingAction = if (uiState.editablePlans.size > 1) {
                                 {
                                     IconButton(
@@ -297,7 +302,10 @@ fun BusinessSetupScreen(
                         ),
                         border = BorderStroke(1.dp, RevLensTheme.colors.borderDefault)
                     ) {
-                        Icon(imageVector = Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(
+                            imageVector = Icons.Filled.Add, contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = "Add Another Plan",
@@ -314,43 +322,38 @@ fun BusinessSetupScreen(
                 text = "Save Data",
                 onClick = {
                     val currentProfile = profile
-                    val newProfile = if (currentProfile != null) {
-                        currentProfile.copy(
-                            currencyCode = uiState.currencyCode,
-                            monthlyChurnRate = uiState.churnRateStr.toDoubleOrNull()
-                                ?.div(100.0) ?: currentProfile.monthlyChurnRate,
-                            monthlyGrowthRate = uiState.growthRateStr.toDoubleOrNull()
-                                ?.div(100.0) ?: currentProfile.monthlyGrowthRate,
-                            cac = uiState.cacStr.toBigDecimalOrNull() ?: currentProfile.cac,
-                            fixedCosts = uiState.fixedCostsStr.toBigDecimalOrNull()
-                                ?: currentProfile.fixedCosts,
-                            variableCostPerCustomer = uiState.varCostsStr.toBigDecimalOrNull()
-                                ?: currentProfile.variableCostPerCustomer,
-                            plans = uiState.editablePlans.map { editablePlan ->
-                                val originalPlan =
-                                    currentProfile.plans.find { it.id == editablePlan.id }
-                                if (originalPlan != null) {
-                                    originalPlan.copy(
-                                        name = editablePlan.name.ifEmpty { originalPlan.name },
-                                        price = editablePlan.priceStr.toBigDecimalOrNull()
-                                            ?: originalPlan.price,
-                                        customerCount = editablePlan.customerCountStr.toIntOrNull()
-                                            ?: originalPlan.customerCount
-                                    )
-                                } else {
-                                    com.example.revlens.model.Plan(
-                                        id = editablePlan.id,
-                                        name = editablePlan.name,
-                                        price = editablePlan.priceStr.toBigDecimalOrNull()
-                                            ?: BigDecimal.ZERO,
-                                        customerCount = editablePlan.customerCountStr.toIntOrNull()
-                                            ?: 0
-                                    )
-                                }
-                            }
-                        )
-                    } else {
-                        com.example.revlens.model.BusinessProfile(
+                    val newProfile = currentProfile?.copy(
+                        currencyCode = uiState.currencyCode,
+                        monthlyChurnRate = uiState.churnRateStr.toDoubleOrNull()
+                            ?.div(100.0) ?: currentProfile.monthlyChurnRate,
+                        monthlyGrowthRate = uiState.growthRateStr.toDoubleOrNull()
+                            ?.div(100.0) ?: currentProfile.monthlyGrowthRate,
+                        cac = uiState.cacStr.toBigDecimalOrNull() ?: currentProfile.cac,
+                        fixedCosts = uiState.fixedCostsStr.toBigDecimalOrNull()
+                            ?: currentProfile.fixedCosts,
+                        variableCostPerCustomer = uiState.varCostsStr.toBigDecimalOrNull()
+                            ?: currentProfile.variableCostPerCustomer,
+                        plans = uiState.editablePlans.map { editablePlan ->
+                            val originalPlan =
+                                currentProfile.plans.find { it.id == editablePlan.id }
+                            originalPlan?.copy(
+                                name = editablePlan.name.ifEmpty { originalPlan.name },
+                                price = editablePlan.priceStr.toBigDecimalOrNull()
+                                    ?: originalPlan.price,
+                                customerCount = editablePlan.customerCountStr.toIntOrNull()
+                                    ?: originalPlan.customerCount
+                            )
+                                ?: Plan(
+                                    id = editablePlan.id,
+                                    name = editablePlan.name,
+                                    price = editablePlan.priceStr.toBigDecimalOrNull()
+                                        ?: BigDecimal.ZERO,
+                                    customerCount = editablePlan.customerCountStr.toIntOrNull()
+                                        ?: 0
+                                )
+                        }
+                    )
+                        ?: BusinessProfile(
                             currencyCode = uiState.currencyCode,
                             monthlyChurnRate = uiState.churnRateStr.toDoubleOrNull()
                                 ?.div(100.0) ?: 0.0,
@@ -362,7 +365,7 @@ fun BusinessSetupScreen(
                             variableCostPerCustomer = uiState.varCostsStr.toBigDecimalOrNull()
                                 ?: BigDecimal.ZERO,
                             plans = uiState.editablePlans.map { editablePlan ->
-                                com.example.revlens.model.Plan(
+                                Plan(
                                     id = editablePlan.id,
                                     name = editablePlan.name,
                                     price = editablePlan.priceStr.toBigDecimalOrNull()
@@ -371,7 +374,6 @@ fun BusinessSetupScreen(
                                 )
                             }
                         )
-                    }
                     viewModel.updateProfile(newProfile)
                     onNavigateBack()
                 },

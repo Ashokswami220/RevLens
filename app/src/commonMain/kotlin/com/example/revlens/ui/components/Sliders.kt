@@ -19,7 +19,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -36,14 +38,12 @@ fun LabeledSlider(
     valueRange: ClosedFloatingPointRange<Float>,
     modifier: Modifier = Modifier,
     valueString: String = value.toString(),
-    onValueStringChange: (String) -> Unit = {},
     caption: String? = null,
     icon: ImageVector? = null,
     enabled: Boolean = true
 ) {
     val isDark = isSystemInDarkTheme()
 
-    // Normal neutral colors (not primary)
     val activeColor = if (isDark) Color(0xFFF1F5F9) else Color(0xFF0F172A)
     val inactiveColor = if (isDark) Color(0xFF262C38) else Color(0xFFE2E8F0)
     val dividerColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
@@ -207,12 +207,11 @@ fun LabeledSlider(
                 }
 
                 // 3. Middle vertical divider line (extends full dividerHeight, rounded pill)
-                // Note: The area around this line is completely transparent!
                 val divLeft = dividerCenterX - (divW / 2f)
                 drawRoundRect(
                     color = dividerColor,
-                    topLeft = androidx.compose.ui.geometry.Offset(divLeft, 0f),
-                    size = androidx.compose.ui.geometry.Size(divW, h),
+                    topLeft = Offset(divLeft, 0f),
+                    size = Size(divW, h),
                     cornerRadius = CornerRadius(divW / 2f, divW / 2f)
                 )
             }

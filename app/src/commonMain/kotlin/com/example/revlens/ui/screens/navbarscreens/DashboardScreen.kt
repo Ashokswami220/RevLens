@@ -9,6 +9,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -33,7 +34,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import com.example.revlens.ui.components.ActionCardButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -53,19 +53,18 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.koin.compose.viewmodel.koinViewModel
 import com.example.revlens.domain.calc.LtvCalculator
+import com.example.revlens.model.BigDecimal
 import com.example.revlens.model.BusinessProfile
 import com.example.revlens.presentation.MainViewModel
-import com.example.revlens.ui.components.PrimaryButton
+import com.example.revlens.ui.components.ActionCardButton
 import com.example.revlens.ui.components.ProgressRing
 import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.theme.RevLensTheme
-import com.example.revlens.ui.theme.RevLensTypography
+import com.example.revlens.utils.CurrencyUtils
 import com.example.revlens.utils.DateUtils
 import com.example.revlens.utils.RevLensFormatter
-import com.example.revlens.utils.CurrencyUtils
-import com.example.revlens.model.BigDecimal
+import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.pow
 
 // --- THEME-AWARE DYNAMIC COLOR TOKENS ---
@@ -90,7 +89,6 @@ fun DashboardScreen(
     onNavigateToPricing: () -> Unit = {},
     onNavigateToWhatIf: () -> Unit,
     onNavigateToBreakEven: () -> Unit,
-    onNavigateToSettings: () -> Unit,
     onNavigateToMetrics: () -> Unit,
     onNavigateToGoalPlanner: () -> Unit = {}
 ) {
@@ -118,7 +116,7 @@ fun DashboardScreen(
                     Spacer(modifier = Modifier.width(4.dp))
                     TextButton(
                         onClick = onNavigateToInput,
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                        contentPadding = PaddingValues(
                             horizontal = 8.dp, vertical = 4.dp
                         ),
                         modifier = Modifier.height(36.dp)
@@ -173,7 +171,7 @@ private fun DashboardContent(
     onNavigateToGoalPlanner: () -> Unit
 ) {
     val currencyFormatter = remember(profile.currencyCode) {
-        com.example.revlens.utils.CurrencyUtils.getFormatter(profile.currencyCode)
+        CurrencyUtils.getFormatter(profile.currencyCode)
     }
 
     // 1. Top Compact Simulator Action Buttons (Pricing, What-If, Break-Even)
@@ -295,7 +293,11 @@ private fun DashboardContent(
             title = "USER CHURN",
             value = "${CurrencyUtils.formatDecimal(profile.monthlyChurnRate * 100, 1)}%",
             subValue = "benchmark <3%",
-            badge = if (profile.monthlyChurnRate <= 0.03) "Low" else "${CurrencyUtils.formatDecimal(profile.monthlyChurnRate * 100, 1)}%",
+            badge = if (profile.monthlyChurnRate <= 0.03) "Low" else "${
+                CurrencyUtils.formatDecimal(
+                    profile.monthlyChurnRate * 100, 1
+                )
+            }%",
             badgeColor = EmeraldAccent,
             sparklineType = SparklineType.DOWNWARD_GREEN,
             modifier = Modifier.weight(1f)
@@ -371,7 +373,11 @@ private fun HeroRevenueCard(
                         .padding(horizontal = 7.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = "↗ +${CurrencyUtils.formatDecimal(profile.monthlyGrowthRate * 100, 1)}%",
+                        text = "↗ +${
+                            CurrencyUtils.formatDecimal(
+                                profile.monthlyGrowthRate * 100, 1
+                            )
+                        }%",
                         color = greenBadgeColor,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
@@ -725,7 +731,11 @@ private fun MrrTrajectoryChartCard(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "6-Month Forecast (+${CurrencyUtils.formatDecimal(profile.monthlyGrowthRate * 100, 1)}%/mo)",
+                        text = "6-Month Forecast (+${
+                            CurrencyUtils.formatDecimal(
+                                profile.monthlyGrowthRate * 100, 1
+                            )
+                        }%/mo)",
                         color = TextMuted,
                         fontSize = 11.sp
                     )
@@ -878,7 +888,7 @@ private fun GoalTrackerCard(
     val hasGoal = targetGoal != null && targetGoal > BigDecimal.ZERO
     val isDark = isSystemInDarkTheme()
     val rawProgress = if (hasGoal) {
-        (mrr.toDouble() / targetGoal!!.toDouble()).toFloat()
+        (mrr.toDouble() / targetGoal.toDouble()).toFloat()
     } else {
         0f
     }
@@ -959,7 +969,7 @@ private fun GoalTrackerCard(
                         )
                     }
 
-                    val remaining = targetGoal!!.subtract(mrr)
+                    val remaining = targetGoal.subtract(mrr)
                         .coerceAtLeast(BigDecimal.ZERO)
                     Text(
                         text = "${currencyFormatter.format(remaining)} to go",

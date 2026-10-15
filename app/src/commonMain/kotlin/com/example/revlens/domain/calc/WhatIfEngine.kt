@@ -13,8 +13,6 @@ object WhatIfEngine {
      */
     fun compare(baseline: BusinessProfile, projected: BusinessProfile): List<MetricResult> {
         val currencyFormatter = CurrencyUtils.getFormatter(baseline.currencyCode)
-        val percentFormatter = CurrencyUtils.getPercentFormatter(1)
-
         val results = mutableListOf<MetricResult>()
 
         // 1. MRR
@@ -84,7 +82,11 @@ object WhatIfEngine {
             MetricResult(
                 label = "CAC Payback",
                 value = BigDecimal.valueOf(projPayback ?: 0.0),
-                formattedValue = if (projPayback != null) "${CurrencyUtils.formatDecimal(projPayback, 1)} mo" else "Never",
+                formattedValue = if (projPayback != null) "${
+                    CurrencyUtils.formatDecimal(
+                        projPayback, 1
+                    )
+                } mo" else "Never",
                 deltaPercent = paybackDelta,
                 isPositive = isPaybackPositive
             )

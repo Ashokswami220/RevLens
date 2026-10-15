@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -68,16 +67,11 @@ import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.screens.detailscreens.EditablePlan
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
+import com.example.revlens.utils.AppCurrency
 import com.example.revlens.utils.CurrencyUtils
 import kotlinx.coroutines.launch
 
-/**
- * Dedicated Multi-Step Onboarding Data Entry Screen.
- * Contains:
- * - Step 1: Currency & Core Metrics (right-aligned currency dropdown, churn & growth rates)
- * - Step 2: Costs & Expenses (CAC, fixed costs, variable costs)
- * - Step 3: Pricing Plans (dynamic plan additions, deletion hidden when only 1 plan remains)
- */
+
 @Composable
 fun OnboardingDataScreen(
     onNavigateBack: () -> Unit,
@@ -233,6 +227,7 @@ fun OnboardingDataScreen(
                         growthRateStr = growthRateStr,
                         onGrowthRateChange = { growthRateStr = it }
                     )
+
                     1 -> Step2CostAndExpenses(
                         cacStr = cacStr,
                         onCacChange = { cacStr = it },
@@ -242,6 +237,7 @@ fun OnboardingDataScreen(
                         onVarCostsChange = { varCostsStr = it },
                         currencySymbol = currentCurrency.symbol
                     )
+
                     2 -> Step3PricingPlans(
                         editablePlans = editablePlans,
                         currencySymbol = currentCurrency.symbol,
@@ -273,7 +269,8 @@ fun OnboardingDataScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Circular Back Button
-                val borderColor = if (isDark) Color(0xFF2E3646) else RevLensTheme.colors.borderDefault
+                val borderColor =
+                    if (isDark) Color(0xFF2E3646) else RevLensTheme.colors.borderDefault
                 val backgroundColor = if (isDark) Color(0xFF1E232E) else RevLensTheme.colors.surface
 
                 Surface(
@@ -334,7 +331,7 @@ fun OnboardingDataScreen(
 private fun Step1CurrencyAndCoreMetrics(
     currencyCode: String,
     onCurrencyChange: (String) -> Unit,
-    currentCurrency: com.example.revlens.utils.AppCurrency,
+    currentCurrency: AppCurrency,
     churnRateStr: String,
     onChurnRateChange: (String) -> Unit,
     growthRateStr: String,
@@ -392,7 +389,9 @@ private fun Step1CurrencyAndCoreMetrics(
                                 1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(8.dp)
                             )
                     ) {
-                        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                        CompositionLocalProvider(
+                            LocalLayoutDirection provides LayoutDirection.Ltr
+                        ) {
                             CurrencyUtils.supportedCurrencies.forEach { curr ->
                                 DropdownMenuItem(
                                     text = {
@@ -538,7 +537,9 @@ private fun Step3PricingPlans(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
                             .background(RevLensTheme.colors.surfaceElevated)
-                            .border(1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(12.dp))
+                            .border(
+                                1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(12.dp)
+                            )
                             .padding(14.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
@@ -622,7 +623,10 @@ private fun Step3PricingPlans(
                     ),
                     border = BorderStroke(1.dp, RevLensTheme.colors.borderDefault)
                 ) {
-                    Icon(imageVector = Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(
+                        imageVector = Icons.Filled.Add, contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "Add Another Plan",

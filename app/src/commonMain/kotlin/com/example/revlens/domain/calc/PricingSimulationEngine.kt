@@ -7,11 +7,6 @@ import com.example.revlens.model.RoundingMode
 
 object PricingSimulationEngine {
 
-    /**
-     * Applies the assumptions in a Scenario to a BusinessProfile to project the new state.
-     * If [targetPlanId] or [assumptions.targetPlanId] is specified, only that plan's price is adjusted.
-     * Otherwise, all plans are adjusted by [assumptions.priceChangePercent].
-     */
     fun simulate(
         baseline: BusinessProfile,
         assumptions: Assumptions,

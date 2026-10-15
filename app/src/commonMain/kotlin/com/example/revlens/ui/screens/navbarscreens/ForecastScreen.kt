@@ -1,14 +1,7 @@
 package com.example.revlens.ui.screens.navbarscreens
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -49,9 +42,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.koin.compose.viewmodel.koinViewModel
 import com.example.revlens.domain.calc.ForecastEngine
-import com.example.revlens.domain.calc.MonthlyForecast
+import com.example.revlens.model.BigDecimal
+import com.example.revlens.model.RoundingMode
 import com.example.revlens.presentation.MainViewModel
 import com.example.revlens.ui.components.ActionCardButton
 import com.example.revlens.ui.components.ChartLegend
@@ -63,14 +56,12 @@ import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
 import com.example.revlens.utils.CurrencyUtils
 import com.example.revlens.utils.DateUtils
-import com.example.revlens.model.BigDecimal
-import com.example.revlens.model.RoundingMode
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForecastScreen(
     viewModel: MainViewModel = koinViewModel(),
-    onNavigateBack: (() -> Unit)? = null,
     onNavigateToGoalPlanner: () -> Unit,
     onNavigateToMetrics: () -> Unit
 ) {
@@ -122,7 +113,8 @@ fun ForecastScreen(
             // 1. Sleek Segmented Duration Switcher
             val durationOptions = listOf("6 Months", "12 Months", "24 Months")
             val durationValues = listOf(6, 12, 24)
-            val selectedIndex = durationValues.indexOf(selectedMonths).coerceAtLeast(0)
+            val selectedIndex = durationValues.indexOf(selectedMonths)
+                .coerceAtLeast(0)
 
             SegmentedTabs(
                 options = durationOptions,
@@ -150,7 +142,11 @@ fun ForecastScreen(
                             ForecastKpiTile(
                                 label = "PROJECTED MRR",
                                 value = currencyFormatter.format(finalMonth.mrr),
-                                badge = "+${CurrencyUtils.formatPercent(mrrGrowthPct, isFraction = false, maxFractionDigits = 1)}",
+                                badge = "+${
+                                    CurrencyUtils.formatPercent(
+                                        mrrGrowthPct, isFraction = false, maxFractionDigits = 1
+                                    )
+                                }",
                                 badgeColor = RevLensTheme.colors.success,
                                 modifier = Modifier.weight(1f)
                             )
@@ -176,7 +172,9 @@ fun ForecastScreen(
                             )
                             ForecastKpiTile(
                                 label = "ARR RUN-RATE",
-                                value = currencyFormatter.format(finalMonth.mrr.multiply(BigDecimal(12))),
+                                value = currencyFormatter.format(
+                                    finalMonth.mrr.multiply(BigDecimal(12))
+                                ),
                                 badge = "Annualized",
                                 badgeColor = RevLensTheme.colors.brandPrimary,
                                 modifier = Modifier.weight(1f)
@@ -274,15 +272,24 @@ fun ForecastScreen(
                         displayList.forEachIndexed { index, data ->
                             val monthName = monthLabels.getOrNull(data.monthIndex)?.first
                                 ?: "Month ${data.monthIndex}"
-                            val prevMonth = if (data.monthIndex > 0) forecastData.getOrNull(data.monthIndex - 1) else null
-                            val monthlyGain = if (prevMonth != null) data.mrr.subtract(prevMonth.mrr) else BigDecimal.ZERO
-                            val netNewUsers = if (prevMonth != null) data.customers - prevMonth.customers else 0
+                            val prevMonth = if (data.monthIndex > 0) forecastData.getOrNull(
+                                data.monthIndex - 1
+                            ) else null
+                            val monthlyGain = if (prevMonth != null) data.mrr.subtract(
+                                prevMonth.mrr
+                            ) else BigDecimal.ZERO
+                            val netNewUsers =
+                                if (prevMonth != null) data.customers - prevMonth.customers else 0
 
                             ForecastRowItem(
                                 monthTitle = monthName,
                                 monthSubtitle = if (data.monthIndex == 0) "Baseline" else "Month ${data.monthIndex}",
                                 mrrFormatted = currencyFormatter.format(data.mrr),
-                                mrrGainFormatted = if (data.monthIndex > 0) "+${currencyFormatter.format(monthlyGain)}" else "Current",
+                                mrrGainFormatted = if (data.monthIndex > 0) "+${
+                                    currencyFormatter.format(
+                                        monthlyGain
+                                    )
+                                }" else "Current",
                                 usersFormatted = "${data.customers} users",
                                 usersGainFormatted = if (data.monthIndex > 0) "+$netNewUsers net" else "Active base",
                                 isCurrent = data.monthIndex == 0

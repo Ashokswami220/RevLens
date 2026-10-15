@@ -9,13 +9,15 @@ actual object BrowserRouter {
             if (window.location.hash != target) {
                 window.location.hash = target
             }
-        } catch (_: Throwable) {}
+        } catch (_: Throwable) {
+        }
     }
 
     actual fun getInitialRoute(): String? {
         return try {
-            val hash = window.location.hash.removePrefix("#").removePrefix("/")
-            if (hash.isNotBlank()) hash else null
+            val hash = window.location.hash.removePrefix("#")
+                .removePrefix("/")
+            hash.ifBlank { null }
         } catch (_: Throwable) {
             null
         }
@@ -24,11 +26,13 @@ actual object BrowserRouter {
     actual fun onUrlChange(callback: (String) -> Unit) {
         try {
             window.addEventListener("hashchange") {
-                val hash = window.location.hash.removePrefix("#").removePrefix("/")
+                val hash = window.location.hash.removePrefix("#")
+                    .removePrefix("/")
                 if (hash.isNotBlank()) {
                     callback(hash)
                 }
             }
-        } catch (_: Throwable) {}
+        } catch (_: Throwable) {
+        }
     }
 }

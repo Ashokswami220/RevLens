@@ -14,11 +14,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
-import org.koin.compose.viewmodel.koinViewModel
 import com.example.revlens.presentation.MainViewModel
 import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SegmentedTabs
@@ -26,13 +26,13 @@ import com.example.revlens.ui.screens.detailscreens.BreakEvenScreen
 import com.example.revlens.ui.screens.detailscreens.WhatIfScreen
 import com.example.revlens.ui.theme.RevLensTheme
 import kotlinx.coroutines.launch
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SimulatorScreen(
     initialTab: Int = 0,
     viewModel: MainViewModel = koinViewModel(),
-    onNavigateBack: (() -> Unit)? = null,
     onNavigateToMetrics: () -> Unit
 ) {
     val pagerState = rememberPagerState(
@@ -42,7 +42,7 @@ fun SimulatorScreen(
     val coroutineScope = rememberCoroutineScope()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
-    androidx.compose.runtime.LaunchedEffect(initialTab) {
+    LaunchedEffect(initialTab) {
         if (pagerState.currentPage != initialTab) {
             pagerState.scrollToPage(initialTab.coerceIn(0, 2))
         }

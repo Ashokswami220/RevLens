@@ -27,13 +27,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import org.koin.compose.viewmodel.koinViewModel
 import com.example.revlens.domain.calc.BreakEvenCalculator
 import com.example.revlens.domain.calc.LtvCalculator
 import com.example.revlens.domain.calc.PricingSimulationEngine
-import com.example.revlens.model.BusinessProfile
+import com.example.revlens.model.BigDecimal
 import com.example.revlens.model.Scenario
 import com.example.revlens.presentation.MainViewModel
 import com.example.revlens.ui.components.ChartLegend
@@ -44,9 +44,9 @@ import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
 import com.example.revlens.utils.CurrencyUtils
-import com.example.revlens.model.BigDecimal
 import com.example.revlens.utils.DateUtils
 import com.example.revlens.utils.RevLensFormatter
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun ScenarioComparisonScreen(
@@ -133,10 +133,10 @@ fun ScenarioComparisonScreen(
                 )
 
                 val chartDataList = mutableListOf<List<Float>>()
-                val legendItems = mutableListOf<Pair<String, androidx.compose.ui.graphics.Color>>()
+                val legendItems = mutableListOf<Pair<String, Color>>()
 
                 val selectedScenarios = scenarios.filter { selectedScenarioIds.contains(it.id) }
-                selectedScenarios.forEachIndexed { index, scenario ->
+                selectedScenarios.forEach { scenario ->
                     val color = availableColors[scenarios.indexOf(scenario) % availableColors.size]
                     val result = PricingSimulationEngine.simulate(
                         scenario.baselineProfile, scenario.assumptions
@@ -147,7 +147,7 @@ fun ScenarioComparisonScreen(
 
                     val projection = mutableListOf<Float>()
                     var current = mrr
-                    for (i in 0..11) {
+                    repeat(12) {
                         projection.add(current)
                         current *= (1f + growth)
                     }
@@ -157,7 +157,8 @@ fun ScenarioComparisonScreen(
 
                 if (chartDataList.isNotEmpty()) {
                     val projectionMonths = remember {
-                        DateUtils.getForwardMonthNames(12).map { it.replace(" (Now)", "") }
+                        DateUtils.getForwardMonthNames(12)
+                            .map { it.replace(" (Now)", "") }
                     }
 
                     SectionCard(title = "MRR Projection (12 Months)") {
@@ -175,7 +176,6 @@ fun ScenarioComparisonScreen(
             if (profile != null) {
                 val selectedScenarios = scenarios.filter { selectedScenarioIds.contains(it.id) }
                 ComparisonTable(
-                    profile = profile!!,
                     scenarios = selectedScenarios,
                     currencyFormatter = currencyFormatter,
                     percentFormatter = percentFormatter
@@ -187,7 +187,6 @@ fun ScenarioComparisonScreen(
 
 @Composable
 private fun ComparisonTable(
-    profile: BusinessProfile,
     scenarios: List<Scenario>,
     currencyFormatter: RevLensFormatter,
     percentFormatter: RevLensFormatter
@@ -254,7 +253,11 @@ private fun ComparisonTable(
                     TableValue(percentFormatter.format(result.monthlyChurnRate))
                     TableValue(currencyFormatter.format(ltv))
                     TableValue(
-                        if (payback != null) "${CurrencyUtils.formatDecimal(payback, 1)} mo" else "N/A"
+                        if (payback != null) "${
+                            CurrencyUtils.formatDecimal(
+                                payback, 1
+                            )
+                        } mo" else "N/A"
                     )
                 }
             }

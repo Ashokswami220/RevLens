@@ -1,8 +1,8 @@
 package com.example.revlens.domain.calc
 
-import org.junit.Assert.assertEquals
-import org.junit.Test
 import com.example.revlens.model.BigDecimal
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class LtvCalculatorTest {
 

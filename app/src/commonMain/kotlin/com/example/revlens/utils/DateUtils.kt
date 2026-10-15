@@ -5,10 +5,12 @@ package com.example.revlens.utils
  * Completely pure Kotlin, zero JVM or platform dependencies.
  */
 object DateUtils {
-    private val MONTH_NAMES = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+    private val MONTH_NAMES =
+        listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
     private val DAYS_IN_MONTHS = intArrayOf(31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
 
-    private fun isLeapYear(year: Int): Boolean = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
+    private fun isLeapYear(year: Int): Boolean =
+        (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
 
     private fun getCurrentYearAndMonth(): Pair<Int, Int> {
         val days = (getCurrentTimeMillis() / (1000L * 60 * 60 * 24)).toInt()

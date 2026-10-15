@@ -131,34 +131,3 @@ fun DeltaChip(
         )
     }
 }
-
-enum class HealthStatus { GOOD, STRETCH, POOR }
-
-@Composable
-fun HealthBadge(
-    text: String,
-    status: HealthStatus,
-    modifier: Modifier = Modifier
-) {
-    val (backgroundColor, contentColor) = when (status) {
-        HealthStatus.GOOD -> RevLensTheme.colors.success to Color.White
-        HealthStatus.STRETCH -> RevLensTheme.colors.warning to Color.Black
-        HealthStatus.POOR -> RevLensTheme.colors.error to Color.White
-    }
-
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier
-            .height(24.dp)
-            .clip(CircleShape)
-            .background(backgroundColor)
-            .padding(horizontal = 10.dp)
-    ) {
-        Text(
-            text = text,
-            style = RevLensTypography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            color = contentColor
-        )
-    }
-}

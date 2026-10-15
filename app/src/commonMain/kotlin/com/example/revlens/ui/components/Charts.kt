@@ -4,7 +4,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
-import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,6 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -53,7 +53,8 @@ fun RevLensLineChart(
 
     val isDark = isSystemInDarkTheme()
     val textMeasurer = rememberTextMeasurer()
-    val lineGridColor = if (isDark) Color(0xFF2E384D).copy(alpha = 0.55f) else Color(0xFFCBD5E1).copy(alpha = 0.75f)
+    val lineGridColor =
+        if (isDark) Color(0xFF2E384D).copy(alpha = 0.55f) else Color(0xFFCBD5E1).copy(alpha = 0.75f)
     val backgroundColor = RevLensTheme.colors.background
 
     Box(
@@ -67,7 +68,6 @@ fun RevLensLineChart(
                 val labelPadding = 48f
                 val height = fullHeight - labelPadding
 
-                // Draw Grid (5 horizontal lines, dashed break-break like Dashboard)
                 val gridSteps = 4
                 val stepY = height / gridSteps
                 val dashEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
@@ -123,7 +123,8 @@ fun RevLensLineChart(
                     drawPath(path = fillPath, brush = fillBrush)
 
                     val isDashed = dashedIndices.contains(seriesIndex)
-                    val lineDashEffect = if (isDashed) PathEffect.dashPathEffect(floatArrayOf(10f, 8f), 0f) else null
+                    val lineDashEffect =
+                        if (isDashed) PathEffect.dashPathEffect(floatArrayOf(10f, 8f), 0f) else null
 
                     if (!isDashed) {
                         // 2) Outer glow
@@ -196,7 +197,10 @@ fun RevLensLineChart(
                         )
                         drawText(
                             textLayoutResult = measured,
-                            topLeft = Offset(i * labelStepX - (measured.size.width / 2f), fullHeight - measured.size.height)
+                            topLeft = Offset(
+                                i * labelStepX - (measured.size.width / 2f),
+                                fullHeight - measured.size.height
+                            )
                         )
                     }
                 }
@@ -318,26 +322,27 @@ fun RevLensBarChart(
                     }
 
                     // Value label above or below the bar
-                    valueLabels?.getOrNull(index)?.let { vLabel ->
-                        val measured = textMeasurer.measure(
-                            text = vLabel,
-                            style = TextStyle(
-                                color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                textAlign = TextAlign.Center
+                    valueLabels?.getOrNull(index)
+                        ?.let { vLabel ->
+                            val measured = textMeasurer.measure(
+                                text = vLabel,
+                                style = TextStyle(
+                                    color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    textAlign = TextAlign.Center
+                                )
                             )
-                        )
-                        val textY = if (value >= 0) {
-                            (topY - measured.size.height - 2f).coerceAtLeast(0f)
-                        } else {
-                            (topY + barHeight + 2f).coerceAtMost(fullHeight - labelHeight)
+                            val textY = if (value >= 0) {
+                                (topY - measured.size.height - 2f).coerceAtLeast(0f)
+                            } else {
+                                (topY + barHeight + 2f).coerceAtMost(fullHeight - labelHeight)
+                            }
+                            drawText(
+                                textLayoutResult = measured,
+                                topLeft = Offset(centerX - (measured.size.width / 2f), textY)
+                            )
                         }
-                        drawText(
-                            textLayoutResult = measured,
-                            topLeft = Offset(centerX - (measured.size.width / 2f), textY)
-                        )
-                    }
 
                     // X-Axis Label below chart
                     val label = labels?.getOrNull(index) ?: if (labels != null) "" else "M${index}"
@@ -352,7 +357,10 @@ fun RevLensBarChart(
                         )
                         drawText(
                             textLayoutResult = measured,
-                            topLeft = Offset(centerX - (measured.size.width / 2f), fullHeight - measured.size.height)
+                            topLeft = Offset(
+                                centerX - (measured.size.width / 2f),
+                                fullHeight - measured.size.height
+                            )
                         )
                     }
                 }

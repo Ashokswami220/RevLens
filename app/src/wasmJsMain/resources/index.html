@@ -2,18 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+          name="viewport">
     <title>RevLens — SaaS Revenue & Financial Intelligence</title>
-    <meta name="description" content="Interactive SaaS revenue metrics, MRR forecasts, pricing simulations, and break-even intelligence.">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="RevLens">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#0B0F19">
-    <link rel="manifest" href="manifest.json">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <meta content="Interactive SaaS revenue metrics, MRR forecasts, pricing simulations, and break-even intelligence."
+          name="description">
+    <meta content="yes" name="apple-mobile-web-app-capable">
+    <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style">
+    <meta content="RevLens" name="apple-mobile-web-app-title">
+    <meta content="yes" name="mobile-web-app-capable">
+    <meta content="#0B0F19" name="theme-color">
+    <link href="manifest.json" rel="manifest">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap"
+          rel="stylesheet">
     <style>
         * {
             box-sizing: border-box;
@@ -101,28 +104,28 @@
     </style>
 </head>
 <body>
-    <div id="loading-spinner">
-        <div class="spinner"></div>
-        <div>Loading RevLens WebAssembly...</div>
-    </div>
-    <div id="root"></div>
-    <script>
-        window.addEventListener('error', function(e) {
-            console.error('RevLens Runtime Error:', e.error || e.message);
-        });
-        window.addEventListener('unhandledrejection', function(e) {
-            console.error('RevLens Unhandled Rejection:', e.reason);
-        });
-        window.addEventListener('load', () => {
-            const spinner = document.getElementById('loading-spinner');
-            if (spinner) {
-                setTimeout(() => {
-                    spinner.style.opacity = '0';
-                    setTimeout(() => spinner.remove(), 400);
-                }, 800);
-            }
-        });
-    </script>
-    <script src="revlens.js"></script>
+<div id="loading-spinner">
+    <div class="spinner"></div>
+    <div>Loading RevLens WebAssembly...</div>
+</div>
+<div id="root"></div>
+<script>
+    window.addEventListener('error', function(e) {
+        console.error('RevLens Runtime Error:', e.error || e.message);
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+        console.error('RevLens Unhandled Rejection:', e.reason);
+    });
+    window.addEventListener('load', () => {
+        const spinner = document.getElementById('loading-spinner');
+        if (spinner) {
+            setTimeout(() => {
+                spinner.style.opacity = '0';
+                setTimeout(() => spinner.remove(), 400);
+            }, 800);
+        }
+    });
+</script>
+<script src="revlens.js"></script>
 </body>
 </html>

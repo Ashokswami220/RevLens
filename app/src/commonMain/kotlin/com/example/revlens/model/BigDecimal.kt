@@ -27,8 +27,10 @@ class BigDecimal(
 ) : Comparable<BigDecimal> {
 
     constructor(str: String) : this(
-        rawValue = str.trim().toDoubleOrNull() ?: 0.0,
-        scale = if (str.contains('.')) str.trim().substringAfter('.').length else -1
+        rawValue = str.trim()
+            .toDoubleOrNull() ?: 0.0,
+        scale = if (str.contains('.')) str.trim()
+            .substringAfter('.').length else -1
     )
 
     constructor(intVal: Int) : this(intVal.toDouble(), 0)
@@ -83,6 +85,7 @@ class BigDecimal(
                 val r = if (diff <= 0.5) floor(absScaled) else ceil(absScaled)
                 sign * r
             }
+
             RoundingMode.CEILING -> ceil(scaled)
             RoundingMode.FLOOR -> floor(scaled)
             RoundingMode.DOWN -> if (scaled >= 0) floor(scaled) else ceil(scaled)
@@ -111,7 +114,6 @@ class BigDecimal(
 
     fun toDouble(): Double = rawValue
     fun toFloat(): Float = rawValue.toFloat()
-    fun toLong(): Long = rawValue.toLong()
     fun toInt(): Int = rawValue.toInt()
 
     fun toPlainString(): String = toString()
@@ -128,7 +130,8 @@ class BigDecimal(
                 val s = absVal.toString()
                 val parts = s.split(".")
                 val intPart = parts[0]
-                val decPart = if (parts.size > 1) parts[1].padEnd(scale, '0').take(scale) else "0".repeat(scale)
+                val decPart = if (parts.size > 1) parts[1].padEnd(scale, '0')
+                    .take(scale) else "0".repeat(scale)
                 "${if (isNegative) "-" else ""}$intPart.$decPart"
             }
         } else {
@@ -140,7 +143,6 @@ class BigDecimal(
     companion object {
         val ZERO = BigDecimal(0.0, 2)
         val ONE = BigDecimal(1.0, 2)
-        val TEN = BigDecimal(10.0, 2)
         fun valueOf(v: Double): BigDecimal = BigDecimal(v)
         fun valueOf(v: Long): BigDecimal = BigDecimal(v.toDouble(), 0)
     }

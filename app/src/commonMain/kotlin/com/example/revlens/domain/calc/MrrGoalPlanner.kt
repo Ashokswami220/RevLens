@@ -15,9 +15,6 @@ data class GoalPlan(
 
 object MrrGoalPlanner {
 
-    /**
-     * Calculates the required metrics to hit a target MRR in a given number of months.
-     */
     fun calculateRequiredMetrics(
         currentProfile: BusinessProfile,
         targetMrr: BigDecimal,

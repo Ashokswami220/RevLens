@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.BookmarkAdd
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -35,22 +37,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.revlens.domain.calc.PricingSimulationEngine
 import com.example.revlens.model.Assumptions
+import com.example.revlens.model.BigDecimal
+import com.example.revlens.model.RoundingMode
+import com.example.revlens.model.Scenario
 import com.example.revlens.presentation.MainViewModel
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.BookmarkAdd
 import com.example.revlens.ui.components.ActionCardButton
 import com.example.revlens.ui.components.ChartLegend
 import com.example.revlens.ui.components.ChoiceChip
 import com.example.revlens.ui.components.DeltaChip
 import com.example.revlens.ui.components.DeltaType
 import com.example.revlens.ui.components.LabeledSlider
-import com.example.revlens.ui.components.PrimaryButton
 import com.example.revlens.ui.components.RevLensBarChart
 import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
-import com.example.revlens.model.BigDecimal
-import com.example.revlens.model.RoundingMode
 import com.example.revlens.utils.CurrencyUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,7 +68,7 @@ fun PricingSimulatorScreen(viewModel: MainViewModel) {
     var scenarioName by remember { mutableStateOf("") }
 
     val currencyFormatter = remember(profile?.currencyCode) {
-        com.example.revlens.utils.CurrencyUtils.getFormatter(profile?.currencyCode)
+        CurrencyUtils.getFormatter(profile?.currencyCode)
     }
 
     // Assumptions object for simulation
@@ -128,7 +128,7 @@ fun PricingSimulatorScreen(viewModel: MainViewModel) {
 
             // 1. New Projected MRR Hero Card (at the top)
             val projected = PricingSimulationEngine.simulate(profile!!, assumptions, selectedPlanId)
-            val mrrDelta = if (profile!!.currentMrr.compareTo(BigDecimal.ZERO) > 0) {
+            val mrrDelta = if (profile!!.currentMrr > BigDecimal.ZERO) {
                 (projected.currentMrr - profile!!.currentMrr)
                     .divide(profile!!.currentMrr, 4, RoundingMode.HALF_UP)
                     .toDouble() * 100
@@ -274,7 +274,11 @@ fun PricingSimulatorScreen(viewModel: MainViewModel) {
                                 else -> RevLensTheme.colors.textPrimary
                             }
                             Text(
-                                text = "$churnSign${CurrencyUtils.formatDecimal(churnChangePercent.toDouble(), 1)}%",
+                                text = "$churnSign${
+                                    CurrencyUtils.formatDecimal(
+                                        churnChangePercent.toDouble(), 1
+                                    )
+                                }%",
                                 style = RevLensTypography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = churnColor
@@ -327,7 +331,7 @@ fun PricingSimulatorScreen(viewModel: MainViewModel) {
                 TextButton(onClick = {
                     profile?.let { p ->
                         viewModel.saveScenario(
-                            com.example.revlens.model.Scenario(
+                            Scenario(
                                 name = scenarioName.ifEmpty { "New Pricing Scenario" },
                                 baselineProfile = p,
                                 assumptions = assumptions

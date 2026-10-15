@@ -1,12 +1,14 @@
 package com.example.revlens.domain.calc
 
 import com.example.revlens.model.Assumptions
+import com.example.revlens.model.BigDecimal
 import com.example.revlens.model.BusinessProfile
 import com.example.revlens.model.Plan
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Test
-import com.example.revlens.model.BigDecimal
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class WhatIfEngineTest {
 
@@ -71,8 +73,8 @@ class WhatIfEngineTest {
         val results = WhatIfEngine.compare(baseline, projected)
         val paybackResult = results.find { it.label == "CAC Payback" }
         assertEquals("Never", paybackResult!!.formattedValue)
-        org.junit.Assert.assertFalse(
-            "Payback of Never must be marked negative", paybackResult.isPositive
+        assertFalse(
+            paybackResult.isPositive, "Payback of Never must be marked negative"
         )
     }
 
@@ -97,8 +99,8 @@ class WhatIfEngineTest {
         val forecastResult = results.find { it.label == "12-Mo MRR" }
 
         assertTrue(
-            "Projected 12-Mo MRR should expand significantly",
-            forecastResult!!.deltaPercent!! > 50.0
+            forecastResult!!.deltaPercent!! > 50.0,
+            "Projected 12-Mo MRR should expand significantly"
         )
         assertTrue(forecastResult.isPositive)
     }
@@ -131,7 +133,7 @@ class WhatIfEngineTest {
         assertEquals(5, results.size)
         // With 0 baseline MRR, deltaPercent should be null without crashing
         val mrrResult = results.find { it.label == "MRR" }
-        org.junit.Assert.assertNull(mrrResult!!.deltaPercent)
+        assertNull(mrrResult!!.deltaPercent)
         assertTrue(mrrResult.isPositive)
     }
 }

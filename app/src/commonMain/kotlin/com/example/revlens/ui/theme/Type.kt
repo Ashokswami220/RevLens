@@ -7,8 +7,6 @@ import androidx.compose.ui.text.font.FontWeight
 
 import androidx.compose.ui.unit.sp
 
-// We will use default font family for now, but in reality it should be Inter.
-// fontFeatureSettings = "tnum" is used for tabular figures.
 
 val RevLensTypography = Typography(
     displayLarge = TextStyle(

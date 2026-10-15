@@ -69,12 +69,14 @@ object CurrencyUtils {
         val factor = 10.0.pow(decimals.toDouble())
         val rounded = round(value * factor) / factor
         return if (decimals == 0) {
-            rounded.toLong().toString()
+            rounded.toLong()
+                .toString()
         } else {
             val s = rounded.toString()
             val parts = s.split(".")
             val intPart = parts[0]
-            val decPart = if (parts.size > 1) parts[1].padEnd(decimals, '0').take(decimals) else "0".repeat(decimals)
+            val decPart = if (parts.size > 1) parts[1].padEnd(decimals, '0')
+                .take(decimals) else "0".repeat(decimals)
             "$intPart.$decPart"
         }
     }
@@ -82,13 +84,16 @@ object CurrencyUtils {
     /**
      * Helper to format a percentage directly without creating a formatter instance.
      */
-    fun formatPercent(value: Double, isFraction: Boolean = true, maxFractionDigits: Int = 1): String {
+    fun formatPercent(
+        value: Double, isFraction: Boolean = true, maxFractionDigits: Int = 1
+    ): String {
         val pct = if (isFraction) value * 100.0 else value
         return "${formatDecimal(pct, maxFractionDigits)}%"
     }
 }
 
-private class MultiplatformCurrencyFormatter(private val appCurrency: AppCurrency) : RevLensFormatter {
+private class MultiplatformCurrencyFormatter(private val appCurrency: AppCurrency) :
+    RevLensFormatter {
     override fun format(amount: BigDecimal): String = formatValue(amount.toDouble())
     override fun format(amount: Double): String = formatValue(amount)
     override fun format(amount: Long): String = formatValue(amount.toDouble())
@@ -101,7 +106,9 @@ private class MultiplatformCurrencyFormatter(private val appCurrency: AppCurrenc
         is Long -> format(amount)
         is Int -> format(amount)
         is Number -> format(amount)
-        is String -> amount.toBigDecimalOrNull()?.let { format(it) } ?: amount
+        is String -> amount.toBigDecimalOrNull()
+            ?.let { format(it) } ?: amount
+
         null -> "-"
         else -> amount.toString()
     }
@@ -110,13 +117,18 @@ private class MultiplatformCurrencyFormatter(private val appCurrency: AppCurrenc
         val rounded = round(value).toLong()
         val isNegative = rounded < 0
         val absVal = abs(rounded)
-        val formattedNumber = absVal.toString().reversed().chunked(3).joinToString(",").reversed()
+        val formattedNumber = absVal.toString()
+            .reversed()
+            .chunked(3)
+            .joinToString(",")
+            .reversed()
         val prefix = if (isNegative) "-" else ""
         return if (appCurrency.symbolOnLeft) "$prefix${appCurrency.symbol}$formattedNumber" else "$prefix$formattedNumber ${appCurrency.symbol}"
     }
 }
 
-private class MultiplatformPercentFormatter(private val maxFractionDigits: Int = 1) : RevLensFormatter {
+private class MultiplatformPercentFormatter(private val maxFractionDigits: Int = 1) :
+    RevLensFormatter {
     override fun format(amount: BigDecimal): String = formatValue(amount.toDouble())
     override fun format(amount: Double): String = formatValue(amount)
     override fun format(amount: Long): String = formatValue(amount.toDouble())
@@ -129,7 +141,9 @@ private class MultiplatformPercentFormatter(private val maxFractionDigits: Int =
         is Long -> format(amount)
         is Int -> format(amount)
         is Number -> format(amount)
-        is String -> amount.toDoubleOrNull()?.let { format(it) } ?: amount
+        is String -> amount.toDoubleOrNull()
+            ?.let { format(it) } ?: amount
+
         null -> "-"
         else -> amount.toString()
     }

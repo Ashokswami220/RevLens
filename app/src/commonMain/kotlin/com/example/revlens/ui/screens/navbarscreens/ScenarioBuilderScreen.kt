@@ -9,7 +9,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
+import androidx.compose.material.icons.automirrored.outlined.CompareArrows
+import androidx.compose.material.icons.outlined.AddCircleOutline
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,9 +22,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import org.koin.compose.viewmodel.koinViewModel
-import androidx.compose.material.icons.automirrored.outlined.CompareArrows
-import androidx.compose.material.icons.outlined.AddCircleOutline
 import com.example.revlens.domain.calc.PricingSimulationEngine
 import com.example.revlens.model.Scenario
 import com.example.revlens.presentation.MainViewModel
@@ -30,13 +31,14 @@ import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
+import com.example.revlens.utils.CurrencyUtils
 import com.example.revlens.utils.RevLensFormatter
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScenarioBuilderScreen(
     viewModel: MainViewModel = koinViewModel(),
-    onNavigateBack: (() -> Unit)? = null,
     onNavigateToCreate: () -> Unit,
     onNavigateToCompare: () -> Unit,
     onNavigateToMetrics: () -> Unit
@@ -45,7 +47,7 @@ fun ScenarioBuilderScreen(
 
     val profile by viewModel.profile.collectAsState()
     val currencyFormatter = remember(profile?.currencyCode) {
-        com.example.revlens.utils.CurrencyUtils.getFormatter(profile?.currencyCode)
+        CurrencyUtils.getFormatter(profile?.currencyCode)
     }
 
     Scaffold(
@@ -55,8 +57,8 @@ fun ScenarioBuilderScreen(
                 title = "Scenarios",
                 onBackClick = null,
                 actions = {
-                    androidx.compose.material3.IconButton(onClick = onNavigateToMetrics) {
-                        androidx.compose.material3.Icon(
+                    IconButton(onClick = onNavigateToMetrics) {
+                        Icon(
                             imageVector = Icons.AutoMirrored.Filled.ShowChart,
                             contentDescription = "Metrics",
                             tint = RevLensTheme.colors.textPrimary

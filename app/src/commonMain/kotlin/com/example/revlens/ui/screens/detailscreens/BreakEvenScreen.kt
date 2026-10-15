@@ -6,12 +6,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.draw.clip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,15 +20,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.revlens.domain.calc.BreakEvenCalculator
+import com.example.revlens.model.BigDecimal
 import com.example.revlens.presentation.MainViewModel
+import com.example.revlens.ui.components.ChartLegend
 import com.example.revlens.ui.components.LabeledSlider
+import com.example.revlens.ui.components.RevLensLineChart
 import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
-import com.example.revlens.model.BigDecimal
 import com.example.revlens.utils.CurrencyUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -105,7 +106,7 @@ fun BreakEvenScreen(viewModel: MainViewModel) {
                         (0..10).map { "${(maxCustomers * it / 10f).toInt()}" }
                     }
 
-                    com.example.revlens.ui.components.RevLensLineChart(
+                    RevLensLineChart(
                         data = listOf(revenueData, costData),
                         colors = listOf(
                             RevLensTheme.colors.brandPrimary, RevLensTheme.colors.error
@@ -113,7 +114,7 @@ fun BreakEvenScreen(viewModel: MainViewModel) {
                         xLabels = customerLabels,
                         chartHeight = 150.dp
                     )
-                    com.example.revlens.ui.components.ChartLegend(
+                    ChartLegend(
                         items = listOf(
                             "Revenue" to RevLensTheme.colors.brandPrimary,
                             "Costs" to RevLensTheme.colors.error
@@ -205,9 +206,4 @@ private fun ResultCard(
             color = RevLensTheme.colors.textPrimary
         )
     }
-}
-
-@Composable
-private fun ResultRow(label: String, value: String) {
-    ResultCard(label = label, value = value)
 }

@@ -5,20 +5,17 @@ import androidx.lifecycle.viewModelScope
 import com.example.revlens.data.ProfileRepository
 import com.example.revlens.data.ScenarioRepository
 import com.example.revlens.model.BusinessProfile
-import com.example.revlens.model.Plan
 import com.example.revlens.model.Scenario
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import com.example.revlens.model.BigDecimal
 
 class MainViewModel(
     private val repository: ProfileRepository,
     private val scenarioRepository: ScenarioRepository
 ) : ViewModel() {
 
-    // The single source of truth for the app's current business profile
     val profile: StateFlow<BusinessProfile?> = repository.profileFlow
         .stateIn(
             scope = viewModelScope,
@@ -50,37 +47,6 @@ class MainViewModel(
         viewModelScope.launch {
             repository.saveProfile(profile)
             repository.setOnboardingCompleted(true)
-        }
-    }
-
-    // Helper functions for common edits to avoid full object recreation in UI
-    fun addPlan(plan: Plan) {
-        val current = profile.value ?: return
-        val newPlans = current.plans + plan
-        updateProfile(current.copy(plans = newPlans))
-    }
-
-    fun updatePlan(updatedPlan: Plan) {
-        val current = profile.value ?: return
-        val newPlans = current.plans.map { if (it.id == updatedPlan.id) updatedPlan else it }
-        updateProfile(current.copy(plans = newPlans))
-    }
-
-    fun removePlan(planId: String) {
-        val current = profile.value ?: return
-        val newPlans = current.plans.filter { it.id != planId }
-        updateProfile(current.copy(plans = newPlans))
-    }
-
-    fun updateCac(newCac: BigDecimal) {
-        profile.value?.let { current ->
-            updateProfile(current.copy(cac = newCac))
-        }
-    }
-
-    fun updateFixedCosts(newCosts: BigDecimal) {
-        profile.value?.let { current ->
-            updateProfile(current.copy(fixedCosts = newCosts))
         }
     }
 

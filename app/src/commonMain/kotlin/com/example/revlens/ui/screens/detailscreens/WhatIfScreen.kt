@@ -12,8 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.clip
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.BookmarkAdd
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -26,25 +26,25 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.revlens.domain.calc.PricingSimulationEngine
 import com.example.revlens.domain.calc.WhatIfEngine
 import com.example.revlens.model.Assumptions
+import com.example.revlens.model.BigDecimal
 import com.example.revlens.model.MetricResult
+import com.example.revlens.model.Scenario
 import com.example.revlens.presentation.MainViewModel
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.BookmarkAdd
 import com.example.revlens.ui.components.ActionCardButton
 import com.example.revlens.ui.components.LabeledSlider
-import com.example.revlens.ui.components.PrimaryButton
 import com.example.revlens.ui.components.RevLensBarChart
 import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
-import com.example.revlens.model.BigDecimal
 import com.example.revlens.utils.CurrencyUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -126,22 +126,23 @@ fun WhatIfScreen(viewModel: MainViewModel) {
 
                 // 2 numbers per row
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    results.chunked(2).forEach { pair ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            pair.forEach { metric ->
-                                CompactMetricItem(
-                                    result = metric,
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
-                            if (pair.size == 1) {
-                                Spacer(modifier = Modifier.weight(1f))
+                    results.chunked(2)
+                        .forEach { pair ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                pair.forEach { metric ->
+                                    CompactMetricItem(
+                                        result = metric,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                                if (pair.size == 1) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
                             }
                         }
-                    }
                 }
             }
         }
@@ -162,7 +163,11 @@ fun WhatIfScreen(viewModel: MainViewModel) {
                     value = churnChangePercent,
                     onValueChange = { churnChangePercent = it },
                     valueRange = -10f..10f,
-                    valueString = "${if (churnChangePercent > 0) "+" else ""}${CurrencyUtils.formatDecimal(churnChangePercent.toDouble(), 1)}%"
+                    valueString = "${if (churnChangePercent > 0) "+" else ""}${
+                        CurrencyUtils.formatDecimal(
+                            churnChangePercent.toDouble(), 1
+                        )
+                    }%"
                 )
 
                 LabeledSlider(
@@ -174,7 +179,9 @@ fun WhatIfScreen(viewModel: MainViewModel) {
                 )
 
                 val cacInt = cacChange.toInt()
-                val cacFormatted = "${if (cacInt > 0) "+$" else if (cacInt < 0) "-$" else "$"}${kotlin.math.abs(cacInt)}"
+                val cacFormatted = "${if (cacInt > 0) "+$" else if (cacInt < 0) "-$" else "$"}${
+                    kotlin.math.abs(cacInt)
+                }"
                 LabeledSlider(
                     label = "CAC",
                     value = cacChange,
@@ -213,7 +220,7 @@ fun WhatIfScreen(viewModel: MainViewModel) {
                 TextButton(onClick = {
                     profile?.let { p ->
                         viewModel.saveScenario(
-                            com.example.revlens.model.Scenario(
+                            Scenario(
                                 name = scenarioName.ifEmpty { "New Scenario" },
                                 baselineProfile = p,
                                 assumptions = assumptions
@@ -268,7 +275,8 @@ private fun CompactMetricItem(
                 color = RevLensTheme.colors.textPrimary
             )
             if (result.deltaPercent != null && result.deltaPercent != 0.0) {
-                val color = if (result.isPositive) RevLensTheme.colors.success else RevLensTheme.colors.error
+                val color =
+                    if (result.isPositive) RevLensTheme.colors.success else RevLensTheme.colors.error
                 val sign = if (result.deltaPercent > 0) "+" else ""
                 Text(
                     text = "$sign${CurrencyUtils.formatDecimal(result.deltaPercent, 1)}%",
@@ -279,9 +287,4 @@ private fun CompactMetricItem(
             }
         }
     }
-}
-
-@Composable
-fun MetricResultRow(result: MetricResult) {
-    CompactMetricItem(result)
 }
