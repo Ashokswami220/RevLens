@@ -18,7 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.androidx.compose.koinViewModel
 import com.example.revlens.domain.calc.BreakEvenCalculator
 import com.example.revlens.domain.calc.LtvCalculator
 import com.example.revlens.presentation.MainViewModel
@@ -32,7 +32,7 @@ import com.example.revlens.utils.CurrencyUtils
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SaaSMetricsScreen(
-    viewModel: MainViewModel = hiltViewModel(),
+    viewModel: MainViewModel = koinViewModel(),
     onNavigateBack: () -> Unit = {}
 ) {
     val profile by viewModel.profile.collectAsState()

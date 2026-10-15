@@ -40,7 +40,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.androidx.compose.koinViewModel
 import com.example.revlens.presentation.MainViewModel
 import com.example.revlens.ui.components.NumberField
 import com.example.revlens.ui.components.PrimaryButton
@@ -60,8 +60,8 @@ data class EditablePlan(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BusinessSetupScreen(
-    viewModel: MainViewModel = hiltViewModel(),
-    setupViewModel: BusinessSetupViewModel = hiltViewModel(),
+    viewModel: MainViewModel = koinViewModel(),
+    setupViewModel: BusinessSetupViewModel = koinViewModel(),
     onNavigateBack: () -> Unit
 ) {
     val profile by viewModel.profile.collectAsState()

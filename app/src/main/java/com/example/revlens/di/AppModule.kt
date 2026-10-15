@@ -4,22 +4,20 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
+import com.example.revlens.data.ProfileRepository
+import com.example.revlens.data.ScenarioRepository
+import com.example.revlens.presentation.MainViewModel
+import com.example.revlens.ui.screens.detailscreens.BusinessSetupViewModel
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.module.dsl.viewModel
+import org.koin.dsl.module
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "revlens_settings")
 
-@Module
-@InstallIn(SingletonComponent::class)
-object AppModule {
-
-    @Provides
-    @Singleton
-    fun provideDataStore(@ApplicationContext context: Context): DataStore<Preferences> {
-        return context.dataStore
-    }
+val appModule = module {
+    single<DataStore<Preferences>> { androidContext().dataStore }
+    single { ProfileRepository(get()) }
+    single { ScenarioRepository(get()) }
+    viewModel { MainViewModel(get(), get()) }
+    viewModel { BusinessSetupViewModel() }
 }

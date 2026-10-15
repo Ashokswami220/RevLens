@@ -29,7 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.androidx.compose.koinViewModel
 import com.example.revlens.domain.calc.BreakEvenCalculator
 import com.example.revlens.domain.calc.LtvCalculator
 import com.example.revlens.domain.calc.PricingSimulationEngine
@@ -49,7 +49,7 @@ import java.math.BigDecimal
 
 @Composable
 fun ScenarioComparisonScreen(
-    viewModel: MainViewModel = hiltViewModel(),
+    viewModel: MainViewModel = koinViewModel(),
     onNavigateBack: () -> Unit
 ) {
     val scenarios by viewModel.scenarios.collectAsState()

@@ -2,15 +2,12 @@ package com.example.revlens.ui.screens.detailscreens
 
 import androidx.lifecycle.ViewModel
 import com.example.revlens.model.BusinessProfile
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import javax.inject.Inject
 
-@HiltViewModel
-class BusinessSetupViewModel @Inject constructor() : ViewModel() {
+class BusinessSetupViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(BusinessSetupUiState())
     val uiState: StateFlow<BusinessSetupUiState> = _uiState.asStateFlow()

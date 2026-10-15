@@ -18,7 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.androidx.compose.koinViewModel
 import androidx.compose.material.icons.automirrored.outlined.CompareArrows
 import androidx.compose.material.icons.outlined.AddCircleOutline
 import com.example.revlens.domain.calc.PricingSimulationEngine
@@ -35,7 +35,7 @@ import com.example.revlens.utils.RevLensFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScenarioBuilderScreen(
-    viewModel: MainViewModel = hiltViewModel(),
+    viewModel: MainViewModel = koinViewModel(),
     onNavigateToCreate: () -> Unit,
     onNavigateToCompare: () -> Unit,
     onNavigateToMetrics: () -> Unit

@@ -7,16 +7,13 @@ import com.example.revlens.data.ScenarioRepository
 import com.example.revlens.model.BusinessProfile
 import com.example.revlens.model.Plan
 import com.example.revlens.model.Scenario
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
-import javax.inject.Inject
 
-@HiltViewModel
-class MainViewModel @Inject constructor(
+class MainViewModel(
     private val repository: ProfileRepository,
     private val scenarioRepository: ScenarioRepository
 ) : ViewModel() {

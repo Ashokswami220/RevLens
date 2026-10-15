@@ -49,7 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.androidx.compose.koinViewModel
 import com.example.revlens.domain.calc.ForecastEngine
 import com.example.revlens.domain.calc.MonthlyForecast
 import com.example.revlens.presentation.MainViewModel
@@ -69,7 +69,7 @@ import java.math.RoundingMode
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForecastScreen(
-    viewModel: MainViewModel = hiltViewModel(),
+    viewModel: MainViewModel = koinViewModel(),
     onNavigateToGoalPlanner: () -> Unit,
     onNavigateToMetrics: () -> Unit
 ) {

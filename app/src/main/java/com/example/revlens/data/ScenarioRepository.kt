@@ -8,9 +8,8 @@ import com.example.revlens.model.Scenario
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
-import javax.inject.Inject
 
-class ScenarioRepository @Inject constructor(
+class ScenarioRepository(
     private val dataStore: DataStore<Preferences>
 ) {
     companion object {

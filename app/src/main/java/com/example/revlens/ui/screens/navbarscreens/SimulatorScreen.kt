@@ -18,7 +18,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.androidx.compose.koinViewModel
 import com.example.revlens.presentation.MainViewModel
 import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SegmentedTabs
@@ -31,7 +31,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SimulatorScreen(
     initialTab: Int = 0,
-    viewModel: MainViewModel = hiltViewModel(),
+    viewModel: MainViewModel = koinViewModel(),
     onNavigateToMetrics: () -> Unit
 ) {
     val pagerState = rememberPagerState(

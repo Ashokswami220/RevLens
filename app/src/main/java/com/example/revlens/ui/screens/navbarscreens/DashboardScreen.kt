@@ -54,7 +54,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.androidx.compose.koinViewModel
 import com.example.revlens.domain.calc.LtvCalculator
 import com.example.revlens.model.BusinessProfile
 import com.example.revlens.presentation.MainViewModel
@@ -86,7 +86,7 @@ private fun adaptiveCardBorder(): BorderStroke? =
 
 @Composable
 fun DashboardScreen(
-    viewModel: MainViewModel = hiltViewModel(),
+    viewModel: MainViewModel = koinViewModel(),
     onNavigateToInput: () -> Unit,
     onNavigateToPricing: () -> Unit = {},
     onNavigateToWhatIf: () -> Unit,

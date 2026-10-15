@@ -10,9 +10,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import java.math.BigDecimal
-import javax.inject.Inject
 
-class ProfileRepository @Inject constructor(
+class ProfileRepository(
     private val dataStore: DataStore<Preferences>
 ) {
     companion object {
