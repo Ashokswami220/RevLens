@@ -213,6 +213,14 @@ fun RevLensNavGraph(
                 "Billing"
             ) -> "billing"
 
+            currentDestination?.hasRoute<IntegrationsRoute>() == true || currentRoute.contains(
+                "Integrations"
+            ) -> "integrations"
+
+            currentDestination?.hasRoute<ApiWebhooksRoute>() == true || currentRoute.contains(
+                "ApiWebhooks"
+            ) -> "developer"
+
             else -> null
         }
         if (slug != null) {
@@ -248,6 +256,8 @@ fun RevLensNavGraph(
                 "login" -> navController.navigate(LoginRoute) { launchSingleTop = true }
                 "team" -> navController.navigate(TeamRoute) { launchSingleTop = true }
                 "billing" -> navController.navigate(BillingRoute) { launchSingleTop = true }
+                "integrations" -> navController.navigate(IntegrationsRoute) { launchSingleTop = true }
+                "developer", "apiwebhooks", "webhooks" -> navController.navigate(ApiWebhooksRoute) { launchSingleTop = true }
                 "compare" -> navController.navigate(ScenarioComparisonRoute) {
                     launchSingleTop = true
                 }
@@ -282,6 +292,8 @@ fun RevLensNavGraph(
                     "login" -> navController.navigate(LoginRoute) { launchSingleTop = true }
                     "team" -> navController.navigate(TeamRoute) { launchSingleTop = true }
                     "billing" -> navController.navigate(BillingRoute) { launchSingleTop = true }
+                    "integrations" -> navController.navigate(IntegrationsRoute) { launchSingleTop = true }
+                    "developer", "apiwebhooks", "webhooks" -> navController.navigate(ApiWebhooksRoute) { launchSingleTop = true }
                     "compare" -> navController.navigate(ScenarioComparisonRoute) {
                         launchSingleTop = true
                     }
@@ -520,7 +532,9 @@ fun RevLensNavGraph(
                         onNavigateToReports = { navController.navigate(ReportsRoute) },
                         onNavigateToSecurity = { navController.navigate(SecurityRoute) },
                         onNavigateToNotifications = { navController.navigate(NotificationsRoute) },
-                        onNavigateToBilling = { navController.navigate(BillingRoute) }
+                        onNavigateToBilling = { navController.navigate(BillingRoute) },
+                        onNavigateToIntegrations = { navController.navigate(IntegrationsRoute) },
+                        onNavigateToApiWebhooks = { navController.navigate(ApiWebhooksRoute) }
                     )
                 }
 
@@ -667,6 +681,22 @@ fun RevLensNavGraph(
                     val billingViewModel: com.example.revlens.ui.screens.billing.BillingViewModel = org.koin.compose.viewmodel.koinViewModel()
                     com.example.revlens.ui.screens.billing.BillingScreen(
                         viewModel = billingViewModel,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable<IntegrationsRoute> {
+                    val integrationsViewModel: com.example.revlens.ui.screens.integrations.IntegrationsViewModel = org.koin.compose.viewmodel.koinViewModel()
+                    com.example.revlens.ui.screens.integrations.IntegrationsScreen(
+                        viewModel = integrationsViewModel,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable<ApiWebhooksRoute> {
+                    val developerViewModel: com.example.revlens.ui.screens.developer.ApiWebhooksViewModel = org.koin.compose.viewmodel.koinViewModel()
+                    com.example.revlens.ui.screens.developer.ApiWebhooksScreen(
+                        viewModel = developerViewModel,
                         onNavigateBack = { navController.popBackStack() }
                     )
                 }
