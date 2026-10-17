@@ -201,6 +201,10 @@ fun RevLensNavGraph(
                 "Notifications"
             ) -> "notifications"
 
+            currentDestination?.hasRoute<ProfileRoute>() == true || currentRoute.contains(
+                "Profile"
+            ) -> "profile"
+
             else -> null
         }
         if (slug != null) {
@@ -221,9 +225,8 @@ fun RevLensNavGraph(
                 }
 
                 "forecast" -> navController.navigate(ForecastRoute) { launchSingleTop = true }
-                "settings", "profile" -> navController.navigate(SettingsRoute) {
-                    launchSingleTop = true
-                }
+                "settings" -> navController.navigate(SettingsRoute) { launchSingleTop = true }
+                "profile" -> navController.navigate(ProfileRoute) { launchSingleTop = true }
 
                 "metrics" -> navController.navigate(MetricsRoute) { launchSingleTop = true }
                 "goals", "goalplanner" -> navController.navigate(
@@ -254,9 +257,8 @@ fun RevLensNavGraph(
                     }
 
                     "forecast" -> navController.navigate(ForecastRoute) { launchSingleTop = true }
-                    "settings", "profile" -> navController.navigate(
-                        SettingsRoute
-                    ) { launchSingleTop = true }
+                    "settings" -> navController.navigate(SettingsRoute) { launchSingleTop = true }
+                    "profile" -> navController.navigate(ProfileRoute) { launchSingleTop = true }
 
                     "metrics" -> navController.navigate(MetricsRoute) { launchSingleTop = true }
                     "goals", "goalplanner" -> navController.navigate(
@@ -501,6 +503,7 @@ fun RevLensNavGraph(
                         onNavigateToBaseline = { navController.navigate(InputDataRoute) },
                         onNavigateToDataImport = { navController.navigate(DataImportRoute) },
                         onNavigateToSignUp = { navController.navigate(LoginRoute) },
+                        onNavigateToProfile = { navController.navigate(ProfileRoute) },
                         onNavigateToReports = { navController.navigate(ReportsRoute) },
                         onNavigateToSecurity = { navController.navigate(SecurityRoute) },
                         onNavigateToNotifications = { navController.navigate(NotificationsRoute) }
@@ -626,6 +629,15 @@ fun RevLensNavGraph(
                     com.example.revlens.ui.screens.auth.LoginScreen(
                         viewModel = loginViewModel,
                         onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable<ProfileRoute> {
+                    val profileViewModel: com.example.revlens.ui.screens.profile.ProfileViewModel = org.koin.compose.viewmodel.koinViewModel()
+                    com.example.revlens.ui.screens.profile.ProfileScreen(
+                        viewModel = profileViewModel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToLogin = { navController.navigate(LoginRoute) }
                     )
                 }
             }

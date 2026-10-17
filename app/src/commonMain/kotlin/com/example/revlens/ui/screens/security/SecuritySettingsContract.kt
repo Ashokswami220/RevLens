@@ -8,7 +8,9 @@ data class SecuritySettingsUiState(
     val isBiometricEnabled: Boolean = false,
     val timeout: LockTimeout = LockTimeout.ONE_MINUTE,
     val isGuest: Boolean = true,
-    val twoFactorEnabled: Boolean = false,
+    val isGoogleConnected: Boolean = false,
+    val googleAccountEmail: String? = null,
+    val googleLinkedDate: String = "Active (Google OAuth 2.0)",
     val sessions: List<UserSession> = listOf(
         UserSession(
             id = "sess_current",
@@ -18,8 +20,6 @@ data class SecuritySettingsUiState(
             isCurrent = true
         )
     ),
-    val showPasswordSheet: Boolean = false,
-    val showTwoFactorSheet: Boolean = false,
     val showUpgradePrompt: Boolean = false
 )
 
@@ -27,10 +27,6 @@ sealed interface SecuritySettingsEvent {
     data class ToggleBiometric(val enabled: Boolean) : SecuritySettingsEvent
     data class ChangeTimeout(val timeout: LockTimeout) : SecuritySettingsEvent
     data object LockNow : SecuritySettingsEvent
-    data object OpenPasswordSheet : SecuritySettingsEvent
-    data object DismissPasswordSheet : SecuritySettingsEvent
-    data object ToggleTwoFactor : SecuritySettingsEvent
-    data object DismissTwoFactorSheet : SecuritySettingsEvent
     data class RevokeSession(val sessionId: String) : SecuritySettingsEvent
     data object RevokeAllOtherSessions : SecuritySettingsEvent
     data object ClickUpgradeCloudSecurity : SecuritySettingsEvent

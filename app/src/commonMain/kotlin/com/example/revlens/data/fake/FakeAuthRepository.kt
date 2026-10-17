@@ -9,13 +9,14 @@ import com.example.revlens.domain.repository.AuthRepository
 import kotlinx.serialization.json.Json
 
 class FakeAuthRepository(
-    private val secureStorage: SecureStorage? = null
+    private val secureStorage: SecureStorage? = null,
+    initialUser: UserAccount? = null
 ) : AuthRepository {
 
     private val json = Json { ignoreUnknownKeys = true }
     private val usersByEmail = mutableMapOf<String, Pair<UserAccount, String>>()
     private val resetTokens = mutableMapOf<String, String>() // token -> email
-    private var currentUser: UserAccount? = null
+    private var currentUser: UserAccount? = initialUser
     private var currentTokens: AuthTokens? = null
 
     init {
@@ -29,6 +30,10 @@ class FakeAuthRepository(
         )
         usersByEmail["alex@revlens.com"] = Pair(demoUser, "password123")
         resetTokens["mock-reset-token-valid"] = "alex@revlens.com"
+
+        if (initialUser != null) {
+            usersByEmail[initialUser.email] = Pair(initialUser, "password123")
+        }
     }
 
     override suspend fun loginWithGoogle(
@@ -173,6 +178,28 @@ class FakeAuthRepository(
         } catch (_: Exception) {
             null
         }
+    }
+
+    override suspend fun updateProfile(name: String, jobTitle: String?): Result<UserAccount> {
+        val current = currentUser ?: return Result.failure(AppException(AppError.Unauthorized))
+        val updated = current.copy(name = name, jobTitle = jobTitle)
+        currentUser = updated
+        val existingPair = usersByEmail[current.email]
+        if (existingPair != null) {
+            usersByEmail[current.email] = Pair(updated, existingPair.second)
+        }
+        return Result.success(updated)
+    }
+
+    override suspend fun deleteAccount(): Result<Unit> {
+        val current = currentUser
+        if (current != null) {
+            usersByEmail.remove(current.email)
+        }
+        currentUser = null
+        currentTokens = null
+        secureStorage?.remove("auth_tokens")
+        return Result.success(Unit)
     }
 
     private suspend fun saveTokens(tokens: AuthTokens) {

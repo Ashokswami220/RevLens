@@ -66,6 +66,7 @@ val appModule = module {
     viewModel { com.example.revlens.ui.screens.security.SecuritySettingsViewModel(get(), get(), get()) }
     viewModel { com.example.revlens.ui.screens.notifications.NotificationSettingsViewModel(get(), get()) }
     viewModel { com.example.revlens.ui.screens.auth.LoginViewModel(get(), get()) }
+    viewModel { com.example.revlens.ui.screens.profile.ProfileViewModel(get(), get(), get(), get()) }
 }
 
 

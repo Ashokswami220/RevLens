@@ -5,6 +5,8 @@ import com.example.revlens.core.platform.BiometricAuthenticator
 import com.example.revlens.core.platform.BiometricStatus
 import com.example.revlens.core.ui.MviViewModel
 import com.example.revlens.domain.model.LockTimeout
+import com.example.revlens.domain.model.SessionState
+import com.example.revlens.domain.model.UserSession
 import com.example.revlens.domain.repository.AppLockRepository
 import com.example.revlens.domain.session.SessionManager
 import kotlinx.coroutines.launch
@@ -25,11 +27,57 @@ class SecuritySettingsViewModel(
     private fun checkBiometricsAndSession() {
         val status = biometricAuthenticator.checkStatus()
         val isSupported = status != BiometricStatus.NotAvailable
-        val isGuest = sessionManager.state.value is com.example.revlens.domain.model.SessionState.Guest
+        val session = sessionManager.state.value
+        val isGuest = session !is SessionState.Authenticated
+
+        val (googleEmail, isConnected) = when (session) {
+            is SessionState.Authenticated -> session.user.email to true
+            else -> null to false
+        }
+
+        val defaultSessions = if (isGuest) {
+            listOf(
+                UserSession(
+                    id = "sess_current",
+                    deviceName = "Current Device (Local)",
+                    location = "Local Sandbox",
+                    lastActive = "Active now",
+                    isCurrent = true
+                )
+            )
+        } else {
+            listOf(
+                UserSession(
+                    id = "sess_current",
+                    deviceName = "Current Device",
+                    location = "San Francisco, CA",
+                    lastActive = "Active now",
+                    isCurrent = true
+                ),
+                UserSession(
+                    id = "sess_web_mac",
+                    deviceName = "Chrome on macOS (Web Wasm)",
+                    location = "San Francisco, CA",
+                    lastActive = "2 hours ago",
+                    isCurrent = false
+                ),
+                UserSession(
+                    id = "sess_mobile",
+                    deviceName = "Pixel 8 Pro · Android App",
+                    location = "San Jose, CA",
+                    lastActive = "Yesterday",
+                    isCurrent = false
+                )
+            )
+        }
+
         update {
             copy(
                 isBiometricSupported = isSupported,
-                isGuest = isGuest
+                isGuest = isGuest,
+                isGoogleConnected = isConnected,
+                googleAccountEmail = googleEmail,
+                sessions = defaultSessions
             )
         }
     }
@@ -76,34 +124,26 @@ class SecuritySettingsViewModel(
                     appLockRepository.setLocked(true)
                 }
             }
-            SecuritySettingsEvent.OpenPasswordSheet -> {
-                if (state.value.isGuest) {
-                    update { copy(showUpgradePrompt = true) }
-                } else {
-                    update { copy(showPasswordSheet = true) }
-                }
-            }
-            SecuritySettingsEvent.DismissPasswordSheet -> update { copy(showPasswordSheet = false) }
-            SecuritySettingsEvent.ToggleTwoFactor -> {
-                if (state.value.isGuest) {
-                    update { copy(showUpgradePrompt = true) }
-                } else {
-                    update { copy(twoFactorEnabled = !twoFactorEnabled) }
-                }
-            }
-            SecuritySettingsEvent.DismissTwoFactorSheet -> update { copy(showTwoFactorSheet = false) }
             is SecuritySettingsEvent.RevokeSession -> {
                 val updated = state.value.sessions.filterNot { it.id == event.sessionId }
                 update { copy(sessions = updated) }
                 emit(SecuritySettingsEffect.ShowToast("Session revoked"))
             }
             SecuritySettingsEvent.RevokeAllOtherSessions -> {
-                val updated = state.value.sessions.filter { it.isCurrent }
-                update { copy(sessions = updated) }
-                emit(SecuritySettingsEffect.ShowToast("Signed out of all other devices"))
+                if (state.value.isGuest) {
+                    update { copy(showUpgradePrompt = true) }
+                } else {
+                    val currentOnly = state.value.sessions.filter { it.isCurrent }
+                    update { copy(sessions = currentOnly) }
+                    emit(SecuritySettingsEffect.ShowToast("Signed out of all other sessions"))
+                }
             }
-            SecuritySettingsEvent.ClickUpgradeCloudSecurity -> update { copy(showUpgradePrompt = true) }
-            SecuritySettingsEvent.DismissUpgradePrompt -> update { copy(showUpgradePrompt = false) }
+            SecuritySettingsEvent.ClickUpgradeCloudSecurity -> {
+                update { copy(showUpgradePrompt = true) }
+            }
+            SecuritySettingsEvent.DismissUpgradePrompt -> {
+                update { copy(showUpgradePrompt = false) }
+            }
         }
     }
 }

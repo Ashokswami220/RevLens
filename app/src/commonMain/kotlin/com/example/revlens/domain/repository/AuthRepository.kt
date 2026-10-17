@@ -18,4 +18,6 @@ interface AuthRepository {
     suspend fun refreshToken(): Result<AuthTokens>
     suspend fun getCurrentUser(): UserAccount?
     suspend fun getTokens(): AuthTokens?
+    suspend fun updateProfile(name: String, jobTitle: String?): Result<UserAccount>
+    suspend fun deleteAccount(): Result<Unit>
 }

@@ -20,18 +20,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.Fingerprint
-import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.VpnKey
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -44,17 +46,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.revlens.domain.model.LockTimeout
-import com.example.revlens.ui.components.FilterChip
-import com.example.revlens.ui.components.SectionCard
-import com.example.revlens.ui.components.display.StatusBadge
-import com.example.revlens.ui.components.display.StatusBadgeType
+import com.example.revlens.ui.components.PrimaryButton
+import com.example.revlens.ui.components.SecondaryButton
 import com.example.revlens.ui.components.feedback.UpgradePromptSheet
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
@@ -114,325 +117,355 @@ fun SecuritySettingsScreen(
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             // SECTION 1: APP LOCK (LOCAL DEVICE PROTECTION)
-            SectionCard(title = "App Lock (Device Protection)") {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    // Biometric Unlock Switch
+            SecuritySection(title = "App Lock (Device Protection)") {
+                // Biometric Unlock Switch
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(RevLensTheme.colors.brandPrimary.copy(alpha = 0.12f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Fingerprint,
+                                contentDescription = null,
+                                tint = RevLensTheme.colors.brandPrimary,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                        Column {
+                            Text(
+                                text = "Biometric Lock",
+                                style = RevLensTypography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = RevLensTheme.colors.textPrimary
+                            )
+                            Text(
+                                text = if (state.isBiometricSupported) "Require fingerprint or biometric scan to open RevLens" else "Biometrics not enrolled on device",
+                                style = RevLensTypography.bodySmall,
+                                color = RevLensTheme.colors.textSecondary
+                            )
+                        }
+                    }
+
+                    Switch(
+                        checked = state.isBiometricEnabled,
+                        onCheckedChange = { viewModel.onEvent(SecuritySettingsEvent.ToggleBiometric(it)) },
+                        enabled = state.isBiometricSupported,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = RevLensTheme.colors.brandPrimary,
+                            uncheckedThumbColor = RevLensTheme.colors.textSecondary,
+                            uncheckedTrackColor = RevLensTheme.colors.surfaceElevated
+                        )
+                    )
+                }
+
+                if (state.isBiometricEnabled) {
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Timeout Selector
+                    var timeoutMenuExpanded by remember { mutableStateOf(false) }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(RevLensTheme.colors.surfaceElevated)
+                            .clickable { timeoutMenuExpanded = true }
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
-                                    .background(RevLensTheme.colors.brandPrimary.copy(alpha = 0.12f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Fingerprint,
-                                    contentDescription = null,
-                                    tint = RevLensTheme.colors.brandPrimary,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
-                            Column {
-                                Text(
-                                    text = "Biometric Lock",
-                                    style = RevLensTypography.titleSmall,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = RevLensTheme.colors.textPrimary
-                                )
-                                Text(
-                                    text = if (state.isBiometricSupported) "Require fingerprint or face to open RevLens" else "Biometrics not enrolled on device",
-                                    style = RevLensTypography.bodySmall,
-                                    color = RevLensTheme.colors.textSecondary
-                                )
-                            }
-                        }
-
-                        Switch(
-                            checked = state.isBiometricEnabled,
-                            onCheckedChange = { viewModel.onEvent(SecuritySettingsEvent.ToggleBiometric(it)) },
-                            enabled = state.isBiometricSupported,
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = RevLensTheme.colors.surface,
-                                checkedTrackColor = RevLensTheme.colors.brandPrimary,
-                                uncheckedThumbColor = RevLensTheme.colors.textSecondary,
-                                uncheckedTrackColor = RevLensTheme.colors.borderDefault
-                            )
-                        )
-                    }
-
-                    if (state.isBiometricEnabled) {
-                        // Timeout Selector
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(
-                                text = "Auto-Lock Timeout",
-                                style = RevLensTypography.labelMedium,
-                                color = RevLensTheme.colors.textSecondary
-                            )
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                for (timeout in LockTimeout.entries) {
-                                    FilterChip(
-                                        text = timeout.displayName,
-                                        selected = state.timeout == timeout,
-                                        onClick = { viewModel.onEvent(SecuritySettingsEvent.ChangeTimeout(timeout)) }
-                                    )
-                                }
-                            }
-                        }
-
-                        // Lock Now Button
-                        Button(
-                            onClick = { viewModel.onEvent(SecuritySettingsEvent.LockNow) },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = RevLensTheme.colors.surfaceElevated,
-                                contentColor = RevLensTheme.colors.brandPrimary
-                            ),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .border(1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(8.dp))
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.Lock,
+                                imageVector = Icons.Filled.Schedule,
                                 contentDescription = null,
-                                modifier = Modifier.size(16.dp)
+                                tint = RevLensTheme.colors.brandPrimary,
+                                modifier = Modifier.size(18.dp)
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Lock App Immediately", fontWeight = FontWeight.SemiBold)
+                            Text(
+                                text = "Lock when inactive for",
+                                style = RevLensTypography.bodyMedium,
+                                color = RevLensTheme.colors.textPrimary
+                            )
                         }
+                        Text(
+                            text = state.timeout.displayName,
+                            style = RevLensTypography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = RevLensTheme.colors.brandPrimary
+                        )
+
+                        DropdownMenu(
+                            expanded = timeoutMenuExpanded,
+                            onDismissRequest = { timeoutMenuExpanded = false }
+                        ) {
+                            LockTimeout.entries.forEach { timeout ->
+                                DropdownMenuItem(
+                                    text = { Text(timeout.displayName) },
+                                    onClick = {
+                                        viewModel.onEvent(SecuritySettingsEvent.ChangeTimeout(timeout))
+                                        timeoutMenuExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Lock Now Button
+                    OutlinedButton(
+                        onClick = { viewModel.onEvent(SecuritySettingsEvent.LockNow) },
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = RevLensTheme.colors.brandPrimary
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(8.dp))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Lock,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Lock App Immediately", fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
 
-            // SECTION 2: ACCOUNT & CLOUD SECURITY (PASSWORD & 2FA)
-            SectionCard(title = "Account Credentials & 2FA") {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    if (state.isGuest) {
-                        Row(
+            // SECTION 2: CONNECTED GOOGLE ACCOUNT
+            SecuritySection(title = "Connected Account & Authentication") {
+                if (state.isGoogleConnected) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(RevLensTheme.colors.surfaceElevated)
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Box(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(RevLensTheme.colors.brandPrimary.copy(alpha = 0.08f))
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .size(42.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF4285F4)),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.Filled.Lock,
-                                contentDescription = null,
-                                tint = RevLensTheme.colors.brandPrimary,
-                                modifier = Modifier.size(20.dp)
+                            Text(
+                                text = "G",
+                                style = RevLensTypography.titleMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color.White
                             )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column(modifier = Modifier.weight(1f)) {
+                        }
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
                                 Text(
-                                    text = "Guest Local Mode",
+                                    text = "Google Account",
                                     style = RevLensTypography.titleSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = RevLensTheme.colors.textPrimary
                                 )
-                                Text(
-                                    text = "Create an account to protect cloud models with passwords and two-factor authentication.",
-                                    style = RevLensTypography.bodySmall,
-                                    color = RevLensTheme.colors.textSecondary
+                                Icon(
+                                    imageVector = Icons.Filled.CheckCircle,
+                                    contentDescription = null,
+                                    tint = RevLensTheme.colors.success,
+                                    modifier = Modifier.size(14.dp)
                                 )
                             }
+                            Text(
+                                text = state.googleAccountEmail ?: "Connected",
+                                style = RevLensTypography.bodySmall,
+                                color = RevLensTheme.colors.textSecondary
+                            )
+                            Text(
+                                text = state.googleLinkedDate,
+                                style = RevLensTypography.labelSmall,
+                                color = RevLensTheme.colors.brandPrimary
+                            )
                         }
                     }
-
-                    // Change Password Row
-                    Row(
+                } else {
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { viewModel.onEvent(SecuritySettingsEvent.OpenPasswordSheet) }
-                            .padding(vertical = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(RevLensTheme.colors.brandPrimary.copy(alpha = 0.08f))
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(RevLensTheme.colors.surfaceElevated),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Key,
-                                    contentDescription = null,
-                                    tint = RevLensTheme.colors.textSecondary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                            Column {
-                                Text(
-                                    text = "Change Password",
-                                    style = RevLensTypography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = RevLensTheme.colors.textPrimary
-                                )
-                                Text(
-                                    text = if (state.isGuest) "Locked for Guests" else "Last changed 45 days ago",
-                                    style = RevLensTypography.labelSmall,
-                                    color = RevLensTheme.colors.textSecondary
-                                )
-                            }
-                        }
-
-                        Icon(
-                            imageVector = Icons.Default.ChevronRight,
-                            contentDescription = null,
-                            tint = RevLensTheme.colors.textSecondary
-                        )
-                    }
-
-                    // Two-Factor Authentication Row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(RevLensTheme.colors.surfaceElevated),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Security,
-                                    contentDescription = null,
-                                    tint = RevLensTheme.colors.textSecondary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                            Column {
-                                Text(
-                                    text = "Two-Factor Auth (TOTP)",
-                                    style = RevLensTypography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = RevLensTheme.colors.textPrimary
-                                )
-                                Text(
-                                    text = if (state.twoFactorEnabled) "Enabled via Authenticator" else "Extra layer of account defense",
-                                    style = RevLensTypography.labelSmall,
-                                    color = RevLensTheme.colors.textSecondary
-                                )
-                            }
-                        }
-
-                        Switch(
-                            checked = state.twoFactorEnabled,
-                            onCheckedChange = { viewModel.onEvent(SecuritySettingsEvent.ToggleTwoFactor) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = RevLensTheme.colors.surface,
-                                checkedTrackColor = RevLensTheme.colors.brandPrimary,
-                                uncheckedThumbColor = RevLensTheme.colors.textSecondary,
-                                uncheckedTrackColor = RevLensTheme.colors.borderDefault
+                            Icon(
+                                imageVector = Icons.Filled.Security,
+                                contentDescription = null,
+                                tint = RevLensTheme.colors.brandPrimary,
+                                modifier = Modifier.size(20.dp)
                             )
+                            Text(
+                                text = "Unlinked Guest Session",
+                                style = RevLensTypography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = RevLensTheme.colors.textPrimary
+                            )
+                        }
+                        Text(
+                            text = "Connect a Google Account to enable multi-device sync, cloud backups, and cross-platform session management.",
+                            style = RevLensTypography.bodySmall,
+                            color = RevLensTheme.colors.textSecondary
+                        )
+                        PrimaryButton(
+                            text = "Connect with Google",
+                            onClick = onNavigateToSignUp,
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }
             }
 
-            // SECTION 3: ACTIVE SESSIONS
-            SectionCard(title = "Active Sessions") {
+            // SECTION 3: ACTIVE DEVICE SESSIONS
+            SecuritySection(title = "Active Device Sessions") {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    for (session in state.sessions) {
+                    state.sessions.forEach { session ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(RevLensTheme.colors.background)
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(RevLensTheme.colors.surfaceElevated)
+                                .padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Column {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Text(
-                                        text = session.deviceName,
-                                        style = RevLensTypography.bodyMedium,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = RevLensTheme.colors.textPrimary
-                                    )
-                                    if (session.isCurrent) {
-                                        StatusBadge(type = StatusBadgeType.RUNNING)
-                                    }
-                                }
-                                Text(
-                                    text = "${session.location} · ${session.lastActive}",
-                                    style = RevLensTypography.labelSmall,
-                                    color = RevLensTheme.colors.textSecondary
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = if (session.isCurrent) Icons.Filled.Smartphone else Icons.Filled.Devices,
+                                    contentDescription = null,
+                                    tint = if (session.isCurrent) RevLensTheme.colors.brandPrimary else RevLensTheme.colors.textSecondary,
+                                    modifier = Modifier.size(24.dp)
                                 )
+                                Column {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Text(
+                                            text = session.deviceName,
+                                            style = RevLensTypography.bodyMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = RevLensTheme.colors.textPrimary
+                                        )
+                                        if (session.isCurrent) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(4.dp))
+                                                    .background(RevLensTheme.colors.brandPrimary.copy(alpha = 0.15f))
+                                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                                            ) {
+                                                Text(
+                                                    text = "This Device",
+                                                    style = RevLensTypography.labelSmall,
+                                                    color = RevLensTheme.colors.brandPrimary,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        }
+                                    }
+                                    Text(
+                                        text = "${session.location} · ${session.lastActive}",
+                                        style = RevLensTypography.labelSmall,
+                                        color = RevLensTheme.colors.textSecondary
+                                    )
+                                }
                             }
 
                             if (!session.isCurrent) {
-                                Button(
-                                    onClick = { viewModel.onEvent(SecuritySettingsEvent.RevokeSession(session.id)) },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = RevLensTheme.colors.surface,
-                                        contentColor = RevLensTheme.colors.error
-                                    ),
-                                    shape = RoundedCornerShape(6.dp)
-                                ) {
-                                    Text("Sign Out", style = RevLensTypography.labelSmall)
-                                }
+                                Text(
+                                    text = "Revoke",
+                                    style = RevLensTypography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = RevLensTheme.colors.error,
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .clickable { viewModel.onEvent(SecuritySettingsEvent.RevokeSession(session.id)) }
+                                        .padding(horizontal = 8.dp, vertical = 6.dp)
+                                )
                             }
                         }
                     }
 
-                    if (state.sessions.size > 1) {
-                        Button(
+                    if (!state.isGuest && state.sessions.size > 1) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        SecondaryButton(
+                            text = "Sign Out Other Sessions",
                             onClick = { viewModel.onEvent(SecuritySettingsEvent.RevokeAllOtherSessions) },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = RevLensTheme.colors.surface,
-                                contentColor = RevLensTheme.colors.error
-                            ),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .border(1.dp, RevLensTheme.colors.error.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-                        ) {
-                            Text("Sign Out of All Other Devices", fontWeight = FontWeight.Bold)
-                        }
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(40.dp))
         }
     }
 
     if (state.showUpgradePrompt) {
         UpgradePromptSheet(
-            featureName = "Cloud Security & Multi-Device Sessions",
-            description = "Create a free RevLens account to enable cloud passwords, 2FA authenticator apps, and session management.",
+            featureName = "Multi-Device Sessions & Cloud Security",
+            description = "Sign in with Google to manage multi-device sessions and cloud security policies.",
             onSeePlans = {
                 viewModel.onEvent(SecuritySettingsEvent.DismissUpgradePrompt)
                 onNavigateToSignUp()
             },
             onDismiss = { viewModel.onEvent(SecuritySettingsEvent.DismissUpgradePrompt) }
         )
+    }
+}
+
+@Composable
+private fun SecuritySection(
+    title: String,
+    content: @Composable () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(RevLensTheme.colors.surface)
+            .border(1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(16.dp))
+            .padding(16.dp)
+    ) {
+        Text(
+            text = title,
+            style = RevLensTypography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = RevLensTheme.colors.textPrimary
+        )
+        Spacer(modifier = Modifier.height(14.dp))
+        content()
     }
 }

@@ -2,9 +2,17 @@ package com.example.revlens.ui.screens.notifications
 
 import com.example.revlens.domain.model.NotificationPrefs
 
+enum class NotificationSyncStatus {
+    Synced,
+    Syncing,
+    Error
+}
+
 data class NotificationSettingsUiState(
     val prefs: NotificationPrefs = NotificationPrefs(),
-    val isSaving: Boolean = false
+    val isSaving: Boolean = false,
+    val syncStatus: NotificationSyncStatus = NotificationSyncStatus.Synced,
+    val isPushRegistered: Boolean = false
 )
 
 sealed interface NotificationSettingsEvent {
@@ -23,6 +31,7 @@ sealed interface NotificationSettingsEvent {
     data class ToggleMonthlyReport(val enabled: Boolean) : NotificationSettingsEvent
     data class ToggleQuietHours(val enabled: Boolean) : NotificationSettingsEvent
     data class UpdateQuietHoursTimes(val start: String, val end: String) : NotificationSettingsEvent
+    data object RetrySync : NotificationSettingsEvent
 }
 
 sealed interface NotificationSettingsEffect {

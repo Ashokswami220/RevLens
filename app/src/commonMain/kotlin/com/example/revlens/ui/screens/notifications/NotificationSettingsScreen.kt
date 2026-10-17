@@ -1,6 +1,10 @@
 package com.example.revlens.ui.screens.notifications
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -19,6 +25,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.ui.draw.clip
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
@@ -95,6 +102,55 @@ fun NotificationSettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
+            // CLOUD SYNC STATUS BAR
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(RevLensTheme.colors.surface)
+                    .border(1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(10.dp))
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(
+                                when (state.syncStatus) {
+                                    NotificationSyncStatus.Synced -> RevLensTheme.colors.success
+                                    NotificationSyncStatus.Syncing -> RevLensTheme.colors.brandPrimary
+                                    NotificationSyncStatus.Error -> RevLensTheme.colors.error
+                                }
+                            )
+                    )
+                    Text(
+                        text = when (state.syncStatus) {
+                            NotificationSyncStatus.Synced -> "All notification preferences synced to cloud"
+                            NotificationSyncStatus.Syncing -> "Syncing preferences to cloud..."
+                            NotificationSyncStatus.Error -> "Cloud sync offline · saved locally"
+                        },
+                        style = RevLensTypography.labelSmall,
+                        color = RevLensTheme.colors.textSecondary
+                    )
+                }
+
+                if (state.syncStatus == NotificationSyncStatus.Error) {
+                    Text(
+                        text = "Retry",
+                        style = RevLensTypography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = RevLensTheme.colors.brandPrimary,
+                        modifier = Modifier.clickable { viewModel.onEvent(NotificationSettingsEvent.RetrySync) }
+                    )
+                }
+            }
+
             // SECTION 1: DELIVERY CHANNELS
             SectionCard(title = "Delivery Channels") {
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
