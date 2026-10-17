@@ -47,6 +47,8 @@ import com.example.revlens.ui.screens.navbarscreens.ForecastScreen
 import com.example.revlens.ui.screens.navbarscreens.ScenarioBuilderScreen
 import com.example.revlens.ui.screens.navbarscreens.SettingsScreen
 import com.example.revlens.ui.screens.navbarscreens.SimulatorScreen
+import com.example.revlens.ui.screens.workspace.CreateWorkspaceScreen
+import com.example.revlens.ui.screens.workspace.WorkspaceManagementScreen
 import com.example.revlens.ui.theme.RevLensTheme
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -341,7 +343,18 @@ fun RevLensNavGraph(
                 composable<IntroRoute> {
                     IntroScreen(
                         onGetStarted = {
+                            navController.navigate(CreateWorkspaceRoute)
+                        }
+                    )
+                }
+
+                composable<CreateWorkspaceRoute> {
+                    CreateWorkspaceScreen(
+                        onNavigateToOnboarding = {
                             navController.navigate(OnboardingRoute)
+                        },
+                        onBackClick = {
+                            navController.popBackStack()
                         }
                     )
                 }
@@ -378,6 +391,11 @@ fun RevLensNavGraph(
                         },
                         onNavigateToBreakEven = {
                             navController.navigate(PricingSimulatorRoute(initialTab = 2)) {
+                                launchSingleTop = true
+                            }
+                        },
+                        onNavigateToGrowth = {
+                            navController.navigate(PricingSimulatorRoute(initialTab = 3)) {
                                 launchSingleTop = true
                             }
                         },
@@ -437,12 +455,82 @@ fun RevLensNavGraph(
 
                 composable<MetricsRoute> {
                     SaaSMetricsScreen(
-                        onNavigateBack = { navController.popBackStack() }
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToRevenueBreakdown = { navController.navigate(RevenueBreakdownRoute) },
+                        onNavigateToLtvAnalysis = { navController.navigate(LtvAnalysisRoute) },
+                        onNavigateToCacAnalytics = { navController.navigate(CacAnalyticsRoute) },
+                        onNavigateToCustomerAnalytics = { navController.navigate(CustomerAnalyticsRoute) }
                     )
                 }
 
                 composable<SettingsRoute> {
-                    SettingsScreen()
+                    SettingsScreen(
+                        onNavigateToWorkspace = { navController.navigate(WorkspaceManagementRoute) },
+                        onNavigateToBaseline = { navController.navigate(InputDataRoute) },
+                        onNavigateToDataImport = { navController.navigate(DataImportRoute) },
+                        onNavigateToSignUp = { navController.navigate(IntroRoute) }
+                    )
+                }
+
+                composable<WorkspaceManagementRoute> {
+                    WorkspaceManagementScreen(
+                        onBackClick = { navController.popBackStack() },
+                        onNavigateToBaseline = { navController.navigate(InputDataRoute) },
+                        onNavigateToCreateWorkspace = { navController.navigate(CreateWorkspaceRoute) }
+                    )
+                }
+
+                composable<DataImportRoute> {
+                    val importViewModel: com.example.revlens.ui.screens.data.DataImportViewModel = org.koin.compose.viewmodel.koinViewModel()
+                    com.example.revlens.ui.screens.data.DataImportScreen(
+                        viewModel = importViewModel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToAnalytics = {
+                            navController.navigate(RevenueBreakdownRoute) {
+                                popUpTo(DashboardRoute) { inclusive = false }
+                            }
+                        }
+                    )
+                }
+
+                composable<RevenueBreakdownRoute> {
+                    val breakdownViewModel: com.example.revlens.ui.screens.analytics.RevenueBreakdownViewModel = org.koin.compose.viewmodel.koinViewModel()
+                    com.example.revlens.ui.screens.analytics.RevenueBreakdownScreen(
+                        viewModel = breakdownViewModel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToDataImport = { navController.navigate(DataImportRoute) },
+                        onNavigateToSimulator = { navController.navigate(PricingSimulatorRoute(0)) }
+                    )
+                }
+
+                composable<LtvAnalysisRoute> {
+                    val ltvViewModel: com.example.revlens.ui.screens.analytics.LtvAnalysisViewModel = org.koin.compose.viewmodel.koinViewModel()
+                    com.example.revlens.ui.screens.analytics.LtvAnalysisScreen(
+                        viewModel = ltvViewModel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToWhatIf = {
+                            navController.navigate(PricingSimulatorRoute(1))
+                        },
+                        onNavigateToBaseline = { navController.navigate(InputDataRoute) }
+                    )
+                }
+
+                composable<CacAnalyticsRoute> {
+                    val cacViewModel: com.example.revlens.ui.screens.analytics.CacAnalyticsViewModel = org.koin.compose.viewmodel.koinViewModel()
+                    com.example.revlens.ui.screens.analytics.CacAnalyticsScreen(
+                        viewModel = cacViewModel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToGrowthSimulator = { navController.navigate(PricingSimulatorRoute(3)) }
+                    )
+                }
+
+                composable<CustomerAnalyticsRoute> {
+                    val customerViewModel: com.example.revlens.ui.screens.analytics.CustomerAnalyticsViewModel = org.koin.compose.viewmodel.koinViewModel()
+                    com.example.revlens.ui.screens.analytics.CustomerAnalyticsScreen(
+                        viewModel = customerViewModel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToDataImport = { navController.navigate(DataImportRoute) }
+                    )
                 }
             }
         }

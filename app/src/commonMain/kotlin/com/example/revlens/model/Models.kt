@@ -1,5 +1,6 @@
 package com.example.revlens.model
 
+import com.example.revlens.domain.model.GrowthAssumptions
 import com.example.revlens.utils.getCurrentTimeMillis
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -95,7 +96,8 @@ data class Assumptions(
     val growthChangePercent: Double = 0.0,
     @Serializable(with = BigDecimalSerializer::class)
     val fixedCostChange: BigDecimal = BigDecimal.ZERO,
-    val targetPlanId: String? = null
+    val targetPlanId: String? = null,
+    val growth: GrowthAssumptions? = null
 )
 
 @Serializable

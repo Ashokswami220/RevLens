@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -33,7 +35,12 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun SaaSMetricsScreen(
     viewModel: MainViewModel = koinViewModel(),
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit = {},
+    onNavigateToRevenueBreakdown: () -> Unit = {},
+    onNavigateToLtvAnalysis: () -> Unit = {},
+    onNavigateToCacAnalytics: () -> Unit = {},
+    onNavigateToCustomerAnalytics: () -> Unit = {},
+    onNavigateToCohortAnalysis: () -> Unit = {}
 ) {
     val profile by viewModel.profile.collectAsState()
 
@@ -62,6 +69,46 @@ fun SaaSMetricsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                com.example.revlens.ui.components.ActionCardButton(
+                    text = "Bridge",
+                    icon = Icons.AutoMirrored.Filled.TrendingUp,
+                    onClick = onNavigateToRevenueBreakdown,
+                    modifier = Modifier.weight(1f)
+                )
+
+                com.example.revlens.ui.components.ActionCardButton(
+                    text = "LTV",
+                    icon = Icons.AutoMirrored.Filled.TrendingUp,
+                    onClick = onNavigateToLtvAnalysis,
+                    modifier = Modifier.weight(1f)
+                )
+
+                com.example.revlens.ui.components.ActionCardButton(
+                    text = "CAC",
+                    icon = Icons.AutoMirrored.Filled.TrendingUp,
+                    onClick = onNavigateToCacAnalytics,
+                    modifier = Modifier.weight(1f)
+                )
+
+                com.example.revlens.ui.components.ActionCardButton(
+                    text = "Customers",
+                    icon = Icons.AutoMirrored.Filled.TrendingUp,
+                    onClick = onNavigateToCustomerAnalytics,
+                    modifier = Modifier.weight(1f)
+                )
+
+                com.example.revlens.ui.components.ActionCardButton(
+                    text = "Cohorts",
+                    icon = Icons.AutoMirrored.Filled.TrendingUp,
+                    onClick = onNavigateToCohortAnalysis,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
             profile?.let { p ->
                 val ltv = LtvCalculator.calculateLtv(
                     p.arpu, p.monthlyChurnRate, p.variableCostPerCustomer

@@ -2,6 +2,7 @@ package com.example.revlens.ui.navigation
 
 import kotlinx.serialization.Serializable
 
+// Existing Core Routes
 @Serializable
 object IntroRoute
 
@@ -34,3 +35,81 @@ object MetricsRoute
 
 @Serializable
 object SettingsRoute
+
+// Group A: Public & Auth Routes
+@Serializable
+object LandingRoute
+
+@Serializable
+object PublicPricingRoute
+
+@Serializable
+object LoginRoute
+
+@Serializable
+data class SignUpRoute(val plan: String? = null)
+
+@Serializable
+object ForgotPasswordRoute
+
+@Serializable
+data class ResetPasswordRoute(val token: String)
+
+// Group B: Onboarding Routes
+@Serializable
+object CreateWorkspaceRoute
+
+// Group D: Analytics Routes
+@Serializable
+object CustomerAnalyticsRoute
+
+@Serializable
+object CohortAnalysisRoute
+
+@Serializable
+object RevenueBreakdownRoute
+
+@Serializable
+object LtvAnalysisRoute
+
+@Serializable
+object CacAnalyticsRoute
+
+// Group E: Data & Experiments Routes
+@Serializable
+object DataImportRoute
+
+@Serializable
+object ExperimentsRoute
+
+@Serializable
+data class ExperimentDetailsRoute(val id: String)
+
+@Serializable
+object ReportsRoute
+
+// Group F: Integrations & Developer Routes
+@Serializable
+object IntegrationsRoute
+
+@Serializable
+object ApiWebhooksRoute
+
+// Group G: Workspace & Account Routes
+@Serializable
+object WorkspaceManagementRoute
+
+@Serializable
+object TeamRoute
+
+@Serializable
+object BillingRoute
+
+@Serializable
+object ProfileRoute
+
+@Serializable
+object SecurityRoute
+
+@Serializable
+object NotificationsRoute

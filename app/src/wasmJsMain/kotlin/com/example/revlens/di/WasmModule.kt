@@ -2,6 +2,7 @@ package com.example.revlens.di
 
 import com.example.revlens.data.ProfileRepository
 import com.example.revlens.data.ScenarioRepository
+import com.example.revlens.domain.repository.WorkspaceRepository
 import com.example.revlens.model.BigDecimal
 import com.example.revlens.model.BusinessProfile
 import com.example.revlens.model.Plan
@@ -120,6 +121,25 @@ class WasmScenarioRepository : ScenarioRepository {
 val wasmModule = module {
     single<ProfileRepository> { WasmProfileRepository() }
     single<ScenarioRepository> { WasmScenarioRepository() }
-    viewModel { MainViewModel(get(), get()) }
+    single<WorkspaceRepository> { com.example.revlens.data.DefaultWorkspaceRepository() }
+    single<com.example.revlens.domain.context.WorkspaceContext> { com.example.revlens.domain.context.DefaultWorkspaceContext() }
+    single<com.example.revlens.domain.session.SessionManager> { com.example.revlens.domain.session.DefaultSessionManager() }
+    single { com.example.revlens.domain.usecase.ResolveGateUseCase() }
+    single<com.example.revlens.core.platform.FilePicker> { com.example.revlens.core.platform.DefaultFilePicker() }
+    single<com.example.revlens.core.platform.FileSharer> { com.example.revlens.core.platform.DefaultFileSharer() }
+    single<com.example.revlens.core.platform.SecureStorage> { com.example.revlens.core.platform.InMemorySecureStorage() }
+    single<com.example.revlens.core.platform.BiometricAuthenticator> { com.example.revlens.core.platform.DefaultBiometricAuthenticator() }
+    single<com.example.revlens.core.platform.LocalNotifier> { com.example.revlens.core.platform.DefaultLocalNotifier() }
+    single<com.example.revlens.domain.repository.AnalyticsRepository> { com.example.revlens.data.DefaultAnalyticsRepository() }
+    single { com.example.revlens.domain.usecase.CreateWorkspaceUseCase(get(), get(), get()) }
+    viewModel { MainViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { BusinessSetupViewModel() }
+    viewModel { com.example.revlens.ui.screens.workspace.WorkspaceManagementViewModel(get(), get(), get(), get()) }
+    viewModel { com.example.revlens.ui.screens.workspace.CreateWorkspaceViewModel(get()) }
+    viewModel { com.example.revlens.ui.screens.data.DataImportViewModel(get(), get(), get()) }
+    viewModel { com.example.revlens.ui.screens.analytics.RevenueBreakdownViewModel(get(), get(), get()) }
+    viewModel { com.example.revlens.ui.screens.analytics.LtvAnalysisViewModel(get(), get()) }
+    viewModel { com.example.revlens.ui.screens.analytics.CacAnalyticsViewModel(get(), get(), get()) }
+    viewModel { com.example.revlens.ui.screens.simulator.GrowthSimulatorViewModel(get(), get()) }
+    viewModel { com.example.revlens.ui.screens.analytics.CustomerAnalyticsViewModel(get(), get(), get()) }
 }

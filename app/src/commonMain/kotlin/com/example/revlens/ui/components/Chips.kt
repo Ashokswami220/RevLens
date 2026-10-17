@@ -89,20 +89,23 @@ enum class DeltaType { POSITIVE, NEGATIVE, NEUTRAL }
 fun DeltaChip(
     delta: String,
     type: DeltaType,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    lowerIsBetter: Boolean = false
 ) {
-    val (backgroundColor, contentColor, icon) = when (type) {
-        DeltaType.POSITIVE -> Triple(
-            RevLensTheme.colors.success, Color.White, Icons.Filled.ArrowDropUp
-        )
-
-        DeltaType.NEGATIVE -> Triple(
-            RevLensTheme.colors.error, Color.White, Icons.Filled.ArrowDropDown
-        )
-
-        DeltaType.NEUTRAL -> Triple(
-            RevLensTheme.colors.surfaceElevated, RevLensTheme.colors.textSecondary, null
-        )
+    val isPositiveGood = !lowerIsBetter
+    val backgroundColor = when (type) {
+        DeltaType.POSITIVE -> if (isPositiveGood) RevLensTheme.colors.success else RevLensTheme.colors.error
+        DeltaType.NEGATIVE -> if (isPositiveGood) RevLensTheme.colors.error else RevLensTheme.colors.success
+        DeltaType.NEUTRAL -> RevLensTheme.colors.surfaceElevated
+    }
+    val contentColor = when (type) {
+        DeltaType.POSITIVE, DeltaType.NEGATIVE -> Color.White
+        DeltaType.NEUTRAL -> RevLensTheme.colors.textSecondary
+    }
+    val icon = when (type) {
+        DeltaType.POSITIVE -> Icons.Filled.ArrowDropUp
+        DeltaType.NEGATIVE -> Icons.Filled.ArrowDropDown
+        DeltaType.NEUTRAL -> null
     }
 
     Row(

@@ -24,6 +24,7 @@ import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SegmentedTabs
 import com.example.revlens.ui.screens.detailscreens.BreakEvenScreen
 import com.example.revlens.ui.screens.detailscreens.WhatIfScreen
+import com.example.revlens.ui.screens.simulator.GrowthSimulatorScreen
 import com.example.revlens.ui.theme.RevLensTheme
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
@@ -36,15 +37,15 @@ fun SimulatorScreen(
     onNavigateToMetrics: () -> Unit
 ) {
     val pagerState = rememberPagerState(
-        initialPage = initialTab.coerceIn(0, 2),
-        pageCount = { 3 }
+        initialPage = initialTab.coerceIn(0, 3),
+        pageCount = { 4 }
     )
     val coroutineScope = rememberCoroutineScope()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     LaunchedEffect(initialTab) {
         if (pagerState.currentPage != initialTab) {
-            pagerState.scrollToPage(initialTab.coerceIn(0, 2))
+            pagerState.scrollToPage(initialTab.coerceIn(0, 3))
         }
     }
 
@@ -68,7 +69,7 @@ fun SimulatorScreen(
                     }
                 )
                 SegmentedTabs(
-                    options = listOf("Pricing", "What-If", "Break-Even"),
+                    options = listOf("Pricing", "What-If", "Break-Even", "Growth"),
                     selectedIndex = pagerState.currentPage,
                     onOptionSelected = { index ->
                         coroutineScope.launch {
@@ -91,6 +92,7 @@ fun SimulatorScreen(
                 0 -> PricingSimulatorScreen(viewModel = viewModel)
                 1 -> WhatIfScreen(viewModel = viewModel)
                 2 -> BreakEvenScreen(viewModel = viewModel)
+                3 -> GrowthSimulatorScreen()
             }
         }
     }

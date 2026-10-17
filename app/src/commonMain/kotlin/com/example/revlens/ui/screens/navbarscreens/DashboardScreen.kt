@@ -89,6 +89,7 @@ fun DashboardScreen(
     onNavigateToPricing: () -> Unit = {},
     onNavigateToWhatIf: () -> Unit,
     onNavigateToBreakEven: () -> Unit,
+    onNavigateToGrowth: () -> Unit = {},
     onNavigateToMetrics: () -> Unit,
     onNavigateToGoalPlanner: () -> Unit = {}
 ) {
@@ -155,6 +156,7 @@ fun DashboardScreen(
                     onNavigateToPricing = onNavigateToPricing,
                     onNavigateToWhatIf = onNavigateToWhatIf,
                     onNavigateToBreakEven = onNavigateToBreakEven,
+                    onNavigateToGrowth = onNavigateToGrowth,
                     onNavigateToGoalPlanner = onNavigateToGoalPlanner
                 )
             }
@@ -168,19 +170,20 @@ private fun DashboardContent(
     onNavigateToPricing: () -> Unit,
     onNavigateToWhatIf: () -> Unit,
     onNavigateToBreakEven: () -> Unit,
+    onNavigateToGrowth: () -> Unit,
     onNavigateToGoalPlanner: () -> Unit
 ) {
     val currencyFormatter = remember(profile.currencyCode) {
         CurrencyUtils.getFormatter(profile.currencyCode)
     }
 
-    // 1. Top Compact Simulator Action Buttons (Pricing, What-If, Break-Even)
+    // 1. Top Compact Simulator Action Buttons (Pricing, What-If, Break-Even, Growth)
     val isDark = isSystemInDarkTheme()
     val buttonBorder = if (isDark) null else BorderStroke(1.dp, CardBorder)
     val buttonBg = if (isDark) CardBg else RevLensTheme.colors.surfaceElevated
 
     Row(
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Button(
@@ -195,7 +198,7 @@ private fun DashboardContent(
                 contentColor = TextPrimary
             )
         ) {
-            Text("Pricing", color = TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Text("Pricing", color = TextPrimary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
         }
 
         Button(
@@ -210,7 +213,7 @@ private fun DashboardContent(
                 contentColor = TextPrimary
             )
         ) {
-            Text("What-If", color = TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Text("What-If", color = TextPrimary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
         }
 
         Button(
@@ -226,7 +229,25 @@ private fun DashboardContent(
             )
         ) {
             Text(
-                "Break-Even", color = TextPrimary, fontSize = 12.sp,
+                "Break-Even", color = TextPrimary, fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
+        Button(
+            onClick = onNavigateToGrowth,
+            modifier = Modifier
+                .weight(1f)
+                .height(38.dp),
+            shape = RoundedCornerShape(10.dp),
+            border = buttonBorder,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = buttonBg,
+                contentColor = TextPrimary
+            )
+        ) {
+            Text(
+                "Growth", color = TextPrimary, fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold
             )
         }

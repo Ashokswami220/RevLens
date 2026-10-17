@@ -49,4 +49,32 @@ class LtvCalculatorTest {
         val ltv = LtvCalculator.calculateLtv(BigDecimal.ZERO, 0.05)
         assertEquals(BigDecimal.ZERO, ltv)
     }
+
+    @Test
+    fun `calculateSimpleLtv calculates revenue LTV without margin adjustment`() {
+        val arpu = BigDecimal("100.00")
+        val churnPercent = 5.0 // 5% churn -> 20 months lifespan -> $2,000.00
+        val ltv = LtvCalculator.calculateSimpleLtv(arpu, churnPercent)
+        assertEquals(BigDecimal("2000.00"), ltv)
+    }
+
+    @Test
+    fun `calculateMarginAdjustedLtv applies gross margin correctly`() {
+        val arpu = BigDecimal("100.00")
+        val grossMarginPercent = 80.0 // 80% gross margin -> Net ARPU = $80.00
+        val churnPercent = 5.0 // 5% churn -> 20 months lifespan -> $1,600.00
+        val ltv = LtvCalculator.calculateMarginAdjustedLtv(arpu, grossMarginPercent, churnPercent)
+        assertEquals(BigDecimal("1600.00"), ltv)
+    }
+
+    @Test
+    fun `calculateSensitivityPoints returns accurate points`() {
+        val arpu = BigDecimal("100.00")
+        val points = LtvCalculator.calculateSensitivityPoints(arpu, 80.0, listOf(2.0, 4.0))
+        assertEquals(2, points.size)
+        // At 2% churn: 80 / 0.02 = 4000.00
+        assertEquals(BigDecimal("4000.00"), points[0].second)
+        // At 4% churn: 80 / 0.04 = 2000.00
+        assertEquals(BigDecimal("2000.00"), points[1].second)
+    }
 }
