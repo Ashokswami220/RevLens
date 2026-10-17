@@ -93,6 +93,14 @@ class WorkspaceManagementViewModel(
                     emit(WorkspaceManagementEffect.ShowMessage(UiText.DynamicString("Workspace deleted")))
                 }
             }
+            WorkspaceManagementEvent.ShowTransferOwnershipDialog -> update { copy(isTransferOwnershipDialogVisible = true) }
+            WorkspaceManagementEvent.HideTransferOwnershipDialog -> update { copy(isTransferOwnershipDialogVisible = false) }
+            is WorkspaceManagementEvent.SelectTransferMember -> update { copy(selectedTransferMember = event.member) }
+            WorkspaceManagementEvent.ConfirmTransferOwnership -> {
+                val member = state.value.selectedTransferMember
+                update { copy(isTransferOwnershipDialogVisible = false) }
+                emit(WorkspaceManagementEffect.ShowMessage(UiText.DynamicString("Ownership transferred to $member")))
+            }
         }
     }
 }

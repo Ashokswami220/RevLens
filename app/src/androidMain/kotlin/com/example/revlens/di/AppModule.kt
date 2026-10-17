@@ -42,6 +42,8 @@ val appModule = module {
     single<com.example.revlens.domain.repository.AppLockRepository> { com.example.revlens.data.DefaultAppLockRepository() }
     single<com.example.revlens.domain.repository.NotificationPreferencesRepository> { com.example.revlens.data.DefaultNotificationPreferencesRepository() }
     single<com.example.revlens.domain.repository.AuthRepository> { com.example.revlens.data.fake.FakeAuthRepository(get()) }
+    single<com.example.revlens.domain.repository.TeamRepository> { com.example.revlens.data.fake.FakeTeamRepository() }
+    single<com.example.revlens.domain.repository.BillingRepository> { com.example.revlens.data.fake.FakeBillingRepository() }
     single { com.example.revlens.domain.usecase.MigrateGuestDataUseCase(get(), get(), get(), get()) }
     single { com.example.revlens.domain.usecase.LoginUseCase(get(), get(), get()) }
     single { com.example.revlens.domain.usecase.SignUpUseCase(get(), get(), get()) }
@@ -67,6 +69,8 @@ val appModule = module {
     viewModel { com.example.revlens.ui.screens.notifications.NotificationSettingsViewModel(get(), get()) }
     viewModel { com.example.revlens.ui.screens.auth.LoginViewModel(get(), get()) }
     viewModel { com.example.revlens.ui.screens.profile.ProfileViewModel(get(), get(), get(), get()) }
+    viewModel { com.example.revlens.ui.screens.team.TeamViewModel(get(), get()) }
+    viewModel { com.example.revlens.ui.screens.billing.BillingViewModel(get(), get()) }
 }
 
 

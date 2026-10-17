@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.revlens.domain.model.BusinessModel
 import com.example.revlens.domain.model.Workspace
+import com.example.revlens.domain.model.Role
 import com.example.revlens.ui.components.ChoiceChip
 import com.example.revlens.ui.components.DestructiveButton
 import com.example.revlens.ui.components.PrimaryButton
@@ -50,6 +51,7 @@ import com.example.revlens.ui.components.RevLensTextField
 import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.components.SectionCard
 import com.example.revlens.ui.components.TextLinkButton
+import com.example.revlens.ui.components.display.RoleChip
 import com.example.revlens.ui.components.feedback.TypedConfirmDialog
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
@@ -239,6 +241,39 @@ fun WorkspaceManagementScreen(
                 }
             }
 
+            // Ownership & Team Roles
+            SectionCard(title = "Ownership & Access") {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Your Role",
+                                style = RevLensTypography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = RevLensTheme.colors.textPrimary
+                            )
+                            Text(
+                                text = "Full administrative and billing permissions",
+                                style = RevLensTypography.bodySmall,
+                                color = RevLensTheme.colors.textSecondary
+                            )
+                        }
+                        RoleChip(role = Role.Owner)
+                    }
+
+                    WorkspaceSettingRow(
+                        title = "Transfer Workspace Ownership",
+                        value = "Designate another team member as Owner",
+                        valueColor = RevLensTheme.colors.brandPrimary,
+                        onClick = { viewModel.onEvent(WorkspaceManagementEvent.ShowTransferOwnershipDialog) }
+                    )
+                }
+            }
+
             // Danger Zone
             if (state.allWorkspaces.size > 1) {
                 SectionCard(title = "Danger Zone") {
@@ -367,6 +402,74 @@ fun WorkspaceManagementScreen(
             onConfirm = { viewModel.onEvent(WorkspaceManagementEvent.ConfirmDeleteWorkspace) },
             onDismiss = { viewModel.onEvent(WorkspaceManagementEvent.HideDeleteDialog) },
             isDestructive = true
+        )
+    }
+
+    // Transfer Ownership Dialog
+    if (state.isTransferOwnershipDialogVisible) {
+        AlertDialog(
+            onDismissRequest = { viewModel.onEvent(WorkspaceManagementEvent.HideTransferOwnershipDialog) },
+            title = {
+                Text(
+                    text = "Transfer Workspace Ownership",
+                    style = RevLensTypography.titleLarge,
+                    color = RevLensTheme.colors.textPrimary
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        text = "Transferring ownership gives another team member full control over workspace deletion, team billing, and role assignments. You will step down to Admin.",
+                        style = RevLensTypography.bodySmall,
+                        color = RevLensTheme.colors.textSecondary
+                    )
+
+                    Text(
+                        text = "Select New Owner:",
+                        style = RevLensTypography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = RevLensTheme.colors.textPrimary
+                    )
+
+                    state.eligibleTransferMembers.forEach { member ->
+                        val isSelected = member == state.selectedTransferMember
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (isSelected) RevLensTheme.colors.brandPrimary.copy(alpha = 0.12f) else RevLensTheme.colors.surfaceElevated)
+                                .clickable { viewModel.onEvent(WorkspaceManagementEvent.SelectTransferMember(member)) }
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = member,
+                                style = RevLensTypography.bodyMedium,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSelected) RevLensTheme.colors.brandPrimary else RevLensTheme.colors.textPrimary
+                            )
+                            if (isSelected) {
+                                Text("Selected", style = RevLensTypography.labelSmall, color = RevLensTheme.colors.brandPrimary)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                PrimaryButton(
+                    text = "Confirm Transfer",
+                    onClick = { viewModel.onEvent(WorkspaceManagementEvent.ConfirmTransferOwnership) },
+                    modifier = Modifier.width(160.dp)
+                )
+            },
+            dismissButton = {
+                TextLinkButton(
+                    text = "Cancel",
+                    onClick = { viewModel.onEvent(WorkspaceManagementEvent.HideTransferOwnershipDialog) }
+                )
+            },
+            containerColor = RevLensTheme.colors.surface
         )
     }
 

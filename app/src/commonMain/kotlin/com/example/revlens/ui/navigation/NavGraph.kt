@@ -205,6 +205,14 @@ fun RevLensNavGraph(
                 "Profile"
             ) -> "profile"
 
+            currentDestination?.hasRoute<TeamRoute>() == true || currentRoute.contains(
+                "Team"
+            ) -> "team"
+
+            currentDestination?.hasRoute<BillingRoute>() == true || currentRoute.contains(
+                "Billing"
+            ) -> "billing"
+
             else -> null
         }
         if (slug != null) {
@@ -238,6 +246,8 @@ fun RevLensNavGraph(
                 "security" -> navController.navigate(SecurityRoute) { launchSingleTop = true }
                 "notifications" -> navController.navigate(NotificationsRoute) { launchSingleTop = true }
                 "login" -> navController.navigate(LoginRoute) { launchSingleTop = true }
+                "team" -> navController.navigate(TeamRoute) { launchSingleTop = true }
+                "billing" -> navController.navigate(BillingRoute) { launchSingleTop = true }
                 "compare" -> navController.navigate(ScenarioComparisonRoute) {
                     launchSingleTop = true
                 }
@@ -270,6 +280,8 @@ fun RevLensNavGraph(
                     "security" -> navController.navigate(SecurityRoute) { launchSingleTop = true }
                     "notifications" -> navController.navigate(NotificationsRoute) { launchSingleTop = true }
                     "login" -> navController.navigate(LoginRoute) { launchSingleTop = true }
+                    "team" -> navController.navigate(TeamRoute) { launchSingleTop = true }
+                    "billing" -> navController.navigate(BillingRoute) { launchSingleTop = true }
                     "compare" -> navController.navigate(ScenarioComparisonRoute) {
                         launchSingleTop = true
                     }
@@ -500,13 +512,15 @@ fun RevLensNavGraph(
                 composable<SettingsRoute> {
                     SettingsScreen(
                         onNavigateToWorkspace = { navController.navigate(WorkspaceManagementRoute) },
+                        onNavigateToTeam = { navController.navigate(TeamRoute) },
                         onNavigateToBaseline = { navController.navigate(InputDataRoute) },
                         onNavigateToDataImport = { navController.navigate(DataImportRoute) },
                         onNavigateToSignUp = { navController.navigate(LoginRoute) },
                         onNavigateToProfile = { navController.navigate(ProfileRoute) },
                         onNavigateToReports = { navController.navigate(ReportsRoute) },
                         onNavigateToSecurity = { navController.navigate(SecurityRoute) },
-                        onNavigateToNotifications = { navController.navigate(NotificationsRoute) }
+                        onNavigateToNotifications = { navController.navigate(NotificationsRoute) },
+                        onNavigateToBilling = { navController.navigate(BillingRoute) }
                     )
                 }
 
@@ -638,6 +652,22 @@ fun RevLensNavGraph(
                         viewModel = profileViewModel,
                         onNavigateBack = { navController.popBackStack() },
                         onNavigateToLogin = { navController.navigate(LoginRoute) }
+                    )
+                }
+
+                composable<TeamRoute> {
+                    val teamViewModel: com.example.revlens.ui.screens.team.TeamViewModel = org.koin.compose.viewmodel.koinViewModel()
+                    com.example.revlens.ui.screens.team.TeamScreen(
+                        viewModel = teamViewModel,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable<BillingRoute> {
+                    val billingViewModel: com.example.revlens.ui.screens.billing.BillingViewModel = org.koin.compose.viewmodel.koinViewModel()
+                    com.example.revlens.ui.screens.billing.BillingScreen(
+                        viewModel = billingViewModel,
+                        onNavigateBack = { navController.popBackStack() }
                     )
                 }
             }

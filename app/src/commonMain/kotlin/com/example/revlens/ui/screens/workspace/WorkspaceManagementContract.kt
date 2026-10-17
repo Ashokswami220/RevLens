@@ -12,6 +12,13 @@ data class WorkspaceManagementUiState(
     val isCurrencyDialogVisible: Boolean = false,
     val isResetDialogVisible: Boolean = false,
     val isDeleteDialogVisible: Boolean = false,
+    val isTransferOwnershipDialogVisible: Boolean = false,
+    val eligibleTransferMembers: List<String> = listOf(
+        "Sarah Connor (sarah@skynet.ai)",
+        "Dave Bowman (dave@discovery.org)",
+        "Elena Rostova (elena@orbit.io)"
+    ),
+    val selectedTransferMember: String = "Sarah Connor (sarah@skynet.ai)",
     val error: UiText? = null
 )
 
@@ -32,6 +39,10 @@ sealed interface WorkspaceManagementEvent {
     data object ShowDeleteDialog : WorkspaceManagementEvent
     data object HideDeleteDialog : WorkspaceManagementEvent
     data object ConfirmDeleteWorkspace : WorkspaceManagementEvent
+    data object ShowTransferOwnershipDialog : WorkspaceManagementEvent
+    data object HideTransferOwnershipDialog : WorkspaceManagementEvent
+    data class SelectTransferMember(val member: String) : WorkspaceManagementEvent
+    data object ConfirmTransferOwnership : WorkspaceManagementEvent
 }
 
 sealed interface WorkspaceManagementEffect {
