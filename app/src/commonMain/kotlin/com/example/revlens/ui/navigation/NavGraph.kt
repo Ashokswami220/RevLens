@@ -500,7 +500,7 @@ fun RevLensNavGraph(
                         onNavigateToWorkspace = { navController.navigate(WorkspaceManagementRoute) },
                         onNavigateToBaseline = { navController.navigate(InputDataRoute) },
                         onNavigateToDataImport = { navController.navigate(DataImportRoute) },
-                        onNavigateToSignUp = { navController.navigate(IntroRoute) },
+                        onNavigateToSignUp = { navController.navigate(LoginRoute) },
                         onNavigateToReports = { navController.navigate(ReportsRoute) },
                         onNavigateToSecurity = { navController.navigate(SecurityRoute) },
                         onNavigateToNotifications = { navController.navigate(NotificationsRoute) }
@@ -609,7 +609,7 @@ fun RevLensNavGraph(
                     com.example.revlens.ui.screens.security.SecuritySettingsScreen(
                         viewModel = securityViewModel,
                         onNavigateBack = { navController.popBackStack() },
-                        onNavigateToSignUp = { navController.navigate(IntroRoute) }
+                        onNavigateToSignUp = { navController.navigate(LoginRoute) }
                     )
                 }
 
@@ -625,9 +625,7 @@ fun RevLensNavGraph(
                     val loginViewModel: com.example.revlens.ui.screens.auth.LoginViewModel = org.koin.compose.viewmodel.koinViewModel()
                     com.example.revlens.ui.screens.auth.LoginScreen(
                         viewModel = loginViewModel,
-                        onNavigateBack = { navController.popBackStack() },
-                        onNavigateToSignUp = { navController.navigate(IntroRoute) },
-                        onNavigateToForgotPassword = { /* Will navigate to ForgotPasswordRoute in Step 2.4 */ }
+                        onNavigateBack = { navController.popBackStack() }
                     )
                 }
             }

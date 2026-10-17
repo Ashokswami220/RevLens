@@ -2,8 +2,13 @@ package com.example.revlens.domain.repository
 
 import com.example.revlens.domain.model.AuthTokens
 import com.example.revlens.domain.model.UserAccount
-
 interface AuthRepository {
+    suspend fun loginWithGoogle(
+        idToken: String? = null,
+        email: String? = null,
+        name: String? = null,
+        avatarUrl: String? = null
+    ): Result<UserAccount>
     suspend fun login(email: String, password: String): Result<UserAccount>
     suspend fun signUp(name: String, email: String, password: String): Result<UserAccount>
     suspend fun requestPasswordReset(email: String): Result<Unit>

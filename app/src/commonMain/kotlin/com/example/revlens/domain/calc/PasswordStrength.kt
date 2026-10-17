@@ -37,7 +37,7 @@ object PasswordStrength {
 
         // Scale to 0..4
         val score = when {
-            password.length < 8 -> 1.coerceAtMost(points)
+            password.length < 8 -> 1
             points <= 1 -> 1
             points == 2 -> 2
             points in 3..4 -> 3

@@ -31,6 +31,37 @@ class FakeAuthRepository(
         resetTokens["mock-reset-token-valid"] = "alex@revlens.com"
     }
 
+    override suspend fun loginWithGoogle(
+        idToken: String?,
+        email: String?,
+        name: String?,
+        avatarUrl: String?
+    ): Result<UserAccount> {
+        val userEmail = email?.trim()?.lowercase() ?: "alex.vance@gmail.com"
+        val userName = name?.trim() ?: "Alex Vance"
+        val userAvatar = avatarUrl ?: "https://lh3.googleusercontent.com/a/default-user"
+
+        val user = UserAccount(
+            id = "usr_google_${userEmail.hashCode()}",
+            name = userName,
+            email = userEmail,
+            emailVerified = true,
+            avatarUrl = userAvatar,
+            jobTitle = "Founder & CEO"
+        )
+
+        val tokens = AuthTokens(
+            accessToken = "google_acc_${user.id}",
+            refreshToken = "google_ref_${user.id}"
+        )
+
+        currentUser = user
+        currentTokens = tokens
+        saveTokens(tokens)
+
+        return Result.success(user)
+    }
+
     override suspend fun login(email: String, password: String): Result<UserAccount> {
         val normalized = email.trim().lowercase()
         val entry = usersByEmail[normalized]

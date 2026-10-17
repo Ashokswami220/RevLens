@@ -2,19 +2,37 @@ package com.example.revlens.ui.screens.auth
 
 import com.example.revlens.core.platform.InMemorySecureStorage
 import com.example.revlens.data.fake.FakeAuthRepository
+import com.example.revlens.domain.model.SessionState
 import com.example.revlens.domain.session.DefaultSessionManager
 import com.example.revlens.domain.usecase.LoginUseCase
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class LoginViewModelTest {
+
+    private val testDispatcher = StandardTestDispatcher()
+
+    @BeforeTest
+    fun setUp() {
+        Dispatchers.setMain(testDispatcher)
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
 
     @Test
     fun testInitialState() {
@@ -23,61 +41,34 @@ class LoginViewModelTest {
         val vm = LoginViewModel(LoginUseCase(repo, session), session)
 
         val s = vm.state.value
-        assertEquals("", s.email)
-        assertEquals("", s.password)
         assertFalse(s.isLoading)
-        assertFalse(s.canSubmit)
+        assertEquals(null, s.error)
     }
 
     @Test
-    fun testEmailValidationFailure() = runTest {
+    fun testGoogleSignInSuccess() = runTest(testDispatcher) {
         val repo = FakeAuthRepository(InMemorySecureStorage())
         val session = DefaultSessionManager()
         val vm = LoginViewModel(LoginUseCase(repo, session), session)
 
-        vm.onEvent(LoginEvent.EmailChanged("not-an-email"))
-        vm.onEvent(LoginEvent.PasswordChanged("secret123"))
-        vm.onEvent(LoginEvent.Submit)
-
-        val s = vm.state.value
-        assertNotNull(s.emailError)
-        assertFalse(s.isLoading)
-    }
-
-    @Test
-    fun testLoginSuccess() = runTest(UnconfinedTestDispatcher()) {
-        val repo = FakeAuthRepository(InMemorySecureStorage())
-        val session = DefaultSessionManager()
-        val vm = LoginViewModel(LoginUseCase(repo, session), session)
-
-        vm.onEvent(LoginEvent.EmailChanged("alex@revlens.com"))
-        vm.onEvent(LoginEvent.PasswordChanged("password123"))
-        assertTrue(vm.state.value.canSubmit)
-
-        vm.onEvent(LoginEvent.Submit)
+        vm.onEvent(LoginEvent.GoogleSignInClicked)
+        advanceUntilIdle()
 
         assertFalse(vm.state.value.isLoading)
-        assertEquals(null, vm.state.value.emailError)
-        assertEquals(null, vm.state.value.passwordError)
+        val sessionState = session.state.value
+        assertTrue(sessionState is SessionState.Authenticated)
+        assertEquals("Alex Vance", sessionState.user.name)
     }
 
     @Test
-    fun testLoginFailureEmitsEffect() = runTest(UnconfinedTestDispatcher()) {
+    fun testContinueAsGuest() = runTest(testDispatcher) {
         val repo = FakeAuthRepository(InMemorySecureStorage())
-        val session = DefaultSessionManager()
+        val session = DefaultSessionManager(SessionState.SignedOut)
         val vm = LoginViewModel(LoginUseCase(repo, session), session)
 
-        var emittedEffect: LoginEffect? = null
-        val job = backgroundScope.launch {
-            vm.effects.collect { emittedEffect = it }
-        }
+        vm.onEvent(LoginEvent.ContinueAsGuestClicked)
+        advanceUntilIdle()
 
-        vm.onEvent(LoginEvent.EmailChanged("alex@revlens.com"))
-        vm.onEvent(LoginEvent.PasswordChanged("wrongpass"))
-        vm.onEvent(LoginEvent.Submit)
-
-        assertNotNull(emittedEffect)
-        assertTrue(emittedEffect is LoginEffect.ShowMessage)
-        job.cancel()
+        assertEquals(SessionState.Guest, session.state.value)
     }
 }

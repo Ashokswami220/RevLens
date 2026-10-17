@@ -9,6 +9,18 @@ class LoginUseCase(
     private val sessionManager: SessionManager,
     private val migrateGuestDataUseCase: MigrateGuestDataUseCase? = null
 ) {
+    suspend fun loginWithGoogle(
+        idToken: String? = null,
+        email: String? = null,
+        name: String? = null,
+        avatarUrl: String? = null
+    ): Result<UserAccount> {
+        return authRepository.loginWithGoogle(idToken, email, name, avatarUrl).onSuccess { user ->
+            sessionManager.onLoggedIn(user)
+            migrateGuestDataUseCase?.invoke(user.id)
+        }
+    }
+
     suspend operator fun invoke(email: String, password: String): Result<UserAccount> {
         return authRepository.login(email, password).onSuccess { user ->
             sessionManager.onLoggedIn(user)

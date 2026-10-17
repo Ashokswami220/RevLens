@@ -46,14 +46,7 @@ object PublicPricingRoute
 @Serializable
 object LoginRoute
 
-@Serializable
-data class SignUpRoute(val plan: String? = null)
 
-@Serializable
-object ForgotPasswordRoute
-
-@Serializable
-data class ResetPasswordRoute(val token: String)
 
 // Group B: Onboarding Routes
 @Serializable

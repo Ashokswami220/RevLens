@@ -1,6 +1,10 @@
 package com.example.revlens.ui.screens.auth
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,15 +18,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,7 +35,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -39,16 +42,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.revlens.ui.components.ActionCardButton
-import com.example.revlens.ui.components.PrimaryButton
-import com.example.revlens.ui.components.RevLensTextField
 import com.example.revlens.ui.components.RevLensTopAppBar
 import com.example.revlens.ui.theme.RevLensTheme
 import com.example.revlens.ui.theme.RevLensTypography
@@ -57,12 +58,11 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel = koinViewModel(),
-    onNavigateBack: (() -> Unit)? = null,
-    onNavigateToSignUp: () -> Unit = {},
-    onNavigateToForgotPassword: () -> Unit = {}
+    onNavigateBack: (() -> Unit)? = null
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val isDark = isSystemInDarkTheme()
 
     LaunchedEffect(Unit) {
         viewModel.effects.collect { effect ->
@@ -70,8 +70,6 @@ fun LoginScreen(
                 is LoginEffect.ShowMessage -> {
                     snackbarHostState.showSnackbar(effect.text.asString())
                 }
-                LoginEffect.GoToSignUp -> onNavigateToSignUp()
-                LoginEffect.GoToForgotPassword -> onNavigateToForgotPassword()
             }
         }
     }
@@ -82,15 +80,7 @@ fun LoginScreen(
             if (onNavigateBack != null) {
                 RevLensTopAppBar(
                     title = "Sign In",
-                    navigationIcon = {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back",
-                                tint = RevLensTheme.colors.textPrimary
-                            )
-                        }
-                    }
+                    onBackClick = onNavigateBack
                 )
             }
         },
@@ -101,25 +91,46 @@ fun LoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            contentAlignment = Alignment.TopCenter
+            contentAlignment = Alignment.Center
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
+                    .padding(horizontal = 28.dp)
                     .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-                // Brand Pill / Badge
+                // App Icon badge
+                val cardBorder = if (isDark) BorderStroke(1.dp, Color(0xFF262C38)) else BorderStroke(1.dp, RevLensTheme.colors.borderDefault)
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(RoundedCornerShape(22.dp))
+                        .background(RevLensTheme.colors.surfaceElevated)
+                        .border(cardBorder, RoundedCornerShape(22.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "RL",
+                        style = RevLensTypography.displaySmall,
+                        color = RevLensTheme.colors.brandPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Brand Pill
                 Surface(
                     shape = RoundedCornerShape(20.dp),
                     color = RevLensTheme.colors.brandPrimary.copy(alpha = 0.12f),
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    modifier = Modifier.padding(bottom = 12.dp)
                 ) {
                     Text(
-                        text = "RevLens SaaS Intelligence",
+                        text = "RevLens Intelligence",
                         color = RevLensTheme.colors.brandPrimary,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -127,31 +138,32 @@ fun LoginScreen(
                     )
                 }
 
-                // Title & Subtitle
                 Text(
-                    text = "Welcome back",
+                    text = "Welcome to RevLens",
                     style = RevLensTypography.headlineLarge,
                     color = RevLensTheme.colors.textPrimary,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text = "Log in to access your workspaces, forecasts, and team metrics.",
+                    text = "Sign in to access your workspaces, scenario forecasts, and team sync.",
                     style = RevLensTypography.bodyMedium,
                     color = RevLensTheme.colors.textSecondary,
-                    lineHeight = 20.sp
+                    textAlign = TextAlign.Center,
+                    lineHeight = 22.sp
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(36.dp))
 
                 // Session Expired Banner if applicable
                 if (state.isSessionExpiredNotice) {
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 16.dp),
+                            .padding(bottom = 20.dp),
                         shape = RoundedCornerShape(12.dp),
                         color = RevLensTheme.colors.warning.copy(alpha = 0.10f)
                     ) {
@@ -175,74 +187,46 @@ fun LoginScreen(
                     }
                 }
 
-                // Email Input
-                RevLensTextField(
-                    value = state.email,
-                    onValueChange = { viewModel.onEvent(LoginEvent.EmailChanged(it)) },
-                    label = "Email Address",
-                    placeholder = "alex@company.com",
-                    isError = state.emailError != null,
-                    errorMessage = state.emailError?.asString(),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Email,
-                        imeAction = ImeAction.Next
-                    )
-                )
+                // Google Sign-In Primary Button
+                val googleBtnBg = if (isDark) Color(0xFF1E232E) else Color.White
+                val googleBtnBorder = if (isDark) BorderStroke(1.dp, Color(0xFF333B4A)) else BorderStroke(1.dp, RevLensTheme.colors.borderDefault)
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Password Input with Visibility Toggle
-                RevLensTextField(
-                    value = state.password,
-                    onValueChange = { viewModel.onEvent(LoginEvent.PasswordChanged(it)) },
-                    label = "Password",
-                    placeholder = "Enter your password",
-                    isError = state.passwordError != null,
-                    errorMessage = state.passwordError?.asString(),
-                    visualTransformation = if (state.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Password,
-                        imeAction = ImeAction.Done
+                Button(
+                    onClick = { viewModel.onEvent(LoginEvent.GoogleSignInClicked) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp),
+                    enabled = !state.isLoading,
+                    shape = RoundedCornerShape(14.dp),
+                    border = googleBtnBorder,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = googleBtnBg,
+                        contentColor = RevLensTheme.colors.textPrimary
                     ),
-                    trailingIcon = {
-                        IconButton(onClick = { viewModel.onEvent(LoginEvent.TogglePasswordVisibility) }) {
-                            Icon(
-                                imageVector = if (state.isPasswordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                                contentDescription = if (state.isPasswordVisible) "Hide password" else "Show password",
-                                tint = RevLensTheme.colors.textTertiary
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 1.dp, pressedElevation = 0.dp)
+                ) {
+                    if (state.isLoading) {
+                        CircularProgressIndicator(
+                            color = RevLensTheme.colors.brandPrimary,
+                            modifier = Modifier.size(22.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            GoogleIcon(modifier = Modifier.size(22.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Continue with Google",
+                                style = RevLensTypography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = RevLensTheme.colors.textPrimary
                             )
                         }
                     }
-                )
-
-                // Forgot Password Link
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp),
-                    contentAlignment = Alignment.CenterEnd
-                ) {
-                    TextButton(
-                        onClick = { viewModel.onEvent(LoginEvent.ForgotPasswordClicked) }
-                    ) {
-                        Text(
-                            text = "Forgot password?",
-                            color = RevLensTheme.colors.brandPrimary,
-                            style = RevLensTypography.labelMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Primary Log In Button
-                PrimaryButton(
-                    text = "Sign In",
-                    onClick = { viewModel.onEvent(LoginEvent.Submit) },
-                    enabled = state.canSubmit,
-                    isLoading = state.isLoading
-                )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -267,38 +251,49 @@ fun LoginScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-                // Continue as Guest Button
+                // Continue as Guest Option
                 ActionCardButton(
                     text = "Continue without account (Guest)",
                     onClick = { viewModel.onEvent(LoginEvent.ContinueAsGuestClicked) }
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Sign Up Footer
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = "Don't have an account?",
-                        color = RevLensTheme.colors.textSecondary,
-                        style = RevLensTypography.bodyMedium
-                    )
-                    TextButton(onClick = { viewModel.onEvent(LoginEvent.SignUpClicked) }) {
-                        Text(
-                            text = "Sign up",
-                            color = RevLensTheme.colors.brandPrimary,
-                            style = RevLensTypography.bodyMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-
                 Spacer(modifier = Modifier.height(32.dp))
+
+                // Disclaimer
+                Text(
+                    text = "By signing in, you agree to RevLens Terms of Service and Privacy Policy.",
+                    color = RevLensTheme.colors.textTertiary,
+                    fontSize = 11.sp,
+                    lineHeight = 16.sp,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
             }
         }
+    }
+}
+
+@Composable
+private fun GoogleIcon(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(Color.White),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.size(16.dp)) {
+            val center = Offset(size.width / 2, size.height / 2)
+            val radius = size.minDimension / 2
+            drawCircle(color = Color(0xFF4285F4), radius = radius, center = center)
+        }
+        Text(
+            text = "G",
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 11.sp
+        )
     }
 }
