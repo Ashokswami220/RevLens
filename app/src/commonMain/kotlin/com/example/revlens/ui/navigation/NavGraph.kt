@@ -189,6 +189,18 @@ fun RevLensNavGraph(
                 "Comparison"
             ) -> "compare"
 
+            currentDestination?.hasRoute<ReportsRoute>() == true || currentRoute.contains(
+                "Reports"
+            ) -> "reports"
+
+            currentDestination?.hasRoute<SecurityRoute>() == true || currentRoute.contains(
+                "Security"
+            ) -> "security"
+
+            currentDestination?.hasRoute<NotificationsRoute>() == true || currentRoute.contains(
+                "Notifications"
+            ) -> "notifications"
+
             else -> null
         }
         if (slug != null) {
@@ -219,6 +231,10 @@ fun RevLensNavGraph(
                 ) { launchSingleTop = true }
 
                 "input" -> navController.navigate(InputDataRoute) { launchSingleTop = true }
+                "reports" -> navController.navigate(ReportsRoute) { launchSingleTop = true }
+                "security" -> navController.navigate(SecurityRoute) { launchSingleTop = true }
+                "notifications" -> navController.navigate(NotificationsRoute) { launchSingleTop = true }
+                "login" -> navController.navigate(LoginRoute) { launchSingleTop = true }
                 "compare" -> navController.navigate(ScenarioComparisonRoute) {
                     launchSingleTop = true
                 }
@@ -248,6 +264,10 @@ fun RevLensNavGraph(
                     ) { launchSingleTop = true }
 
                     "input" -> navController.navigate(InputDataRoute) { launchSingleTop = true }
+                    "reports" -> navController.navigate(ReportsRoute) { launchSingleTop = true }
+                    "security" -> navController.navigate(SecurityRoute) { launchSingleTop = true }
+                    "notifications" -> navController.navigate(NotificationsRoute) { launchSingleTop = true }
+                    "login" -> navController.navigate(LoginRoute) { launchSingleTop = true }
                     "compare" -> navController.navigate(ScenarioComparisonRoute) {
                         launchSingleTop = true
                     }
@@ -260,11 +280,18 @@ fun RevLensNavGraph(
         }
     }
 
-    CompositionLocalProvider(
-        LocalAppNavigator provides navigateToTab,
-        LocalCurrentTab provides (currentTab ?: "Home")
+    val appLockRepository: com.example.revlens.domain.repository.AppLockRepository = org.koin.compose.koinInject()
+    val biometricAuthenticator: com.example.revlens.core.platform.BiometricAuthenticator = org.koin.compose.koinInject()
+
+    AppLockGate(
+        appLockRepository = appLockRepository,
+        biometricAuthenticator = biometricAuthenticator
     ) {
-        Scaffold(
+        CompositionLocalProvider(
+            LocalAppNavigator provides navigateToTab,
+            LocalCurrentTab provides (currentTab ?: "Home")
+        ) {
+            Scaffold(
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
             bottomBar = {
                 if (showBottomBar) {
@@ -344,6 +371,9 @@ fun RevLensNavGraph(
                     IntroScreen(
                         onGetStarted = {
                             navController.navigate(CreateWorkspaceRoute)
+                        },
+                        onLoginClick = {
+                            navController.navigate(LoginRoute)
                         }
                     )
                 }
@@ -430,7 +460,8 @@ fun RevLensNavGraph(
                             }
                         },
                         onNavigateToCompare = { navController.navigate(ScenarioComparisonRoute) },
-                        onNavigateToMetrics = { navController.navigate(MetricsRoute) }
+                        onNavigateToMetrics = { navController.navigate(MetricsRoute) },
+                        onNavigateToExperiments = { navController.navigate(ExperimentsRoute) }
                     )
                 }
 
@@ -459,7 +490,8 @@ fun RevLensNavGraph(
                         onNavigateToRevenueBreakdown = { navController.navigate(RevenueBreakdownRoute) },
                         onNavigateToLtvAnalysis = { navController.navigate(LtvAnalysisRoute) },
                         onNavigateToCacAnalytics = { navController.navigate(CacAnalyticsRoute) },
-                        onNavigateToCustomerAnalytics = { navController.navigate(CustomerAnalyticsRoute) }
+                        onNavigateToCustomerAnalytics = { navController.navigate(CustomerAnalyticsRoute) },
+                        onNavigateToCohortAnalysis = { navController.navigate(CohortAnalysisRoute) }
                     )
                 }
 
@@ -468,7 +500,10 @@ fun RevLensNavGraph(
                         onNavigateToWorkspace = { navController.navigate(WorkspaceManagementRoute) },
                         onNavigateToBaseline = { navController.navigate(InputDataRoute) },
                         onNavigateToDataImport = { navController.navigate(DataImportRoute) },
-                        onNavigateToSignUp = { navController.navigate(IntroRoute) }
+                        onNavigateToSignUp = { navController.navigate(IntroRoute) },
+                        onNavigateToReports = { navController.navigate(ReportsRoute) },
+                        onNavigateToSecurity = { navController.navigate(SecurityRoute) },
+                        onNavigateToNotifications = { navController.navigate(NotificationsRoute) }
                     )
                 }
 
@@ -532,9 +567,74 @@ fun RevLensNavGraph(
                         onNavigateToDataImport = { navController.navigate(DataImportRoute) }
                     )
                 }
+
+                composable<CohortAnalysisRoute> {
+                    val cohortViewModel: com.example.revlens.ui.screens.analytics.CohortAnalysisViewModel = org.koin.compose.viewmodel.koinViewModel()
+                    com.example.revlens.ui.screens.analytics.CohortAnalysisScreen(
+                        viewModel = cohortViewModel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToDataImport = { navController.navigate(DataImportRoute) }
+                    )
+                }
+
+                composable<ExperimentsRoute> {
+                    val expViewModel: com.example.revlens.ui.screens.experiments.ExperimentsViewModel = org.koin.compose.viewmodel.koinViewModel()
+                    com.example.revlens.ui.screens.experiments.ExperimentsScreen(
+                        viewModel = expViewModel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToDetails = { id -> navController.navigate(ExperimentDetailsRoute(id)) }
+                    )
+                }
+
+                composable<ExperimentDetailsRoute> { backStackEntry ->
+                    val route = backStackEntry.toRoute<ExperimentDetailsRoute>()
+                    val detailsViewModel: com.example.revlens.ui.screens.experiments.ExperimentDetailsViewModel = org.koin.compose.viewmodel.koinViewModel()
+                    com.example.revlens.ui.screens.experiments.ExperimentDetailsScreen(
+                        experimentId = route.id,
+                        viewModel = detailsViewModel,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable<ReportsRoute> {
+                    val reportsViewModel: com.example.revlens.ui.screens.reports.ReportsViewModel = org.koin.compose.viewmodel.koinViewModel()
+                    com.example.revlens.ui.screens.reports.ReportsScreen(
+                        viewModel = reportsViewModel,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable<SecurityRoute> {
+                    val securityViewModel: com.example.revlens.ui.screens.security.SecuritySettingsViewModel = org.koin.compose.viewmodel.koinViewModel()
+                    com.example.revlens.ui.screens.security.SecuritySettingsScreen(
+                        viewModel = securityViewModel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToSignUp = { navController.navigate(IntroRoute) }
+                    )
+                }
+
+                composable<NotificationsRoute> {
+                    val notifViewModel: com.example.revlens.ui.screens.notifications.NotificationSettingsViewModel = org.koin.compose.viewmodel.koinViewModel()
+                    com.example.revlens.ui.screens.notifications.NotificationSettingsScreen(
+                        viewModel = notifViewModel,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable<LoginRoute> {
+                    val loginViewModel: com.example.revlens.ui.screens.auth.LoginViewModel = org.koin.compose.viewmodel.koinViewModel()
+                    com.example.revlens.ui.screens.auth.LoginScreen(
+                        viewModel = loginViewModel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToSignUp = { navController.navigate(IntroRoute) },
+                        onNavigateToForgotPassword = { /* Will navigate to ForgotPasswordRoute in Step 2.4 */ }
+                    )
+                }
             }
         }
     }
 }
+}
+
 
 

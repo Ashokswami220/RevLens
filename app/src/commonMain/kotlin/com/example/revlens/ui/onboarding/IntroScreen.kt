@@ -40,7 +40,8 @@ import com.example.revlens.ui.theme.RevLensTypography
 
 @Composable
 fun IntroScreen(
-    onGetStarted: () -> Unit
+    onGetStarted: () -> Unit,
+    onLoginClick: () -> Unit = {}
 ) {
     val isDark = isSystemInDarkTheme()
     val cardBorder = if (isDark) {
@@ -157,13 +158,39 @@ fun IntroScreen(
             Spacer(modifier = Modifier.height(24.dp))
         }
 
-        // Bottom CTA Button
-        ActionCardButton(
-            text = "Get Started",
-            icon = Icons.AutoMirrored.Filled.ArrowForward,
-            onClick = onGetStarted,
-            modifier = Modifier.fillMaxWidth()
-        )
+        // Bottom CTA Buttons
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            ActionCardButton(
+                text = "Get Started",
+                icon = Icons.AutoMirrored.Filled.ArrowForward,
+                onClick = onGetStarted,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "Already have an account? ",
+                    color = RevLensTheme.colors.textSecondary,
+                    style = RevLensTypography.bodyMedium
+                )
+                androidx.compose.material3.TextButton(onClick = onLoginClick) {
+                    Text(
+                        text = "Sign in",
+                        color = RevLensTheme.colors.brandPrimary,
+                        style = RevLensTypography.bodyMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
     }
 }
 

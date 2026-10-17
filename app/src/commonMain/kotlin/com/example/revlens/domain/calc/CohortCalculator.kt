@@ -70,18 +70,18 @@ object CohortCalculator {
         val subscriptions = dataset.subscriptions
 
         // Group by signup month YYYY-MM
-        val cohortsByMonth = subscriptions.groupBy {
+        val cohortsByMonth: Map<String, List<SubscriptionRecord>> = subscriptions.groupBy {
             val date = it.startDate
             if (date.length >= 7) date.substring(0, 7) else "2026-01"
-        }.toSortedMap()
+        }
 
-        val cohortKeys = cohortsByMonth.keys.toList()
+        val cohortKeys: List<String> = cohortsByMonth.keys.sorted()
         val rows = ArrayList<CohortRow>(cohortKeys.size)
 
         for ((cohortIndex, cohortMonth) in cohortKeys.withIndex()) {
-            val cohortSubs = cohortsByMonth[cohortMonth] ?: emptyList()
+            val cohortSubs: List<SubscriptionRecord> = cohortsByMonth[cohortMonth] ?: emptyList()
             val initialSize = cohortSubs.size
-            val initialMrr = cohortSubs.sumOf { it.mrrMinor }
+            val initialMrr: Long = cohortSubs.sumOf { it.mrrMinor }
             val isSmall = initialSize < 20
 
             val cells = ArrayList<CohortCell>(maxOffsets)
@@ -111,13 +111,11 @@ object CohortCalculator {
                         )
                     )
                 } else {
-                    // Approximate retention decay for offset
-                    // If subscription has endDate, check if churn happened after this offset
-                    val retainedSubs = cohortSubs.filter { sub ->
+                    // Subscriptions retained at this month offset
+                    val retainedSubs: List<SubscriptionRecord> = cohortSubs.filter { sub: SubscriptionRecord ->
                         if (sub.endDate == null) {
                             true
                         } else {
-                            // Sub churned: check months diff
                             val endMonth = if (sub.endDate.length >= 7) sub.endDate.substring(0, 7) else "9999-12"
                             val diffMonths = monthsBetween(cohortMonth, endMonth)
                             diffMonths >= offset
@@ -125,7 +123,7 @@ object CohortCalculator {
                     }
 
                     val retainedCount = retainedSubs.size
-                    val retainedMrr = retainedSubs.sumOf { it.mrrMinor }
+                    val retainedMrr: Long = retainedSubs.sumOf { it.mrrMinor }
 
                     val percent = if (metric == CohortMetric.LOGO_RETENTION) {
                         if (initialSize > 0) (retainedCount.toDouble() / initialSize * 100.0) else 0.0
@@ -159,7 +157,7 @@ object CohortCalculator {
         // Calculate average retention per offset across all non-younger cohorts
         val averageCurve = ArrayList<Double>(maxOffsets)
         for (offset in 0 until maxOffsets) {
-            val validCells = rows.mapNotNull { row ->
+            val validCells: List<Double> = rows.mapNotNull { row: CohortRow ->
                 val cell = row.cells.getOrNull(offset)
                 if (cell != null && !cell.isYounger) cell.retentionPercent else null
             }
@@ -171,7 +169,7 @@ object CohortCalculator {
 
         // Find best cohort at Month 3 (or latest common offset)
         val m3Offset = 3.coerceAtMost(maxOffsets - 1)
-        val bestCohort = rows.filter { !it.cells[m3Offset].isYounger }
+        val bestCohort: CohortRow? = rows.filter { !it.cells[m3Offset].isYounger }
             .maxByOrNull { it.cells[m3Offset].retentionPercent }
 
         val insight = if (bestCohort != null) {

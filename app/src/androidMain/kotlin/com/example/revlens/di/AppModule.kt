@@ -37,6 +37,17 @@ val appModule = module {
     single<com.example.revlens.core.platform.BiometricAuthenticator> { com.example.revlens.core.platform.DefaultBiometricAuthenticator() }
     single<com.example.revlens.core.platform.LocalNotifier> { com.example.revlens.core.platform.DefaultLocalNotifier() }
     single<com.example.revlens.domain.repository.AnalyticsRepository> { com.example.revlens.data.DefaultAnalyticsRepository() }
+    single<com.example.revlens.domain.repository.ExperimentRepository> { com.example.revlens.data.DefaultExperimentRepository() }
+    single<com.example.revlens.domain.repository.ReportRepository> { com.example.revlens.data.DefaultReportRepository() }
+    single<com.example.revlens.domain.repository.AppLockRepository> { com.example.revlens.data.DefaultAppLockRepository() }
+    single<com.example.revlens.domain.repository.NotificationPreferencesRepository> { com.example.revlens.data.DefaultNotificationPreferencesRepository() }
+    single<com.example.revlens.domain.repository.AuthRepository> { com.example.revlens.data.fake.FakeAuthRepository(get()) }
+    single { com.example.revlens.domain.usecase.MigrateGuestDataUseCase(get(), get(), get(), get()) }
+    single { com.example.revlens.domain.usecase.LoginUseCase(get(), get(), get()) }
+    single { com.example.revlens.domain.usecase.SignUpUseCase(get(), get(), get()) }
+    single { com.example.revlens.domain.usecase.RequestPasswordResetUseCase(get()) }
+    single { com.example.revlens.domain.usecase.ValidateResetTokenUseCase(get()) }
+    single { com.example.revlens.domain.usecase.ResetPasswordUseCase(get()) }
     single { com.example.revlens.domain.usecase.CreateWorkspaceUseCase(get(), get(), get()) }
     viewModel { MainViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { BusinessSetupViewModel() }
@@ -48,4 +59,15 @@ val appModule = module {
     viewModel { com.example.revlens.ui.screens.analytics.CacAnalyticsViewModel(get(), get(), get()) }
     viewModel { com.example.revlens.ui.screens.simulator.GrowthSimulatorViewModel(get(), get()) }
     viewModel { com.example.revlens.ui.screens.analytics.CustomerAnalyticsViewModel(get(), get(), get()) }
+    viewModel { com.example.revlens.ui.screens.analytics.CohortAnalysisViewModel(get(), get(), get()) }
+    viewModel { com.example.revlens.ui.screens.experiments.ExperimentsViewModel(get(), get()) }
+    viewModel { com.example.revlens.ui.screens.experiments.ExperimentDetailsViewModel(get()) }
+    viewModel { com.example.revlens.ui.screens.reports.ReportsViewModel(get(), get(), get(), get(), get()) }
+    viewModel { com.example.revlens.ui.screens.security.SecuritySettingsViewModel(get(), get(), get()) }
+    viewModel { com.example.revlens.ui.screens.notifications.NotificationSettingsViewModel(get(), get()) }
+    viewModel { com.example.revlens.ui.screens.auth.LoginViewModel(get(), get()) }
 }
+
+
+
+

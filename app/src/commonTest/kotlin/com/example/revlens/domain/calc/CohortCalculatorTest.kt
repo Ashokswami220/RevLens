@@ -21,7 +21,7 @@ class CohortCalculatorTest {
             cac = BigDecimal("100.00"),
             fixedCosts = BigDecimal("1000.00"),
             variableCostPerCustomer = BigDecimal("5.00"),
-            plans = listOf(Plan("1", "Default", BigDecimal("50.00"), 100))
+            plans = listOf(Plan(id = "1", name = "Default", price = BigDecimal("50.00"), customerCount = 100))
         )
 
         val result = CohortCalculator.build(

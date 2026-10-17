@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.automirrored.outlined.CompareArrows
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.outlined.AddCircleOutline
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -41,7 +42,8 @@ fun ScenarioBuilderScreen(
     viewModel: MainViewModel = koinViewModel(),
     onNavigateToCreate: () -> Unit,
     onNavigateToCompare: () -> Unit,
-    onNavigateToMetrics: () -> Unit
+    onNavigateToMetrics: () -> Unit,
+    onNavigateToExperiments: () -> Unit = {}
 ) {
     val scenarios by viewModel.scenarios.collectAsState()
 
@@ -57,6 +59,13 @@ fun ScenarioBuilderScreen(
                 title = "Scenarios",
                 onBackClick = null,
                 actions = {
+                    IconButton(onClick = onNavigateToExperiments) {
+                        Icon(
+                            imageVector = Icons.Filled.Science,
+                            contentDescription = "Experiments",
+                            tint = RevLensTheme.colors.brandPrimary
+                        )
+                    }
                     IconButton(onClick = onNavigateToMetrics) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ShowChart,

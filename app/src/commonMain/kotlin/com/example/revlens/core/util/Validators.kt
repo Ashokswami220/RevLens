@@ -12,6 +12,12 @@ object Validators {
         return null
     }
 
+    fun password(value: String): UiText? {
+        if (value.isEmpty()) return UiText.DynamicString("Password cannot be empty")
+        if (value.length < 8) return UiText.DynamicString("Password must be at least 8 characters")
+        return null
+    }
+
     fun workspaceName(value: String): UiText? {
         val trimmed = value.trim()
         if (trimmed.length < 2) return UiText.DynamicString("Workspace name must be at least 2 characters")

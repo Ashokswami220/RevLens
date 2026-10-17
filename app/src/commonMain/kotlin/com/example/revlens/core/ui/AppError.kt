@@ -30,3 +30,13 @@ fun AppError.toUiText(): UiText = when (this) {
     AppError.Server -> UiText.DynamicString("Server error. Please try again shortly.")
     is AppError.Unknown -> UiText.DynamicString(cause?.message ?: "An unexpected error occurred.")
 }
+
+class AppException(val error: AppError) : Exception(error.toUiText().asString())
+
+fun Throwable.toAppError(): AppError = when (this) {
+    is AppException -> this.error
+    else -> AppError.Unknown(this)
+}
+
+fun Throwable.toUiText(): UiText = toAppError().toUiText()
+

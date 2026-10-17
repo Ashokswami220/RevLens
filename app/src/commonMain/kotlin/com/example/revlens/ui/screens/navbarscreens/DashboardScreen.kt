@@ -26,7 +26,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.FileUpload
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material3.Button
@@ -41,8 +44,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.example.revlens.domain.calc.AlertRuleEvaluator
+import com.example.revlens.domain.model.AlertSeverity
+import com.example.revlens.domain.model.NotificationPrefs
+import com.example.revlens.domain.model.TriggeredAlert
+import com.example.revlens.domain.repository.NotificationPreferencesRepository
+import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -94,6 +105,15 @@ fun DashboardScreen(
     onNavigateToGoalPlanner: () -> Unit = {}
 ) {
     val profile by viewModel.profile.collectAsState()
+    val notifPrefsRepo: NotificationPreferencesRepository = koinInject()
+    val notifPrefs by notifPrefsRepo.preferencesFlow.collectAsState(initial = NotificationPrefs())
+    val dismissedAlertIds by notifPrefsRepo.dismissedAlertIdsFlow.collectAsState(initial = emptySet())
+    val coroutineScope = rememberCoroutineScope()
+
+    val activeAlerts = remember(notifPrefs, profile, dismissedAlertIds) {
+        AlertRuleEvaluator.evaluate(notifPrefs, profile)
+            .filterNot { it.id in dismissedAlertIds }
+    }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -150,6 +170,17 @@ fun DashboardScreen(
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            for (alert in activeAlerts) {
+                AlertBannerCard(
+                    alert = alert,
+                    onDismiss = {
+                        coroutineScope.launch {
+                            notifPrefsRepo.dismissAlert(alert.id)
+                        }
+                    }
+                )
+            }
+
             profile?.let { currentProfile ->
                 DashboardContent(
                     profile = currentProfile,
@@ -158,6 +189,75 @@ fun DashboardScreen(
                     onNavigateToBreakEven = onNavigateToBreakEven,
                     onNavigateToGrowth = onNavigateToGrowth,
                     onNavigateToGoalPlanner = onNavigateToGoalPlanner
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AlertBannerCard(
+    alert: TriggeredAlert,
+    onDismiss: () -> Unit
+) {
+    val isWarning = alert.severity == AlertSeverity.WARNING
+    val accentColor = if (isWarning) RevLensTheme.colors.warning else RevLensTheme.colors.brandPrimary
+    val containerBg = accentColor.copy(alpha = 0.08f)
+    val borderColor = accentColor.copy(alpha = 0.35f)
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = containerBg,
+        border = BorderStroke(1.dp, borderColor)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .background(accentColor.copy(alpha = 0.15f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = if (isWarning) Icons.Filled.Warning else Icons.Filled.Info,
+                    contentDescription = null,
+                    tint = accentColor,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = alert.title,
+                    color = RevLensTheme.colors.textPrimary,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = alert.message,
+                    color = RevLensTheme.colors.textSecondary,
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp
+                )
+            }
+
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier.size(28.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = "Dismiss",
+                    tint = RevLensTheme.colors.textTertiary,
+                    modifier = Modifier.size(16.dp)
                 )
             }
         }
