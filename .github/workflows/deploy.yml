@@ -1,4 +1,4 @@
-name: Deploy RevLens Wasm to Vercel
+name: Build RevLens Wasm (Vercel Paused)
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -25,8 +25,11 @@ jobs:
       - name: Build WebAssembly Distribution
         run: ./gradlew wasmJsBrowserDistribution --no-daemon
 
-      - name: Deploy to Vercel
+      - name: Deploy to Vercel (Paused - runs only if secret is configured)
+        if: ${{ env.VERCEL_TOKEN != '' }}
         uses: amondnet/vercel-action@v25
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}

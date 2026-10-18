@@ -75,6 +75,8 @@ val appModule = module {
     viewModel { com.example.revlens.ui.screens.billing.BillingViewModel(get(), get()) }
     viewModel { com.example.revlens.ui.screens.integrations.IntegrationsViewModel(get(), get()) }
     viewModel { com.example.revlens.ui.screens.developer.ApiWebhooksViewModel(get(), get()) }
+    viewModel { com.example.revlens.ui.screens.marketing.PublicPricingViewModel() }
+    viewModel { com.example.revlens.ui.screens.marketing.LandingViewModel() }
 }
 
 

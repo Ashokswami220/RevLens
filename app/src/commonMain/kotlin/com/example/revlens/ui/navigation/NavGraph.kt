@@ -221,6 +221,14 @@ fun RevLensNavGraph(
                 "ApiWebhooks"
             ) -> "developer"
 
+            currentDestination?.hasRoute<LandingRoute>() == true || currentRoute.contains(
+                "Landing"
+            ) -> "landing"
+
+            currentDestination?.hasRoute<PublicPricingRoute>() == true || currentRoute.contains(
+                "PublicPricing"
+            ) -> "pricing"
+
             else -> null
         }
         if (slug != null) {
@@ -258,6 +266,8 @@ fun RevLensNavGraph(
                 "billing" -> navController.navigate(BillingRoute) { launchSingleTop = true }
                 "integrations" -> navController.navigate(IntegrationsRoute) { launchSingleTop = true }
                 "developer", "apiwebhooks", "webhooks" -> navController.navigate(ApiWebhooksRoute) { launchSingleTop = true }
+                "pricing", "plans" -> navController.navigate(PublicPricingRoute) { launchSingleTop = true }
+                "landing" -> navController.navigate(LandingRoute) { launchSingleTop = true }
                 "compare" -> navController.navigate(ScenarioComparisonRoute) {
                     launchSingleTop = true
                 }
@@ -294,6 +304,8 @@ fun RevLensNavGraph(
                     "billing" -> navController.navigate(BillingRoute) { launchSingleTop = true }
                     "integrations" -> navController.navigate(IntegrationsRoute) { launchSingleTop = true }
                     "developer", "apiwebhooks", "webhooks" -> navController.navigate(ApiWebhooksRoute) { launchSingleTop = true }
+                    "pricing", "plans" -> navController.navigate(PublicPricingRoute) { launchSingleTop = true }
+                    "landing" -> navController.navigate(LandingRoute) { launchSingleTop = true }
                     "compare" -> navController.navigate(ScenarioComparisonRoute) {
                         launchSingleTop = true
                     }
@@ -698,6 +710,25 @@ fun RevLensNavGraph(
                     com.example.revlens.ui.screens.developer.ApiWebhooksScreen(
                         viewModel = developerViewModel,
                         onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable<LandingRoute> {
+                    val landingViewModel: com.example.revlens.ui.screens.marketing.LandingViewModel = org.koin.compose.viewmodel.koinViewModel()
+                    com.example.revlens.ui.screens.marketing.LandingScreen(
+                        viewModel = landingViewModel,
+                        onNavigateToAuth = { navController.navigate(LoginRoute) },
+                        onNavigateToDemo = { navController.navigate(DashboardRoute) },
+                        onNavigateToPricing = { navController.navigate(PublicPricingRoute) }
+                    )
+                }
+
+                composable<PublicPricingRoute> {
+                    val pricingViewModel: com.example.revlens.ui.screens.marketing.PublicPricingViewModel = org.koin.compose.viewmodel.koinViewModel()
+                    com.example.revlens.ui.screens.marketing.PublicPricingScreen(
+                        viewModel = pricingViewModel,
+                        onNavigateToAuth = { navController.navigate(LoginRoute) },
+                        onNavigateToHome = { navController.navigate(LandingRoute) }
                     )
                 }
             }
