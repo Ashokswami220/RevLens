@@ -10,11 +10,9 @@ import com.revlens.app.domain.context.WorkspaceContext
 import com.revlens.app.domain.model.PeriodPreset
 import com.revlens.app.domain.model.ReportFormat
 import com.revlens.app.domain.model.ReportSnapshot
-import com.revlens.app.domain.model.ReportTemplate
 import com.revlens.app.domain.repository.ReportRepository
 import com.revlens.app.model.BusinessProfile
 import com.revlens.app.model.Scenario
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
@@ -59,6 +57,7 @@ class ReportsViewModel(
                 update { copy(filter = event.filter) }
                 applyFilter()
             }
+
             is ReportsEvent.OpenGenerateSheet -> {
                 val templ = event.template
                 val defaultTitle = "${templ.displayName} · Oct 2026"
@@ -70,11 +69,13 @@ class ReportsViewModel(
                     )
                 }
             }
+
             ReportsEvent.DismissGenerateSheet -> update { copy(showGenerateSheet = false) }
             is ReportsEvent.UpdateTemplate -> {
                 val defaultTitle = "${event.template.displayName} · Oct 2026"
                 update { copy(sheetTemplate = event.template, sheetTitle = defaultTitle) }
             }
+
             is ReportsEvent.UpdateTitle -> update { copy(sheetTitle = event.title) }
             is ReportsEvent.UpdatePeriodPreset -> {
                 val (start, end) = when (event.preset) {
@@ -85,12 +86,22 @@ class ReportsViewModel(
                 }
                 update { copy(sheetPreset = event.preset, sheetStart = start, sheetEnd = end) }
             }
-            is ReportsEvent.UpdatePeriodDates -> update { copy(sheetStart = event.start, sheetEnd = event.end) }
+
+            is ReportsEvent.UpdatePeriodDates -> update {
+                copy(
+                    sheetStart = event.start, sheetEnd = event.end
+                )
+            }
+
             is ReportsEvent.ToggleSection -> {
                 val current = state.value.sheetSections
-                val updated = if (current.contains(event.section)) current - event.section else current + event.section
+                val updated = if (current.contains(
+                        event.section
+                    )
+                ) current - event.section else current + event.section
                 update { copy(sheetSections = updated) }
             }
+
             is ReportsEvent.UpdateFormat -> update { copy(sheetFormat = event.format) }
             is ReportsEvent.UpdateNotes -> update { copy(sheetNotes = event.notes) }
             ReportsEvent.GenerateReport -> generateReport()
@@ -103,6 +114,7 @@ class ReportsViewModel(
                     emit(ReportsEffect.ShowToast("Report deleted"))
                 }
             }
+
             ReportsEvent.ClickUpgradeScheduled -> update { copy(showUpgradePrompt = true) }
             ReportsEvent.DismissUpgradePrompt -> update { copy(showUpgradePrompt = false) }
         }

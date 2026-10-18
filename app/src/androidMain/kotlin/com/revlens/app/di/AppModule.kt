@@ -25,9 +25,21 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "re
 
 val appModule = module {
     single<DataStore<Preferences>> { androidContext().dataStore }
-    single<ProfileRepository> { com.revlens.app.data.AndroidFirestoreProfileRepository(DataStoreProfileRepository(get())) }
-    single<ScenarioRepository> { com.revlens.app.data.AndroidFirestoreScenarioRepository(DataStoreScenarioRepository(get())) }
-    single<WorkspaceRepository> { com.revlens.app.data.AndroidFirestoreWorkspaceRepository(DefaultWorkspaceRepository()) }
+    single<ProfileRepository> {
+        com.revlens.app.data.AndroidFirestoreProfileRepository(
+            DataStoreProfileRepository(get())
+        )
+    }
+    single<ScenarioRepository> {
+        com.revlens.app.data.AndroidFirestoreScenarioRepository(
+            DataStoreScenarioRepository(get())
+        )
+    }
+    single<WorkspaceRepository> {
+        com.revlens.app.data.AndroidFirestoreWorkspaceRepository(
+            DefaultWorkspaceRepository()
+        )
+    }
     single<WorkspaceContext> { DefaultWorkspaceContext() }
     single<SessionManager> { DefaultSessionManager() }
     single { ResolveGateUseCase() }
@@ -41,7 +53,11 @@ val appModule = module {
     single<com.revlens.app.domain.repository.ReportRepository> { com.revlens.app.data.DefaultReportRepository() }
     single<com.revlens.app.domain.repository.AppLockRepository> { com.revlens.app.data.DefaultAppLockRepository() }
     single<com.revlens.app.domain.repository.NotificationPreferencesRepository> { com.revlens.app.data.DefaultNotificationPreferencesRepository() }
-    single<com.revlens.app.domain.repository.AuthRepository> { com.revlens.app.data.AndroidFirebaseAuthRepository(get(), get()) }
+    single<com.revlens.app.domain.repository.AuthRepository> {
+        com.revlens.app.data.AndroidFirebaseAuthRepository(
+            get(), get()
+        )
+    }
     single<com.revlens.app.domain.repository.TeamRepository> { com.revlens.app.data.fake.FakeTeamRepository() }
     single<com.revlens.app.domain.repository.BillingRepository> { com.revlens.app.data.fake.FakeBillingRepository() }
     single<com.revlens.app.domain.repository.IntegrationRepository> { com.revlens.app.data.fake.FakeIntegrationRepository() }
@@ -55,20 +71,40 @@ val appModule = module {
     single { com.revlens.app.domain.usecase.CreateWorkspaceUseCase(get(), get(), get()) }
     viewModel { MainViewModel(get(), get(), get(), get(), get(), get(), get()) }
     viewModel { BusinessSetupViewModel() }
-    viewModel { com.revlens.app.ui.screens.workspace.WorkspaceManagementViewModel(get(), get(), get(), get()) }
+    viewModel {
+        com.revlens.app.ui.screens.workspace.WorkspaceManagementViewModel(
+            get(), get(), get(), get()
+        )
+    }
     viewModel { com.revlens.app.ui.screens.workspace.CreateWorkspaceViewModel(get()) }
     viewModel { com.revlens.app.ui.screens.data.DataImportViewModel(get(), get(), get()) }
-    viewModel { com.revlens.app.ui.screens.analytics.RevenueBreakdownViewModel(get(), get(), get()) }
+    viewModel {
+        com.revlens.app.ui.screens.analytics.RevenueBreakdownViewModel(
+            get(), get(), get()
+        )
+    }
     viewModel { com.revlens.app.ui.screens.analytics.LtvAnalysisViewModel(get(), get()) }
     viewModel { com.revlens.app.ui.screens.analytics.CacAnalyticsViewModel(get(), get(), get()) }
     viewModel { com.revlens.app.ui.screens.simulator.GrowthSimulatorViewModel(get(), get()) }
-    viewModel { com.revlens.app.ui.screens.analytics.CustomerAnalyticsViewModel(get(), get(), get()) }
+    viewModel {
+        com.revlens.app.ui.screens.analytics.CustomerAnalyticsViewModel(
+            get(), get(), get()
+        )
+    }
     viewModel { com.revlens.app.ui.screens.analytics.CohortAnalysisViewModel(get(), get(), get()) }
     viewModel { com.revlens.app.ui.screens.experiments.ExperimentsViewModel(get(), get()) }
     viewModel { com.revlens.app.ui.screens.experiments.ExperimentDetailsViewModel(get()) }
-    viewModel { com.revlens.app.ui.screens.reports.ReportsViewModel(get(), get(), get(), get(), get()) }
+    viewModel {
+        com.revlens.app.ui.screens.reports.ReportsViewModel(
+            get(), get(), get(), get(), get()
+        )
+    }
     viewModel { com.revlens.app.ui.screens.security.SecuritySettingsViewModel(get(), get(), get()) }
-    viewModel { com.revlens.app.ui.screens.notifications.NotificationSettingsViewModel(get(), get()) }
+    viewModel {
+        com.revlens.app.ui.screens.notifications.NotificationSettingsViewModel(
+            get(), get()
+        )
+    }
     viewModel { com.revlens.app.ui.screens.auth.LoginViewModel(get(), get()) }
     viewModel { com.revlens.app.ui.screens.profile.ProfileViewModel(get(), get(), get(), get()) }
     viewModel { com.revlens.app.ui.screens.team.TeamViewModel(get(), get()) }

@@ -55,13 +55,17 @@ class GrowthSimulatorViewModel(
                 update { copy(assumptions = assumptions.copy(timeHorizonMonths = event.months)) }
                 recompute()
             }
+
             is GrowthSimulatorIntent.UpdateChannelSpend -> {
                 val updatedChannels = state.value.assumptions.channels.map { ch ->
-                    if (ch.id == event.channelId) ch.copy(monthlySpendMinor = event.spendMinor) else ch
+                    if (ch.id == event.channelId) ch.copy(
+                        monthlySpendMinor = event.spendMinor
+                    ) else ch
                 }
                 update { copy(assumptions = assumptions.copy(channels = updatedChannels)) }
                 recompute()
             }
+
             is GrowthSimulatorIntent.UpdateChannelCac -> {
                 val updatedChannels = state.value.assumptions.channels.map { ch ->
                     if (ch.id == event.channelId) ch.copy(targetCacMinor = event.cacMinor) else ch
@@ -69,6 +73,7 @@ class GrowthSimulatorViewModel(
                 update { copy(assumptions = assumptions.copy(channels = updatedChannels)) }
                 recompute()
             }
+
             is GrowthSimulatorIntent.ToggleChannelEnabled -> {
                 val updatedChannels = state.value.assumptions.channels.map { ch ->
                     if (ch.id == event.channelId) ch.copy(isEnabled = !ch.isEnabled) else ch
@@ -76,6 +81,7 @@ class GrowthSimulatorViewModel(
                 update { copy(assumptions = assumptions.copy(channels = updatedChannels)) }
                 recompute()
             }
+
             is GrowthSimulatorIntent.AddChannel -> {
                 val id = "ch_" + Random.nextInt(10000, 99999)
                 val newChannel = ChannelPlan(
@@ -94,40 +100,68 @@ class GrowthSimulatorViewModel(
                 }
                 recompute()
             }
+
             is GrowthSimulatorIntent.RemoveChannel -> {
                 if (state.value.assumptions.channels.size > 1) {
-                    val updatedChannels = state.value.assumptions.channels.filterNot { it.id == event.channelId }
+                    val updatedChannels =
+                        state.value.assumptions.channels.filterNot { it.id == event.channelId }
                     update { copy(assumptions = assumptions.copy(channels = updatedChannels)) }
                     recompute()
                 } else {
                     emit(GrowthSimulatorEffect.ShowToast("Must have at least one channel"))
                 }
             }
+
             is GrowthSimulatorIntent.UpdateReferralRate -> {
                 update { copy(assumptions = assumptions.copy(referralRatePercent = event.rate)) }
                 recompute()
             }
+
             is GrowthSimulatorIntent.UpdateOrganicGrowth -> {
                 update { copy(assumptions = assumptions.copy(organicGrowthPercent = event.rate)) }
                 recompute()
             }
+
             is GrowthSimulatorIntent.UpdateExpansionRate -> {
                 update { copy(assumptions = assumptions.copy(expansionRatePercent = event.rate)) }
                 recompute()
             }
+
             is GrowthSimulatorIntent.UpdateStartingCash -> {
                 update { copy(assumptions = assumptions.copy(startingCashMinor = event.cashMinor)) }
                 recompute()
             }
+
             GrowthSimulatorIntent.ResetToDefaults -> {
                 update { copy(assumptions = GrowthAssumptions()) }
                 recompute()
             }
+
             GrowthSimulatorIntent.OpenAddChannelSheet -> update { copy(showAddChannelSheet = true) }
-            GrowthSimulatorIntent.DismissAddChannelSheet -> update { copy(showAddChannelSheet = false) }
-            GrowthSimulatorIntent.OpenSaveScenarioDialog -> update { copy(showSaveScenarioDialog = true) }
-            GrowthSimulatorIntent.DismissSaveScenarioDialog -> update { copy(showSaveScenarioDialog = false) }
-            is GrowthSimulatorIntent.UpdateScenarioName -> update { copy(scenarioNameInput = event.name) }
+            GrowthSimulatorIntent.DismissAddChannelSheet -> update {
+                copy(
+                    showAddChannelSheet = false
+                )
+            }
+
+            GrowthSimulatorIntent.OpenSaveScenarioDialog -> update {
+                copy(
+                    showSaveScenarioDialog = true
+                )
+            }
+
+            GrowthSimulatorIntent.DismissSaveScenarioDialog -> update {
+                copy(
+                    showSaveScenarioDialog = false
+                )
+            }
+
+            is GrowthSimulatorIntent.UpdateScenarioName -> update {
+                copy(
+                    scenarioNameInput = event.name
+                )
+            }
+
             GrowthSimulatorIntent.SaveScenario -> saveScenario()
             GrowthSimulatorIntent.OpenCashSheet -> update { copy(showCashSheet = true) }
             GrowthSimulatorIntent.DismissCashSheet -> update { copy(showCashSheet = false) }

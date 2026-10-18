@@ -34,7 +34,8 @@ class AndroidFirebaseAuthRepository(
         try {
             if (idToken != null) {
                 val credential = GoogleAuthProvider.getCredential(idToken, null)
-                val authResult = auth.signInWithCredential(credential).await()
+                val authResult = auth.signInWithCredential(credential)
+                    .await()
                 val fbUser = authResult.user ?: throw AppException(AppError.Unauthorized)
 
                 val user = UserAccount(
@@ -65,8 +66,12 @@ class AndroidFirebaseAuthRepository(
         return Result.failure(AppException(AppError.InvalidCredentials))
     }
 
-    override suspend fun signUp(name: String, email: String, password: String): Result<UserAccount> {
-        return Result.failure(AppException(AppError.Conflict("Sign up is handled via Google Sign-In")))
+    override suspend fun signUp(
+        name: String, email: String, password: String
+    ): Result<UserAccount> {
+        return Result.failure(
+            AppException(AppError.Conflict("Sign up is handled via Google Sign-In"))
+        )
     }
 
     override suspend fun requestPasswordReset(email: String): Result<Unit> {
@@ -93,7 +98,9 @@ class AndroidFirebaseAuthRepository(
     }
 
     override suspend fun refreshToken(): Result<AuthTokens> {
-        val user = cachedUser ?: getCurrentUser() ?: return Result.failure(AppException(AppError.Unauthorized))
+        val user = cachedUser ?: getCurrentUser() ?: return Result.failure(
+            AppException(AppError.Unauthorized)
+        )
         val tokens = AuthTokens(
             accessToken = "android_fb_acc_${user.id}",
             refreshToken = "android_fb_ref_${user.id}"
@@ -129,7 +136,8 @@ class AndroidFirebaseAuthRepository(
             val updates = UserProfileChangeRequest.Builder()
                 .setDisplayName(name.trim())
                 .build()
-            fbUser.updateProfile(updates).await()
+            fbUser.updateProfile(updates)
+                .await()
 
             val updated = UserAccount(
                 id = fbUser.uid,
@@ -148,7 +156,8 @@ class AndroidFirebaseAuthRepository(
 
     override suspend fun deleteAccount(): Result<Unit> {
         try {
-            auth.currentUser?.delete()?.await()
+            auth.currentUser?.delete()
+                ?.await()
             cachedUser = null
             secureStorage?.remove("auth_tokens")
             return Result.success(Unit)

@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -147,7 +146,11 @@ fun ExperimentsScreen(
                     state.experiments.forEach { experiment ->
                         ExperimentCard(
                             experiment = experiment,
-                            onClick = { viewModel.onEvent(ExperimentsEvent.ClickExperiment(experiment.id)) }
+                            onClick = {
+                                viewModel.onEvent(
+                                    ExperimentsEvent.ClickExperiment(experiment.id)
+                                )
+                            }
                         )
                     }
                 }
@@ -189,7 +192,9 @@ fun ExperimentsScreen(
                     )
                     Button(
                         onClick = { viewModel.onEvent(ExperimentsEvent.OpenCreateSheet) },
-                        colors = ButtonDefaults.buttonColors(containerColor = RevLensTheme.colors.primaryAction),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = RevLensTheme.colors.primaryAction
+                        ),
                         shape = RoundedCornerShape(10.dp)
                     ) {
                         Text("Create Experiment")
@@ -274,13 +279,14 @@ private fun CreateExperimentSheet(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            ExperimentType.entries.take(3).forEach { t ->
-                FilterChip(
-                    text = t.displayName,
-                    selected = selectedType == t,
-                    onClick = { selectedType = t }
-                )
-            }
+            ExperimentType.entries.take(3)
+                .forEach { t ->
+                    FilterChip(
+                        text = t.displayName,
+                        selected = selectedType == t,
+                        onClick = { selectedType = t }
+                    )
+                }
         }
 
         // Primary Metric
@@ -350,7 +356,10 @@ private fun CreateExperimentSheet(
                 val pLift = predictedLiftInput.toDoubleOrNull() ?: 10.0
                 val thresh = thresholdInput.toDoubleOrNull() ?: 5.0
                 val days = durationDaysInput.toIntOrNull() ?: 30
-                onCreate(name, selectedType, selectedMetric, pLift, thresh, days, controlDesc, treatmentDesc)
+                onCreate(
+                    name, selectedType, selectedMetric, pLift, thresh, days, controlDesc,
+                    treatmentDesc
+                )
             },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(10.dp),

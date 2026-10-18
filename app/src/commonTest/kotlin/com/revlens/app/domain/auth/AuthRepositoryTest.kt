@@ -3,15 +3,11 @@ package com.revlens.app.domain.auth
 import com.revlens.app.core.platform.InMemorySecureStorage
 import com.revlens.app.core.ui.AppError
 import com.revlens.app.core.ui.toAppError
-import com.revlens.app.data.DefaultWorkspaceRepository
 import com.revlens.app.data.fake.FakeAuthRepository
-import com.revlens.app.domain.context.DefaultWorkspaceContext
 import com.revlens.app.domain.model.SessionState
 import com.revlens.app.domain.session.DefaultSessionManager
 import com.revlens.app.domain.usecase.LoginUseCase
-import com.revlens.app.domain.usecase.MigrateGuestDataUseCase
 import com.revlens.app.domain.usecase.SignUpUseCase
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -63,7 +59,8 @@ class AuthRepositoryTest {
 
         val result = login("alex@revlens.com", "wrongpassword")
         assertTrue(result.isFailure)
-        val error = result.exceptionOrNull()?.toAppError()
+        val error = result.exceptionOrNull()
+            ?.toAppError()
         assertEquals(AppError.InvalidCredentials, error)
     }
 
@@ -83,7 +80,8 @@ class AuthRepositoryTest {
         // 2. Duplicate email causes Conflict
         val res2 = signUp("Sarah Duplicate", "sarah@skynet.ai", "Password123!")
         assertTrue(res2.isFailure)
-        val error = res2.exceptionOrNull()?.toAppError()
+        val error = res2.exceptionOrNull()
+            ?.toAppError()
         assertTrue(error is AppError.Conflict)
     }
 

@@ -92,20 +92,22 @@ fun ValidationSummary(
 
             if (expanded) {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    report.errorMessages.take(10).forEach { err ->
-                        Text(
-                            text = "• $err",
-                            style = RevLensTypography.bodySmall,
-                            color = RevLensTheme.colors.error
-                        )
-                    }
-                    report.warningMessages.take(5).forEach { warn ->
-                        Text(
-                            text = "• $warn",
-                            style = RevLensTypography.bodySmall,
-                            color = RevLensTheme.colors.warning
-                        )
-                    }
+                    report.errorMessages.take(10)
+                        .forEach { err ->
+                            Text(
+                                text = "• $err",
+                                style = RevLensTypography.bodySmall,
+                                color = RevLensTheme.colors.error
+                            )
+                        }
+                    report.warningMessages.take(5)
+                        .forEach { warn ->
+                            Text(
+                                text = "• $warn",
+                                style = RevLensTypography.bodySmall,
+                                color = RevLensTheme.colors.warning
+                            )
+                        }
                 }
             }
         }

@@ -3,7 +3,6 @@ package com.revlens.app.ui.screens.experiments
 import androidx.lifecycle.viewModelScope
 import com.revlens.app.core.ui.MviViewModel
 import com.revlens.app.domain.calc.ExperimentAnalyzer
-import com.revlens.app.domain.model.ExperimentStatus
 import com.revlens.app.domain.model.Observation
 import com.revlens.app.domain.repository.ExperimentRepository
 import kotlinx.coroutines.launch
@@ -22,8 +21,19 @@ class ExperimentDetailsViewModel(
                 currentExperimentId = event.experimentId
                 loadDetails(event.experimentId)
             }
-            ExperimentDetailsEvent.OpenLogObservationSheet -> update { copy(showLogObservationSheet = true) }
-            ExperimentDetailsEvent.DismissLogObservationSheet -> update { copy(showLogObservationSheet = false) }
+
+            ExperimentDetailsEvent.OpenLogObservationSheet -> update {
+                copy(
+                    showLogObservationSheet = true
+                )
+            }
+
+            ExperimentDetailsEvent.DismissLogObservationSheet -> update {
+                copy(
+                    showLogObservationSheet = false
+                )
+            }
+
             is ExperimentDetailsEvent.LogObservation -> {
                 val expId = currentExperimentId ?: return
                 viewModelScope.launch {
@@ -42,8 +52,14 @@ class ExperimentDetailsViewModel(
                     emit(ExperimentDetailsEffect.ShowToast("Observation logged"))
                 }
             }
+
             ExperimentDetailsEvent.OpenCompleteDialog -> update { copy(showCompleteDialog = true) }
-            ExperimentDetailsEvent.DismissCompleteDialog -> update { copy(showCompleteDialog = false) }
+            ExperimentDetailsEvent.DismissCompleteDialog -> update {
+                copy(
+                    showCompleteDialog = false
+                )
+            }
+
             is ExperimentDetailsEvent.CompleteExperiment -> {
                 val current = state.value.experiment ?: return
                 viewModelScope.launch {
@@ -54,9 +70,14 @@ class ExperimentDetailsViewModel(
                     experimentRepository.saveExperiment(completed)
                     update { copy(showCompleteDialog = false) }
                     loadDetails(completed.id)
-                    emit(ExperimentDetailsEffect.ShowToast("Experiment completed as ${event.verdict.displayName}"))
+                    emit(
+                        ExperimentDetailsEffect.ShowToast(
+                            "Experiment completed as ${event.verdict.displayName}"
+                        )
+                    )
                 }
             }
+
             is ExperimentDetailsEvent.UpdateNotes -> {
                 val current = state.value.experiment ?: return
                 viewModelScope.launch {

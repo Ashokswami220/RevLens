@@ -10,7 +10,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 
-private const val WEB_CLIENT_ID = "512497569694-mev6evlr1e702fdqdmn2po203up65a84.apps.googleusercontent.com"
+private const val WEB_CLIENT_ID =
+    "512497569694-mev6evlr1e702fdqdmn2po203up65a84.apps.googleusercontent.com"
 
 @Composable
 actual fun rememberGoogleSignInLauncher(

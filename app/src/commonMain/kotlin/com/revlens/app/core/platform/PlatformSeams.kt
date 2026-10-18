@@ -10,7 +10,9 @@ data class PickedFile(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is PickedFile) return false
-        return name == other.name && sizeBytes == other.sizeBytes && content.contentEquals(other.content)
+        return name == other.name && sizeBytes == other.sizeBytes && content.contentEquals(
+            other.content
+        )
     }
 
     override fun hashCode(): Int {
@@ -60,9 +62,14 @@ class DefaultFileSharer : FileSharer {
 
 class InMemorySecureStorage : SecureStorage {
     private val map = mutableMapOf<String, String>()
-    override suspend fun put(key: String, value: String) { map[key] = value }
+    override suspend fun put(key: String, value: String) {
+        map[key] = value
+    }
+
     override suspend fun get(key: String): String? = map[key]
-    override suspend fun remove(key: String) { map.remove(key) }
+    override suspend fun remove(key: String) {
+        map.remove(key)
+    }
 }
 
 class DefaultBiometricAuthenticator : BiometricAuthenticator {

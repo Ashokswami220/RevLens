@@ -1,7 +1,6 @@
 package com.revlens.app.domain.calc
 
 import com.revlens.app.domain.model.Dataset
-import com.revlens.app.domain.model.SubscriptionRecord
 import com.revlens.app.model.BusinessProfile
 import com.revlens.app.ui.components.display.DataSourceMode
 import kotlinx.serialization.Serializable
@@ -108,9 +107,11 @@ object CustomerSegmentationCalculator {
             CustomerSegmentBy.PLAN -> {
                 activeSubs.groupBy { it.plan.ifBlank { "Standard" } }
             }
+
             CustomerSegmentBy.CHANNEL -> {
                 activeSubs.groupBy { it.channel?.ifBlank { "Direct" } ?: "Direct / Organic" }
             }
+
             CustomerSegmentBy.COUNTRY -> {
                 activeSubs.groupBy { it.country?.ifBlank { "Other" } ?: "Other" }
             }
@@ -125,7 +126,9 @@ object CustomerSegmentationCalculator {
                     CustomerSegmentBy.COUNTRY -> it.country.equals(name, ignoreCase = true)
                 }
             }
-            val churnRate = if (count > 0) (groupChurned.toDouble() / count * 100.0).coerceAtMost(100.0) else 0.0
+            val churnRate = if (count > 0) (groupChurned.toDouble() / count * 100.0).coerceAtMost(
+                100.0
+            ) else 0.0
             CustomerSegmentShare(
                 name = name,
                 customerCount = count,
@@ -133,13 +136,15 @@ object CustomerSegmentationCalculator {
                 totalMrrMinor = mrr,
                 churnRatePercent = (churnRate * 10.0).roundToInt() / 10.0
             )
-        }.sortedByDescending { it.customerCount }
+        }
+            .sortedByDescending { it.customerCount }
 
         // Concentration: top 10% of customers
         val sortedByMrr = activeSubs.sortedByDescending { it.mrrMinor }
         val totalMrr = activeSubs.sumOf { it.mrrMinor }
         val top10Count = max(1, (activeCount * 0.10).roundToInt())
-        val top10Mrr = sortedByMrr.take(top10Count).sumOf { it.mrrMinor }
+        val top10Mrr = sortedByMrr.take(top10Count)
+            .sumOf { it.mrrMinor }
         val concentrationShare = if (totalMrr > 0) {
             (top10Mrr.toDouble() / totalMrr * 100.0)
         } else 0.0
@@ -151,34 +156,36 @@ object CustomerSegmentationCalculator {
         }
 
         // Top 5 customers (masked)
-        val topCustomers = sortedByMrr.take(5).map { record ->
-            CustomerRecordItem(
-                id = record.customerId,
-                displayName = maskCustomerId(record.customerId),
-                planName = record.plan.ifBlank { "Standard" },
-                mrrMinor = record.mrrMinor,
-                isActive = true,
-                channel = record.channel,
-                country = record.country,
-                startDate = record.startDate,
-                endDate = record.endDate
-            )
-        }
+        val topCustomers = sortedByMrr.take(5)
+            .map { record ->
+                CustomerRecordItem(
+                    id = record.customerId,
+                    displayName = maskCustomerId(record.customerId),
+                    planName = record.plan.ifBlank { "Standard" },
+                    mrrMinor = record.mrrMinor,
+                    isActive = true,
+                    channel = record.channel,
+                    country = record.country,
+                    startDate = record.startDate,
+                    endDate = record.endDate
+                )
+            }
 
         // Recently churned / downgraded
-        val downgraded = churnedSubs.take(5).map { record ->
-            CustomerRecordItem(
-                id = record.customerId,
-                displayName = maskCustomerId(record.customerId),
-                planName = record.plan.ifBlank { "Standard" },
-                mrrMinor = record.mrrMinor,
-                isActive = false,
-                channel = record.channel,
-                country = record.country,
-                startDate = record.startDate,
-                endDate = record.endDate
-            )
-        }
+        val downgraded = churnedSubs.take(5)
+            .map { record ->
+                CustomerRecordItem(
+                    id = record.customerId,
+                    displayName = maskCustomerId(record.customerId),
+                    planName = record.plan.ifBlank { "Standard" },
+                    mrrMinor = record.mrrMinor,
+                    isActive = false,
+                    channel = record.channel,
+                    country = record.country,
+                    startDate = record.startDate,
+                    endDate = record.endDate
+                )
+            }
 
         // Growth timeline points
         val growthTimeline = generateTimeline(activeCount, newCount, churnedCount, period.months)
@@ -216,23 +223,26 @@ object CustomerSegmentationCalculator {
 
         val isChannelOrCountryAvailable = segmentBy == CustomerSegmentBy.PLAN
 
-        val segments = if (isChannelOrCountryAvailable && profile != null && profile.plans.isNotEmpty()) {
-            profile.plans.map { plan ->
-                val count = plan.customerCount
-                val share = if (safeCustomers > 0) (count.toDouble() / safeCustomers * 100.0) else 0.0
-                val priceCents = (plan.price.toDouble() * 100).toLong()
-                val totalMrr = priceCents * count
-                CustomerSegmentShare(
-                    name = plan.name,
-                    customerCount = count,
-                    percentShare = (share * 10.0).roundToInt() / 10.0,
-                    totalMrrMinor = totalMrr,
-                    churnRatePercent = churnRate
-                )
-            }.sortedByDescending { it.customerCount }
-        } else {
-            emptyList()
-        }
+        val segments =
+            if (isChannelOrCountryAvailable && profile != null && profile.plans.isNotEmpty()) {
+                profile.plans.map { plan ->
+                    val count = plan.customerCount
+                    val share =
+                        if (safeCustomers > 0) (count.toDouble() / safeCustomers * 100.0) else 0.0
+                    val priceCents = (plan.price.toDouble() * 100).toLong()
+                    val totalMrr = priceCents * count
+                    CustomerSegmentShare(
+                        name = plan.name,
+                        customerCount = count,
+                        percentShare = (share * 10.0).roundToInt() / 10.0,
+                        totalMrrMinor = totalMrr,
+                        churnRatePercent = churnRate
+                    )
+                }
+                    .sortedByDescending { it.customerCount }
+            } else {
+                emptyList()
+            }
 
         val timeline = generateTimeline(safeCustomers, newPerMonth, churnPerMonth, period.months)
 

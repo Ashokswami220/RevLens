@@ -108,12 +108,14 @@ class FakeDeveloperRepository : DeveloperRepository {
     ): Result<Pair<ApiKey, String>> {
         val flow = getKeysFlow(workspaceId)
         val id = "key_${flow.value.size + 1}"
-        val rawSecret = "rl_live_sec_" + (100000..999999).random().toString() + "_x89"
+        val rawSecret = "rl_live_sec_" + (100000..999999).random()
+            .toString() + "_x89"
         val prefix = rawSecret.take(12)
 
         val apiKey = ApiKey(
             id = id,
-            name = name.trim().ifBlank { "Untitled Key" },
+            name = name.trim()
+                .ifBlank { "Untitled Key" },
             prefix = prefix,
             scope = scope,
             createdAt = "Just now",
@@ -140,12 +142,14 @@ class FakeDeveloperRepository : DeveloperRepository {
     ): Result<WebhookEndpoint> {
         val flow = getWebhooksFlow(workspaceId)
         val id = "wh_${flow.value.size + 1}"
-        val secret = "whsec_" + (100000..999999).random().toString()
+        val secret = "whsec_" + (100000..999999).random()
+            .toString()
 
         val endpoint = WebhookEndpoint(
             id = id,
             url = url.trim(),
-            description = description.trim().ifBlank { "Endpoint $id" },
+            description = description.trim()
+                .ifBlank { "Endpoint $id" },
             events = if (events.isEmpty()) listOf("scenario.created") else events,
             secret = secret,
             isActive = true,
@@ -161,9 +165,12 @@ class FakeDeveloperRepository : DeveloperRepository {
         return Result.success(Unit)
     }
 
-    override suspend fun rotateWebhookSecret(workspaceId: String, endpointId: String): Result<String> {
+    override suspend fun rotateWebhookSecret(
+        workspaceId: String, endpointId: String
+    ): Result<String> {
         val flow = getWebhooksFlow(workspaceId)
-        val newSecret = "whsec_" + (100000..999999).random().toString() + "_rotated"
+        val newSecret = "whsec_" + (100000..999999).random()
+            .toString() + "_rotated"
         flow.update { list ->
             list.map { if (it.id == endpointId) it.copy(secret = newSecret) else it }
         }
@@ -173,7 +180,9 @@ class FakeDeveloperRepository : DeveloperRepository {
     override fun getDeliveries(workspaceId: String): Flow<List<WebhookDelivery>> =
         getDeliveriesFlow(workspaceId).asStateFlow()
 
-    override suspend fun retryDelivery(workspaceId: String, deliveryId: String): Result<WebhookDelivery> {
+    override suspend fun retryDelivery(
+        workspaceId: String, deliveryId: String
+    ): Result<WebhookDelivery> {
         val flow = getDeliveriesFlow(workspaceId)
         val existing = flow.value.find { it.id == deliveryId }
             ?: return Result.failure(NoSuchElementException("Delivery not found"))

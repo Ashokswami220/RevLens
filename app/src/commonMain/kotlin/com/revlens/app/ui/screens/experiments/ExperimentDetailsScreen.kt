@@ -1,7 +1,6 @@
 package com.revlens.app.ui.screens.experiments
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -81,7 +80,10 @@ fun ExperimentDetailsScreen(
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
             when (effect) {
-                is ExperimentDetailsEffect.ShowToast -> snackbarHostState.showSnackbar(effect.message)
+                is ExperimentDetailsEffect.ShowToast -> snackbarHostState.showSnackbar(
+                    effect.message
+                )
+
                 ExperimentDetailsEffect.NavigateBack -> onNavigateBack()
             }
         }
@@ -105,7 +107,8 @@ fun ExperimentDetailsScreen(
                             color = RevLensTheme.colors.textPrimary
                         )
                         Text(
-                            text = experiment?.let { "${it.type.displayName} · ${it.startDate}" } ?: "",
+                            text = experiment?.let { "${it.type.displayName} · ${it.startDate}" }
+                                ?: "",
                             style = RevLensTypography.bodySmall,
                             color = RevLensTheme.colors.textSecondary
                         )
@@ -134,7 +137,9 @@ fun ExperimentDetailsScreen(
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = RevLensTheme.colors.background)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = RevLensTheme.colors.background
+                )
             )
         }
     ) { paddingValues ->
@@ -238,11 +243,19 @@ fun ExperimentDetailsScreen(
                             }
 
                             if (!analysis.isEnoughData) {
-                                StatusBadge(type = StatusBadgeType.DRAFT, customText = "Need more samples")
+                                StatusBadge(
+                                    type = StatusBadgeType.DRAFT, customText = "Need more samples"
+                                )
                             } else if (analysis.isSignificant) {
-                                StatusBadge(type = StatusBadgeType.ACTIVE, customText = "Significant (p < 0.05)")
+                                StatusBadge(
+                                    type = StatusBadgeType.ACTIVE,
+                                    customText = "Significant (p < 0.05)"
+                                )
                             } else {
-                                StatusBadge(type = StatusBadgeType.WARNING, customText = "Not yet significant")
+                                StatusBadge(
+                                    type = StatusBadgeType.WARNING,
+                                    customText = "Not yet significant"
+                                )
                             }
                         }
 
@@ -257,8 +270,15 @@ fun ExperimentDetailsScreen(
                                 color = RevLensTheme.colors.surfaceElevated
                             ) {
                                 Column(modifier = Modifier.padding(10.dp)) {
-                                    Text("Control Avg", style = RevLensTypography.labelSmall, color = RevLensTheme.colors.textSecondary)
-                                    Text("${analysis.controlTotal} (n=${analysis.controlSampleSize})", style = RevLensTypography.titleSmall, color = RevLensTheme.colors.textPrimary)
+                                    Text(
+                                        "Control Avg", style = RevLensTypography.labelSmall,
+                                        color = RevLensTheme.colors.textSecondary
+                                    )
+                                    Text(
+                                        "${analysis.controlTotal} (n=${analysis.controlSampleSize})",
+                                        style = RevLensTypography.titleSmall,
+                                        color = RevLensTheme.colors.textPrimary
+                                    )
                                 }
                             }
                             Surface(
@@ -267,8 +287,15 @@ fun ExperimentDetailsScreen(
                                 color = RevLensTheme.colors.surfaceElevated
                             ) {
                                 Column(modifier = Modifier.padding(10.dp)) {
-                                    Text("Treatment Avg", style = RevLensTypography.labelSmall, color = RevLensTheme.colors.textSecondary)
-                                    Text("${analysis.treatmentTotal} (n=${analysis.treatmentSampleSize})", style = RevLensTypography.titleSmall, color = RevLensTheme.colors.brandPrimary)
+                                    Text(
+                                        "Treatment Avg", style = RevLensTypography.labelSmall,
+                                        color = RevLensTheme.colors.textSecondary
+                                    )
+                                    Text(
+                                        "${analysis.treatmentTotal} (n=${analysis.treatmentSampleSize})",
+                                        style = RevLensTypography.titleSmall,
+                                        color = RevLensTheme.colors.brandPrimary
+                                    )
                                 }
                             }
                         }
@@ -286,13 +313,18 @@ fun ExperimentDetailsScreen(
                                 )
                             )
 
-                            val controlPts = experiment.observations.map { it.controlValue.toFloat() }
-                            val treatmentPts = experiment.observations.map { it.treatmentValue.toFloat() }
+                            val controlPts =
+                                experiment.observations.map { it.controlValue.toFloat() }
+                            val treatmentPts =
+                                experiment.observations.map { it.treatmentValue.toFloat() }
                             val xLabels = experiment.observations.map { it.date.takeLast(5) }
 
                             RevLensLineChart(
                                 data = listOf(controlPts, treatmentPts),
-                                colors = listOf(RevLensTheme.colors.brandSecondary, RevLensTheme.colors.brandPrimary),
+                                colors = listOf(
+                                    RevLensTheme.colors.brandSecondary,
+                                    RevLensTheme.colors.brandPrimary
+                                ),
                                 xLabels = xLabels,
                                 chartHeight = 150.dp
                             )
@@ -304,8 +336,16 @@ fun ExperimentDetailsScreen(
                 SectionCard(
                     title = "Observations (${experiment.observations.size})",
                     trailingAction = {
-                        TextButton(onClick = { viewModel.onEvent(ExperimentDetailsEvent.OpenLogObservationSheet) }) {
-                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                        TextButton(
+                            onClick = {
+                                viewModel.onEvent(
+                                    ExperimentDetailsEvent.OpenLogObservationSheet
+                                )
+                            }) {
+                            Icon(
+                                Icons.Default.Add, contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("Log Data")
                         }
@@ -324,14 +364,30 @@ fun ExperimentDetailsScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Column {
-                                        Text(obs.date, style = RevLensTypography.labelMedium, fontWeight = FontWeight.Bold, color = RevLensTheme.colors.textPrimary)
+                                        Text(
+                                            obs.date, style = RevLensTypography.labelMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = RevLensTheme.colors.textPrimary
+                                        )
                                         if (obs.notes.isNotBlank()) {
-                                            Text(obs.notes, style = RevLensTypography.bodySmall, color = RevLensTheme.colors.textSecondary)
+                                            Text(
+                                                obs.notes, style = RevLensTypography.bodySmall,
+                                                color = RevLensTheme.colors.textSecondary
+                                            )
                                         }
                                     }
                                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                        Text("C: ${obs.controlValue} (n=${obs.controlSampleSize})", style = RevLensTypography.bodySmall, color = RevLensTheme.colors.textSecondary)
-                                        Text("T: ${obs.treatmentValue} (n=${obs.treatmentSampleSize})", style = RevLensTypography.bodySmall, fontWeight = FontWeight.Bold, color = RevLensTheme.colors.brandPrimary)
+                                        Text(
+                                            "C: ${obs.controlValue} (n=${obs.controlSampleSize})",
+                                            style = RevLensTypography.bodySmall,
+                                            color = RevLensTheme.colors.textSecondary
+                                        )
+                                        Text(
+                                            "T: ${obs.treatmentValue} (n=${obs.treatmentSampleSize})",
+                                            style = RevLensTypography.bodySmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = RevLensTheme.colors.brandPrimary
+                                        )
                                     }
                                 }
                             }
@@ -348,9 +404,22 @@ fun ExperimentDetailsScreen(
                 // Setup Details
                 SectionCard(title = "Hypothesis & Variant Setup") {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Control: ${experiment.controlDescription.ifBlank { "Standard baseline" }}", style = RevLensTypography.bodyMedium, color = RevLensTheme.colors.textSecondary)
-                        Text("Treatment: ${experiment.treatmentDescription.ifBlank { "Test variation" }}", style = RevLensTypography.bodyMedium, color = RevLensTheme.colors.textPrimary, fontWeight = FontWeight.SemiBold)
-                        Text("Success Threshold: +${experiment.successThresholdPercent}% lift", style = RevLensTypography.bodySmall, color = RevLensTheme.colors.textTertiary)
+                        Text(
+                            "Control: ${experiment.controlDescription.ifBlank { "Standard baseline" }}",
+                            style = RevLensTypography.bodyMedium,
+                            color = RevLensTheme.colors.textSecondary
+                        )
+                        Text(
+                            "Treatment: ${experiment.treatmentDescription.ifBlank { "Test variation" }}",
+                            style = RevLensTypography.bodyMedium,
+                            color = RevLensTheme.colors.textPrimary,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            "Success Threshold: +${experiment.successThresholdPercent}% lift",
+                            style = RevLensTypography.bodySmall,
+                            color = RevLensTheme.colors.textTertiary
+                        )
                     }
                 }
 
@@ -360,9 +429,14 @@ fun ExperimentDetailsScreen(
                         onClick = { viewModel.onEvent(ExperimentDetailsEvent.OpenCompleteDialog) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = RevLensTheme.colors.primaryAction)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = RevLensTheme.colors.primaryAction
+                        )
                     ) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(
+                            Icons.Default.CheckCircle, contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text("Complete Experiment & Declare Verdict")
                     }
@@ -379,7 +453,10 @@ fun ExperimentDetailsScreen(
             onDismissRequest = { viewModel.onEvent(ExperimentDetailsEvent.DismissCompleteDialog) },
             containerColor = RevLensTheme.colors.surface,
             title = {
-                Text("Complete Experiment", style = RevLensTypography.titleMedium, color = RevLensTheme.colors.textPrimary)
+                Text(
+                    "Complete Experiment", style = RevLensTypography.titleMedium,
+                    color = RevLensTheme.colors.textPrimary
+                )
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -399,15 +476,27 @@ fun ExperimentDetailsScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Button(
-                            onClick = { viewModel.onEvent(ExperimentDetailsEvent.CompleteExperiment(ExperimentStatus.WON)) },
-                            colors = ButtonDefaults.buttonColors(containerColor = RevLensTheme.colors.success),
+                            onClick = {
+                                viewModel.onEvent(
+                                    ExperimentDetailsEvent.CompleteExperiment(ExperimentStatus.WON)
+                                )
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = RevLensTheme.colors.success
+                            ),
                             modifier = Modifier.weight(1f)
                         ) {
                             Text("Won")
                         }
                         Button(
-                            onClick = { viewModel.onEvent(ExperimentDetailsEvent.CompleteExperiment(ExperimentStatus.LOST)) },
-                            colors = ButtonDefaults.buttonColors(containerColor = RevLensTheme.colors.error),
+                            onClick = {
+                                viewModel.onEvent(
+                                    ExperimentDetailsEvent.CompleteExperiment(ExperimentStatus.LOST)
+                                )
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = RevLensTheme.colors.error
+                            ),
                             modifier = Modifier.weight(1f)
                         ) {
                             Text("Lost")
@@ -417,7 +506,8 @@ fun ExperimentDetailsScreen(
             },
             confirmButton = {},
             dismissButton = {
-                TextButton(onClick = { viewModel.onEvent(ExperimentDetailsEvent.DismissCompleteDialog) }) {
+                TextButton(
+                    onClick = { viewModel.onEvent(ExperimentDetailsEvent.DismissCompleteDialog) }) {
                     Text("Cancel", color = RevLensTheme.colors.textSecondary)
                 }
             }
@@ -427,7 +517,11 @@ fun ExperimentDetailsScreen(
     // Log Observation Bottom Sheet
     if (state.showLogObservationSheet) {
         ModalBottomSheet(
-            onDismissRequest = { viewModel.onEvent(ExperimentDetailsEvent.DismissLogObservationSheet) },
+            onDismissRequest = {
+                viewModel.onEvent(
+                    ExperimentDetailsEvent.DismissLogObservationSheet
+                )
+            },
             sheetState = sheetState,
             containerColor = RevLensTheme.colors.surface
         ) {
@@ -468,21 +562,42 @@ private fun LogObservationSheet(
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Log New Observation", style = RevLensTypography.titleLarge, fontWeight = FontWeight.Bold, color = RevLensTheme.colors.textPrimary)
+        Text(
+            "Log New Observation", style = RevLensTypography.titleLarge,
+            fontWeight = FontWeight.Bold, color = RevLensTheme.colors.textPrimary
+        )
 
-        RevLensTextField(value = dateInput, onValueChange = { dateInput = it }, label = "Observation Date (YYYY-MM-DD)")
+        RevLensTextField(
+            value = dateInput, onValueChange = { dateInput = it },
+            label = "Observation Date (YYYY-MM-DD)"
+        )
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            NumberField(value = controlValInput, onValueChange = { controlValInput = it }, label = "Control Value", modifier = Modifier.weight(1f))
-            NumberField(value = controlNInput, onValueChange = { controlNInput = it }, label = "Control Sample N", modifier = Modifier.weight(1f))
+            NumberField(
+                value = controlValInput, onValueChange = { controlValInput = it },
+                label = "Control Value", modifier = Modifier.weight(1f)
+            )
+            NumberField(
+                value = controlNInput, onValueChange = { controlNInput = it },
+                label = "Control Sample N", modifier = Modifier.weight(1f)
+            )
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            NumberField(value = treatmentValInput, onValueChange = { treatmentValInput = it }, label = "Treatment Value", modifier = Modifier.weight(1f))
-            NumberField(value = treatmentNInput, onValueChange = { treatmentNInput = it }, label = "Treatment Sample N", modifier = Modifier.weight(1f))
+            NumberField(
+                value = treatmentValInput, onValueChange = { treatmentValInput = it },
+                label = "Treatment Value", modifier = Modifier.weight(1f)
+            )
+            NumberField(
+                value = treatmentNInput, onValueChange = { treatmentNInput = it },
+                label = "Treatment Sample N", modifier = Modifier.weight(1f)
+            )
         }
 
-        RevLensTextField(value = notesInput, onValueChange = { notesInput = it }, label = "Notes (Optional)", placeholder = "e.g. Day 14 checkpoint")
+        RevLensTextField(
+            value = notesInput, onValueChange = { notesInput = it }, label = "Notes (Optional)",
+            placeholder = "e.g. Day 14 checkpoint"
+        )
 
         Spacer(modifier = Modifier.height(6.dp))
 

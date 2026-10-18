@@ -13,11 +13,16 @@ class LoginViewModel(
 ) : MviViewModel<LoginUiState, LoginEvent, LoginEffect>(LoginUiState()) {
 
     override fun onEvent(event: LoginEvent) = when (event) {
-        is LoginEvent.GoogleSignInClicked -> signInWithGoogle(event.idToken, event.email, event.displayName)
+        is LoginEvent.GoogleSignInClicked -> signInWithGoogle(
+            event.idToken, event.email, event.displayName
+        )
+
         LoginEvent.ContinueAsGuestClicked -> continueAsGuest()
     }
 
-    private fun signInWithGoogle(idToken: String? = null, email: String? = null, displayName: String? = null) {
+    private fun signInWithGoogle(
+        idToken: String? = null, email: String? = null, displayName: String? = null
+    ) {
         viewModelScope.launch {
             update { copy(isLoading = true, error = null) }
             val result = loginUseCase.loginWithGoogle(idToken, email, displayName)

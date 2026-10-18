@@ -36,19 +36,25 @@ object CacCalculator {
         profile: BusinessProfile,
         simulatedBudgetMinor: Long? = null
     ): CacAnalysisResult {
-        val baseCacMinor = (profile.cac.toDouble() * 100).toLong().coerceAtLeast(100L)
-        val defaultMonthlyNewCustomers = (profile.totalCustomers * (profile.monthlyGrowthRate / 100.0)).toInt().coerceAtLeast(1)
+        val baseCacMinor = (profile.cac.toDouble() * 100).toLong()
+            .coerceAtLeast(100L)
+        val defaultMonthlyNewCustomers =
+            (profile.totalCustomers * (profile.monthlyGrowthRate / 100.0)).toInt()
+                .coerceAtLeast(1)
         val defaultSpendMinor = simulatedBudgetMinor ?: (defaultMonthlyNewCustomers * baseCacMinor)
 
         val totalCustomers = defaultMonthlyNewCustomers
-        val blendedCac = if (totalCustomers > 0) defaultSpendMinor / totalCustomers else baseCacMinor
+        val blendedCac =
+            if (totalCustomers > 0) defaultSpendMinor / totalCustomers else baseCacMinor
 
-        val arpuMinor = (profile.arpu.toDouble() * 100).toLong().coerceAtLeast(100L)
+        val arpuMinor = (profile.arpu.toDouble() * 100).toLong()
+            .coerceAtLeast(100L)
         val varCostMinor = (profile.variableCostPerCustomer.toDouble() * 100).toLong()
         val marginFraction = if (arpuMinor > 0) {
             ((arpuMinor - varCostMinor).toDouble() / arpuMinor.toDouble()).coerceIn(0.1, 1.0)
         } else 0.8
-        val monthlyMarginMinor = (arpuMinor * marginFraction).toLong().coerceAtLeast(10L)
+        val monthlyMarginMinor = (arpuMinor * marginFraction).toLong()
+            .coerceAtLeast(10L)
         val paybackMonths = if (monthlyMarginMinor > 0) {
             blendedCac.toDouble() / monthlyMarginMinor.toDouble()
         } else 0.0
@@ -63,7 +69,8 @@ object CacCalculator {
 
         val channelBreakdown = channels.map { (name, spendShare, custShare) ->
             val spend = (defaultSpendMinor * spendShare).toLong()
-            val custs = (totalCustomers * custShare).toInt().coerceAtLeast(1)
+            val custs = (totalCustomers * custShare).toInt()
+                .coerceAtLeast(1)
             val cac = if (custs > 0) spend / custs else 0L
             val rating = when {
                 cac <= (blendedCac * 0.75) -> "Top Tier"
@@ -82,8 +89,10 @@ object CacCalculator {
 
         // Standard SaaS acquisition funnel benchmark (e.g. 10,000 visitors -> 600 trials (6%) -> 150 paid (25%))
         val paidCount = totalCustomers
-        val trialCount = (paidCount * 4.5).toInt().coerceAtLeast(paidCount)
-        val visitorCount = (trialCount * 14.0).toInt().coerceAtLeast(trialCount)
+        val trialCount = (paidCount * 4.5).toInt()
+            .coerceAtLeast(paidCount)
+        val visitorCount = (trialCount * 14.0).toInt()
+            .coerceAtLeast(trialCount)
 
         val funnelStages = listOf(
             FunnelStage(
@@ -147,9 +156,11 @@ object CacCalculator {
         val channelList = mutableListOf<ChannelEfficiency>()
         groupedSpend.forEach { (channel, records) ->
             val spend = records.sumOf { it.spendMinor }
-            val custs = records.sumOf { it.newCustomers ?: 0 }.coerceAtLeast(1)
+            val custs = records.sumOf { it.newCustomers ?: 0 }
+                .coerceAtLeast(1)
             val cac = spend / custs
-            val share = if (totalSpend > 0) (spend.toDouble() / totalSpend.toDouble()) * 100.0 else 0.0
+            val share =
+                if (totalSpend > 0) (spend.toDouble() / totalSpend.toDouble()) * 100.0 else 0.0
             val rating = when {
                 cac <= (blendedCac * 0.75) -> "Top Tier"
                 cac <= (blendedCac * 1.25) -> "Strong"

@@ -47,7 +47,6 @@ object PublicPricingRoute
 object LoginRoute
 
 
-
 // Group B: Onboarding Routes
 @Serializable
 object CreateWorkspaceRoute

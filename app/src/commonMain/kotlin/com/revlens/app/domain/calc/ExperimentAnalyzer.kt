@@ -56,8 +56,10 @@ object ExperimentAnalyzer {
         val totalControlSample = obs.sumOf { it.controlSampleSize }
         val totalTreatmentSample = obs.sumOf { it.treatmentSampleSize }
 
-        val avgControlValue = if (obs.isNotEmpty()) obs.map { it.controlValue }.average() else 0.0
-        val avgTreatmentValue = if (obs.isNotEmpty()) obs.map { it.treatmentValue }.average() else 0.0
+        val avgControlValue = if (obs.isNotEmpty()) obs.map { it.controlValue }
+            .average() else 0.0
+        val avgTreatmentValue = if (obs.isNotEmpty()) obs.map { it.treatmentValue }
+            .average() else 0.0
 
         val liftPercent = if (avgControlValue > 0.0) {
             ((avgTreatmentValue - avgControlValue) / avgControlValue * 100.0)
@@ -66,12 +68,16 @@ object ExperimentAnalyzer {
         }
 
         // Two-sample z-score calculation
-        val nC = totalControlSample.toDouble().coerceAtLeast(1.0)
-        val nT = totalTreatmentSample.toDouble().coerceAtLeast(1.0)
+        val nC = totalControlSample.toDouble()
+            .coerceAtLeast(1.0)
+        val nT = totalTreatmentSample.toDouble()
+            .coerceAtLeast(1.0)
 
         // Estimated standard error
         val pPooled = (avgControlValue * nC + avgTreatmentValue * nT) / (nC + nT)
-        val se = sqrt(abs(pPooled * (1.0 - (pPooled / 1000.0).coerceIn(0.01, 0.99))) * (1.0 / nC + 1.0 / nT)).coerceAtLeast(0.001)
+        val se = sqrt(
+            abs(pPooled * (1.0 - (pPooled / 1000.0).coerceIn(0.01, 0.99))) * (1.0 / nC + 1.0 / nT)
+        ).coerceAtLeast(0.001)
 
         val zScore = (avgTreatmentValue - avgControlValue) / se
         val pValue = computeTwoTailedPValue(zScore)
@@ -112,7 +118,8 @@ object ExperimentAnalyzer {
         val absZ = abs(z)
         val t = 1.0 / (1.0 + 0.2316419 * absZ)
         val d = 0.3989422804014327 * exp(-absZ * absZ / 2.0)
-        val prob = d * t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + 1.330274429 * t))))
+        val prob =
+            d * t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + 1.330274429 * t))))
         val twoTailed = 2.0 * prob
         return twoTailed.coerceIn(0.0001, 1.0)
     }

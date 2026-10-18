@@ -39,7 +39,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -70,7 +69,6 @@ import com.revlens.app.ui.components.display.StatusBadge
 import com.revlens.app.ui.components.display.StatusBadgeType
 import com.revlens.app.ui.theme.RevLensTheme
 import com.revlens.app.ui.theme.RevLensTypography
-import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,7 +86,9 @@ fun CustomerAnalyticsScreen(
         viewModel.effects.collect { effect ->
             when (effect) {
                 CustomerAnalyticsEffect.NavigateToDataImport -> onNavigateToDataImport()
-                is CustomerAnalyticsEffect.ShowToast -> snackbarHostState.showSnackbar(effect.message)
+                is CustomerAnalyticsEffect.ShowToast -> snackbarHostState.showSnackbar(
+                    effect.message
+                )
             }
         }
     }
@@ -216,7 +216,8 @@ fun CustomerAnalyticsScreen(
                             )
                         )
 
-                        val activeSeries = result.growthTimeline.map { it.activeCustomers.toFloat() }
+                        val activeSeries =
+                            result.growthTimeline.map { it.activeCustomers.toFloat() }
                         val xLabels = result.growthTimeline.map { it.monthLabel }
 
                         RevLensLineChart(
@@ -232,13 +233,17 @@ fun CustomerAnalyticsScreen(
                         val stackedItems = result.growthTimeline.map { pt ->
                             StackedBarItem(
                                 label = pt.monthLabel,
-                                segmentValues = listOf(pt.newCustomers.toFloat(), pt.churnedCustomers.toFloat())
+                                segmentValues = listOf(
+                                    pt.newCustomers.toFloat(), pt.churnedCustomers.toFloat()
+                                )
                             )
                         }
 
                         RevLensStackedBarChart(
                             items = stackedItems,
-                            segmentColors = listOf(RevLensTheme.colors.success, RevLensTheme.colors.error),
+                            segmentColors = listOf(
+                                RevLensTheme.colors.success, RevLensTheme.colors.error
+                            ),
                             chartHeight = 120.dp
                         )
                     }
@@ -251,9 +256,14 @@ fun CustomerAnalyticsScreen(
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             CustomerSegmentBy.entries.forEach { seg ->
                                 FilterChip(
-                                    text = seg.name.lowercase().replaceFirstChar { it.uppercase() },
+                                    text = seg.name.lowercase()
+                                        .replaceFirstChar { it.uppercase() },
                                     selected = state.segmentBy == seg,
-                                    onClick = { viewModel.onEvent(CustomerAnalyticsEvent.SelectSegmentBy(seg)) }
+                                    onClick = {
+                                        viewModel.onEvent(
+                                            CustomerAnalyticsEvent.SelectSegmentBy(seg)
+                                        )
+                                    }
                                 )
                             }
                         }
@@ -269,7 +279,11 @@ fun CustomerAnalyticsScreen(
                         // Locked Section for Modeled Mode
                         LockedAnalyticsCard(
                             message = "Import custom CSV or connect an integration to break down customers by acquisition channel and geographic country.",
-                            onImportClick = { viewModel.onEvent(CustomerAnalyticsEvent.ImportDataClicked) }
+                            onImportClick = {
+                                viewModel.onEvent(
+                                    CustomerAnalyticsEvent.ImportDataClicked
+                                )
+                            }
                         )
                     }
                 }
@@ -299,13 +313,23 @@ fun CustomerAnalyticsScreen(
 
                             when (result.concentrationBenchmark) {
                                 ConcentrationHealth.HEALTHY -> {
-                                    StatusBadge(type = StatusBadgeType.ACTIVE, customText = "Healthy (<30%)")
+                                    StatusBadge(
+                                        type = StatusBadgeType.ACTIVE, customText = "Healthy (<30%)"
+                                    )
                                 }
+
                                 ConcentrationHealth.MODERATE -> {
-                                    StatusBadge(type = StatusBadgeType.WARNING, customText = "Moderate (30-50%)")
+                                    StatusBadge(
+                                        type = StatusBadgeType.WARNING,
+                                        customText = "Moderate (30-50%)"
+                                    )
                                 }
+
                                 ConcentrationHealth.HIGH_RISK -> {
-                                    StatusBadge(type = StatusBadgeType.FAILED, customText = "High Risk (>50%)")
+                                    StatusBadge(
+                                        type = StatusBadgeType.FAILED,
+                                        customText = "High Risk (>50%)"
+                                    )
                                 }
                             }
                         }
@@ -330,14 +354,22 @@ fun CustomerAnalyticsScreen(
                                 CustomerRowItem(
                                     customer = customer,
                                     currencySymbol = state.currencySymbol,
-                                    onClick = { viewModel.onEvent(CustomerAnalyticsEvent.SelectCustomer(customer)) }
+                                    onClick = {
+                                        viewModel.onEvent(
+                                            CustomerAnalyticsEvent.SelectCustomer(customer)
+                                        )
+                                    }
                                 )
                             }
                         }
                     } else {
                         LockedAnalyticsCard(
                             message = "Account-level contract tracking requires imported subscription data.",
-                            onImportClick = { viewModel.onEvent(CustomerAnalyticsEvent.ImportDataClicked) }
+                            onImportClick = {
+                                viewModel.onEvent(
+                                    CustomerAnalyticsEvent.ImportDataClicked
+                                )
+                            }
                         )
                     }
                 }
@@ -350,7 +382,11 @@ fun CustomerAnalyticsScreen(
                                 CustomerRowItem(
                                     customer = customer,
                                     currencySymbol = state.currencySymbol,
-                                    onClick = { viewModel.onEvent(CustomerAnalyticsEvent.SelectCustomer(customer)) }
+                                    onClick = {
+                                        viewModel.onEvent(
+                                            CustomerAnalyticsEvent.SelectCustomer(customer)
+                                        )
+                                    }
                                 )
                             }
                         }
@@ -460,7 +496,10 @@ private fun SegmentRow(
         }
 
         LinearProgressIndicator(
-            progress = { (item.percentShare / 100.0).toFloat().coerceIn(0f, 1f) },
+            progress = {
+                (item.percentShare / 100.0).toFloat()
+                    .coerceIn(0f, 1f)
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(6.dp)
@@ -563,7 +602,9 @@ private fun LockedAnalyticsCard(
         )
         Button(
             onClick = onImportClick,
-            colors = ButtonDefaults.buttonColors(containerColor = RevLensTheme.colors.primaryAction),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = RevLensTheme.colors.primaryAction
+            ),
             shape = RoundedCornerShape(8.dp)
         ) {
             Icon(
@@ -623,8 +664,12 @@ private fun CustomerDetailSheet(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 DetailRow(label = "Current Plan", value = customer.planName)
-                DetailRow(label = "Monthly MRR", value = "$currencySymbol${customer.mrrMinor / 100} / mo")
-                DetailRow(label = "Acquisition Channel", value = customer.channel ?: "Direct / Organic")
+                DetailRow(
+                    label = "Monthly MRR", value = "$currencySymbol${customer.mrrMinor / 100} / mo"
+                )
+                DetailRow(
+                    label = "Acquisition Channel", value = customer.channel ?: "Direct / Organic"
+                )
                 DetailRow(label = "Country", value = customer.country ?: "Global")
                 DetailRow(label = "Subscribed Since", value = customer.startDate)
                 if (customer.endDate != null) {
@@ -637,7 +682,9 @@ private fun CustomerDetailSheet(
             onClick = onDismiss,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = RevLensTheme.colors.surfaceElevated)
+            colors = ButtonDefaults.buttonColors(
+                containerColor = RevLensTheme.colors.surfaceElevated
+            )
         ) {
             Text(text = "Close", color = RevLensTheme.colors.textPrimary)
         }
@@ -665,7 +712,8 @@ private fun DetailRow(label: String, value: String) {
 }
 
 private fun formatCount(number: Int): String {
-    val s = kotlin.math.abs(number).toString()
+    val s = kotlin.math.abs(number)
+        .toString()
     val sb = StringBuilder()
     val len = s.length
     for (i in 0 until len) {

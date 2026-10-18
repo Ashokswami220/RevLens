@@ -20,7 +20,8 @@ class DefaultReportRepository : ReportRepository {
         _reportsFlow.update { list ->
             val index = list.indexOfFirst { it.id == snapshot.id }
             if (index >= 0) {
-                list.toMutableList().apply { set(index, snapshot) }
+                list.toMutableList()
+                    .apply { set(index, snapshot) }
             } else {
                 listOf(snapshot) + list
             }
@@ -55,7 +56,8 @@ class DefaultReportRepository : ReportRepository {
                 profile = null,
                 scenarios = emptyList(),
                 customNotes = "Steady 11.2% net expansion. Cash runway remains strong at 18 months."
-            ).copy(createdAt = 1760200000L)
+            )
+                .copy(createdAt = 1760200000L)
 
             val rep2 = ReportBuilder.buildSnapshot(
                 id = "rep_monthly_sep",
@@ -69,7 +71,8 @@ class DefaultReportRepository : ReportRepository {
                 profile = null,
                 scenarios = emptyList(),
                 customNotes = "Exported for accounting reconciliation."
-            ).copy(createdAt = 1759800000L)
+            )
+                .copy(createdAt = 1759800000L)
 
             val rep3 = ReportBuilder.buildSnapshot(
                 id = "rep_pricing_q4",
@@ -79,11 +82,15 @@ class DefaultReportRepository : ReportRepository {
                 format = ReportFormat.PDF,
                 periodStart = "2026-10-01",
                 periodEnd = "2027-09-30",
-                sections = listOf(ReportSection.KPIS, ReportSection.SCENARIOS, ReportSection.FORECAST, ReportSection.NOTES),
+                sections = listOf(
+                    ReportSection.KPIS, ReportSection.SCENARIOS, ReportSection.FORECAST,
+                    ReportSection.NOTES
+                ),
                 profile = null,
                 scenarios = emptyList(),
                 customNotes = "Testing $10 price expansion on Pro tier for Q4 cohort."
-            ).copy(createdAt = 1759200000L)
+            )
+                .copy(createdAt = 1759200000L)
 
             return listOf(rep1, rep2, rep3)
         }

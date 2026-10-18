@@ -36,6 +36,7 @@ data class DataImportUiState(
                     CanonicalField.START_DATE,
                     CanonicalField.MRR
                 )
+
                 ImportDatasetType.MARKETING_SPEND -> listOf(
                     CanonicalField.MONTH,
                     CanonicalField.SPEND

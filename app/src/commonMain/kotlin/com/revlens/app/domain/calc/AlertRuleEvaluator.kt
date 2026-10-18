@@ -71,8 +71,10 @@ object AlertRuleEvaluator {
     private fun parseTimeToMinutes(time: String): Int? {
         val parts = time.split(":")
         if (parts.size != 2) return null
-        val hours = parts[0].trim().toIntOrNull() ?: return null
-        val mins = parts[1].trim().toIntOrNull() ?: return null
+        val hours = parts[0].trim()
+            .toIntOrNull() ?: return null
+        val mins = parts[1].trim()
+            .toIntOrNull() ?: return null
         return (hours * 60) + mins
     }
 }

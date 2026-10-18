@@ -1,7 +1,6 @@
 package com.revlens.app.ui.screens.data
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -151,12 +149,14 @@ fun DataImportScreen(
                     selectedType = state.datasetType,
                     onSelectType = { viewModel.onEvent(DataImportEvent.SelectDatasetType(it)) }
                 )
+
                 1 -> StepUploadFile(
                     pickedFile = state.pickedFile,
                     parsedCsv = state.parsedCsv,
                     onPickClick = { viewModel.onEvent(DataImportEvent.PickFile) },
                     onRemoveClick = { viewModel.onEvent(DataImportEvent.RemoveFile) }
                 )
+
                 2 -> StepColumnMapping(
                     datasetType = state.datasetType,
                     headers = state.parsedCsv?.headers ?: emptyList(),
@@ -167,13 +167,23 @@ fun DataImportScreen(
                         viewModel.onEvent(DataImportEvent.UpdateMapping(field, header))
                     }
                 )
+
                 3 -> StepReviewValidation(
                     report = state.validationReport,
                     skipErrors = state.skipErrors,
                     updateBaseline = state.updateBaseline,
-                    onToggleSkipErrors = { viewModel.onEvent(DataImportEvent.ToggleSkipErrors(it)) },
-                    onToggleUpdateBaseline = { viewModel.onEvent(DataImportEvent.ToggleUpdateBaseline(it)) }
+                    onToggleSkipErrors = {
+                        viewModel.onEvent(
+                            DataImportEvent.ToggleSkipErrors(it)
+                        )
+                    },
+                    onToggleUpdateBaseline = {
+                        viewModel.onEvent(
+                            DataImportEvent.ToggleUpdateBaseline(it)
+                        )
+                    }
                 )
+
                 4 -> StepSuccess(
                     filename = state.pickedFile?.name ?: "import.csv",
                     recordCount = state.validationReport?.validCount ?: 0,
@@ -300,14 +310,19 @@ private fun DatasetTypeOptionCard(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val borderColor = if (isSelected) RevLensTheme.colors.brandPrimary else RevLensTheme.colors.borderDefault
-    val bg = if (isSelected) RevLensTheme.colors.brandPrimary.copy(alpha = 0.08f) else RevLensTheme.colors.surface
+    val borderColor =
+        if (isSelected) RevLensTheme.colors.brandPrimary else RevLensTheme.colors.borderDefault
+    val bg = if (isSelected) RevLensTheme.colors.brandPrimary.copy(
+        alpha = 0.08f
+    ) else RevLensTheme.colors.surface
 
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(12.dp),
         color = bg,
-        border = androidx.compose.foundation.BorderStroke(if (isSelected) 2.dp else 1.dp, borderColor),
+        border = androidx.compose.foundation.BorderStroke(
+            if (isSelected) 2.dp else 1.dp, borderColor
+        ),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -404,6 +419,7 @@ private fun StepColumnMapping(
             CanonicalField.CHANNEL,
             CanonicalField.COUNTRY
         )
+
         ImportDatasetType.MARKETING_SPEND -> listOf(
             CanonicalField.MONTH,
             CanonicalField.SPEND,

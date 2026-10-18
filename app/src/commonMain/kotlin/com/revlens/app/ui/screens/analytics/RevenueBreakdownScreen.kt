@@ -7,22 +7,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -133,7 +128,11 @@ fun RevenueBreakdownScreen(
                 SourceModeSelector(
                     currentMode = state.sourceMode,
                     hasActualData = state.hasActualData,
-                    onModeSelected = { viewModel.onEvent(RevenueBreakdownEvent.SelectSourceMode(it)) }
+                    onModeSelected = {
+                        viewModel.onEvent(
+                            RevenueBreakdownEvent.SelectSourceMode(it)
+                        )
+                    }
                 )
 
                 PeriodSelector(
@@ -169,7 +168,11 @@ fun RevenueBreakdownScreen(
 
                     WaterfallChart(
                         steps = result.waterfallSteps,
-                        onStepSelected = { viewModel.onEvent(RevenueBreakdownEvent.SelectWaterfallStep(it)) }
+                        onStepSelected = {
+                            viewModel.onEvent(
+                                RevenueBreakdownEvent.SelectWaterfallStep(it)
+                            )
+                        }
                     )
 
                     // Step Detail Callout (if selected)
@@ -387,7 +390,11 @@ private fun QuickRatioHeroCard(result: RevenueBreakdownResult) {
                     type = if (result.netChangeMinor > 0) DeltaType.POSITIVE else if (result.netChangeMinor < 0) DeltaType.NEGATIVE else DeltaType.NEUTRAL
                 )
                 Text(
-                    text = "${if (isPositive) "+$" else "-$"}${kotlin.math.abs(result.netChangeMinor) / 100} net MRR movement",
+                    text = "${if (isPositive) "+$" else "-$"}${
+                        kotlin.math.abs(
+                            result.netChangeMinor
+                        ) / 100
+                    } net MRR movement",
                     style = RevLensTypography.bodySmall,
                     color = RevLensTheme.colors.textSecondary
                 )
@@ -478,9 +485,13 @@ private fun BridgeMovementSummary(result: RevenueBreakdownResult) {
             color = RevLensTheme.colors.textPrimary
         )
 
-        MovementRow("Starting MRR", "$${result.startingMrrMinor / 100}", RevLensTheme.colors.textSecondary)
+        MovementRow(
+            "Starting MRR", "$${result.startingMrrMinor / 100}", RevLensTheme.colors.textSecondary
+        )
         MovementRow("New MRR", "+$${result.newMrrMinor / 100}", RevLensTheme.colors.success)
-        MovementRow("Expansion MRR", "+$${result.expansionMrrMinor / 100}", RevLensTheme.colors.success)
+        MovementRow(
+            "Expansion MRR", "+$${result.expansionMrrMinor / 100}", RevLensTheme.colors.success
+        )
         MovementRow("Contraction MRR", "-$${result.contractionMrrMinor / 100}", Color(0xFFF59E0B))
         MovementRow("Churn MRR", "-$${result.churnMrrMinor / 100}", RevLensTheme.colors.error)
         MovementRow(

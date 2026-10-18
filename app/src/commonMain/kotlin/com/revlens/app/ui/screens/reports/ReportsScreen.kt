@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.automirrored.outlined.CompareArrows
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Assessment
@@ -28,7 +29,6 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Timeline
-import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -153,14 +153,22 @@ fun ReportsScreen(
                     title = "Investor Update",
                     description = "Executive KPIs, runway & revenue trajectory",
                     icon = Icons.AutoMirrored.Filled.TrendingUp,
-                    onClick = { viewModel.onEvent(ReportsEvent.OpenGenerateSheet(ReportTemplate.INVESTOR_UPDATE)) },
+                    onClick = {
+                        viewModel.onEvent(
+                            ReportsEvent.OpenGenerateSheet(ReportTemplate.INVESTOR_UPDATE)
+                        )
+                    },
                     modifier = Modifier.weight(1f)
                 )
                 ToolTile(
                     title = "Monthly Revenue",
                     description = "MRR bridge, churn decay & plan breakdown",
                     icon = Icons.Filled.Assessment,
-                    onClick = { viewModel.onEvent(ReportsEvent.OpenGenerateSheet(ReportTemplate.MONTHLY_REVENUE)) },
+                    onClick = {
+                        viewModel.onEvent(
+                            ReportsEvent.OpenGenerateSheet(ReportTemplate.MONTHLY_REVENUE)
+                        )
+                    },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -173,14 +181,22 @@ fun ReportsScreen(
                     title = "Scenario Comparison",
                     description = "Side-by-side impact across pricing levers",
                     icon = Icons.AutoMirrored.Outlined.CompareArrows,
-                    onClick = { viewModel.onEvent(ReportsEvent.OpenGenerateSheet(ReportTemplate.SCENARIO_COMPARISON)) },
+                    onClick = {
+                        viewModel.onEvent(
+                            ReportsEvent.OpenGenerateSheet(ReportTemplate.SCENARIO_COMPARISON)
+                        )
+                    },
                     modifier = Modifier.weight(1f)
                 )
                 ToolTile(
                     title = "Forecast Summary",
                     description = "12-month projections & target milestones",
                     icon = Icons.Filled.Timeline,
-                    onClick = { viewModel.onEvent(ReportsEvent.OpenGenerateSheet(ReportTemplate.FORECAST_SUMMARY)) },
+                    onClick = {
+                        viewModel.onEvent(
+                            ReportsEvent.OpenGenerateSheet(ReportTemplate.FORECAST_SUMMARY)
+                        )
+                    },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -387,25 +403,27 @@ fun ReportsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        ReportTemplate.entries.take(2).forEach { t ->
-                            FilterChip(
-                                text = t.displayName,
-                                selected = state.sheetTemplate == t,
-                                onClick = { viewModel.onEvent(ReportsEvent.UpdateTemplate(t)) }
-                            )
-                        }
+                        ReportTemplate.entries.take(2)
+                            .forEach { t ->
+                                FilterChip(
+                                    text = t.displayName,
+                                    selected = state.sheetTemplate == t,
+                                    onClick = { viewModel.onEvent(ReportsEvent.UpdateTemplate(t)) }
+                                )
+                            }
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        ReportTemplate.entries.drop(2).forEach { t ->
-                            FilterChip(
-                                text = t.displayName,
-                                selected = state.sheetTemplate == t,
-                                onClick = { viewModel.onEvent(ReportsEvent.UpdateTemplate(t)) }
-                            )
-                        }
+                        ReportTemplate.entries.drop(2)
+                            .forEach { t ->
+                                FilterChip(
+                                    text = t.displayName,
+                                    selected = state.sheetTemplate == t,
+                                    onClick = { viewModel.onEvent(ReportsEvent.UpdateTemplate(t)) }
+                                )
+                            }
                     }
                 }
 
@@ -456,7 +474,9 @@ fun ReportsScreen(
                                     .weight(1f)
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(
-                                        if (isSelected) RevLensTheme.colors.brandPrimary.copy(alpha = 0.15f)
+                                        if (isSelected) RevLensTheme.colors.brandPrimary.copy(
+                                            alpha = 0.15f
+                                        )
                                         else RevLensTheme.colors.surface
                                     )
                                     .border(
@@ -494,8 +514,15 @@ fun ReportsScreen(
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(RevLensTheme.colors.surface)
-                                .border(1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(8.dp))
-                                .clickable { viewModel.onEvent(ReportsEvent.ToggleSection(section)) }
+                                .border(
+                                    1.dp, RevLensTheme.colors.borderDefault,
+                                    RoundedCornerShape(8.dp)
+                                )
+                                .clickable {
+                                    viewModel.onEvent(
+                                        ReportsEvent.ToggleSection(section)
+                                    )
+                                }
                                 .padding(horizontal = 12.dp, vertical = 8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
@@ -515,7 +542,11 @@ fun ReportsScreen(
                             }
                             Switch(
                                 checked = isChecked,
-                                onCheckedChange = { viewModel.onEvent(ReportsEvent.ToggleSection(section)) },
+                                onCheckedChange = {
+                                    viewModel.onEvent(
+                                        ReportsEvent.ToggleSection(section)
+                                    )
+                                },
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = RevLensTheme.colors.surface,
                                     checkedTrackColor = RevLensTheme.colors.brandPrimary,

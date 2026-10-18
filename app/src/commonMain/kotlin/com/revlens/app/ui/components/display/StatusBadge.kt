@@ -58,11 +58,16 @@ fun StatusBadge(
 
     val (bgColor, contentColor) = when (type) {
         StatusBadgeType.DRAFT -> RevLensTheme.colors.surfaceElevated to RevLensTheme.colors.textSecondary
-        StatusBadgeType.RUNNING -> RevLensTheme.colors.brandPrimary.copy(alpha = 0.15f) to RevLensTheme.colors.brandPrimaryText
+        StatusBadgeType.RUNNING -> RevLensTheme.colors.brandPrimary.copy(
+            alpha = 0.15f
+        ) to RevLensTheme.colors.brandPrimaryText
+
         StatusBadgeType.WON, StatusBadgeType.ACTIVE, StatusBadgeType.PAID, StatusBadgeType.CONNECTED ->
             RevLensTheme.colors.success to Color.White
+
         StatusBadgeType.LOST, StatusBadgeType.FAILED, StatusBadgeType.PAST_DUE, StatusBadgeType.ERROR ->
             RevLensTheme.colors.error to Color.White
+
         StatusBadgeType.INCONCLUSIVE, StatusBadgeType.TRIAL, StatusBadgeType.PENDING, StatusBadgeType.WARNING ->
             RevLensTheme.colors.warning to Color.Black
     }

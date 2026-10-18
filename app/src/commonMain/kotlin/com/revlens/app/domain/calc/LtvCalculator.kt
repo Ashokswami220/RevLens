@@ -46,7 +46,9 @@ object LtvCalculator {
      */
     fun calculateSimpleLtv(arpu: BigDecimal, churnRatePercent: Double): BigDecimal {
         val fraction = churnRatePercent / 100.0
-        return calculateLtv(arpu = arpu, churnRateFraction = fraction, variableCostPerCustomer = BigDecimal.ZERO)
+        return calculateLtv(
+            arpu = arpu, churnRateFraction = fraction, variableCostPerCustomer = BigDecimal.ZERO
+        )
     }
 
     /**
@@ -60,7 +62,9 @@ object LtvCalculator {
         val grossMarginFraction = (grossMarginPercent / 100.0).coerceIn(0.0, 1.0)
         val netArpu = arpu.multiply(BigDecimal.valueOf(grossMarginFraction))
         val fraction = churnRatePercent / 100.0
-        return calculateLtv(arpu = netArpu, churnRateFraction = fraction, variableCostPerCustomer = BigDecimal.ZERO)
+        return calculateLtv(
+            arpu = netArpu, churnRateFraction = fraction, variableCostPerCustomer = BigDecimal.ZERO
+        )
     }
 
     /**

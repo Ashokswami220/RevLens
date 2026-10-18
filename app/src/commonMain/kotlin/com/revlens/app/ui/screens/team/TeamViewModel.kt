@@ -30,19 +30,21 @@ class TeamViewModel(
         observeJob?.cancel()
         observeJob = viewModelScope.launch {
             launch {
-                teamRepository.getMembers(wsId).collect { list ->
-                    update {
-                        copy(
-                            members = list,
-                            usedSeats = list.size
-                        )
+                teamRepository.getMembers(wsId)
+                    .collect { list ->
+                        update {
+                            copy(
+                                members = list,
+                                usedSeats = list.size
+                            )
+                        }
                     }
-                }
             }
             launch {
-                teamRepository.getInvites(wsId).collect { invites ->
-                    update { copy(invites = invites) }
-                }
+                teamRepository.getInvites(wsId)
+                    .collect { invites ->
+                        update { copy(invites = invites) }
+                    }
             }
         }
     }
@@ -57,13 +59,20 @@ class TeamViewModel(
                     error = null
                 )
             }
+
             TeamEvent.DismissInviteSheet -> update {
                 copy(
                     isInviteSheetVisible = false,
                     error = null
                 )
             }
-            is TeamEvent.InviteEmailChanged -> update { copy(inviteEmail = event.email, error = null) }
+
+            is TeamEvent.InviteEmailChanged -> update {
+                copy(
+                    inviteEmail = event.email, error = null
+                )
+            }
+
             is TeamEvent.InviteRoleChanged -> update { copy(inviteRole = event.role) }
             TeamEvent.SubmitInvite -> submitInvite()
             is TeamEvent.ChangeMemberRole -> changeRole(event.memberId, event.newRole)
@@ -84,7 +93,11 @@ class TeamViewModel(
 
         val totalUsed = state.value.members.size + state.value.invites.size
         if (totalUsed >= state.value.totalSeats) {
-            update { copy(error = "Seat limit reached (5 of 5). Upgrade plan to invite more members.") }
+            update {
+                copy(
+                    error = "Seat limit reached (5 of 5). Upgrade plan to invite more members."
+                )
+            }
             return
         }
 
@@ -96,9 +109,10 @@ class TeamViewModel(
             res.onSuccess {
                 update { copy(isInviteSheetVisible = false, inviteEmail = "") }
                 emit(TeamEffect.ShowToast("Invitation sent to $email"))
-            }.onFailure { err ->
-                update { copy(error = err.message ?: "Failed to send invitation.") }
             }
+                .onFailure { err ->
+                    update { copy(error = err.message ?: "Failed to send invitation.") }
+                }
         }
     }
 
@@ -107,9 +121,10 @@ class TeamViewModel(
             val res = teamRepository.updateMemberRole(currentWorkspaceId, memberId, newRole)
             res.onSuccess {
                 emit(TeamEffect.ShowToast("Member role updated to ${newRole.name}"))
-            }.onFailure { err ->
-                emit(TeamEffect.ShowToast(err.message ?: "Could not update role"))
             }
+                .onFailure { err ->
+                    emit(TeamEffect.ShowToast(err.message ?: "Could not update role"))
+                }
         }
     }
 
@@ -120,9 +135,10 @@ class TeamViewModel(
             update { copy(memberToRemove = null) }
             res.onSuccess {
                 emit(TeamEffect.ShowToast("${member.name} removed from workspace"))
-            }.onFailure { err ->
-                emit(TeamEffect.ShowToast(err.message ?: "Could not remove member"))
             }
+                .onFailure { err ->
+                    emit(TeamEffect.ShowToast(err.message ?: "Could not remove member"))
+                }
         }
     }
 

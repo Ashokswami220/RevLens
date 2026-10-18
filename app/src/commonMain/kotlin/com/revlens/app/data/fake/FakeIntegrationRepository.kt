@@ -11,7 +11,8 @@ import kotlinx.coroutines.flow.update
 
 class FakeIntegrationRepository : IntegrationRepository {
 
-    private val connectionsByWs = mutableMapOf<String, MutableStateFlow<List<IntegrationConnection>>>()
+    private val connectionsByWs =
+        mutableMapOf<String, MutableStateFlow<List<IntegrationConnection>>>()
 
     private fun getFlow(workspaceId: String): MutableStateFlow<List<IntegrationConnection>> {
         return connectionsByWs.getOrPut(workspaceId) {

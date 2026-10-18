@@ -7,11 +7,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
@@ -83,8 +81,18 @@ fun TimeField(
 
     if (showDialog) {
         val parts = time.split(":")
-        var hour by remember { mutableStateOf(parts.getOrNull(0)?.toIntOrNull() ?: 22) }
-        var min by remember { mutableStateOf(parts.getOrNull(1)?.toIntOrNull() ?: 0) }
+        var hour by remember {
+            mutableStateOf(
+                parts.getOrNull(0)
+                    ?.toIntOrNull() ?: 22
+            )
+        }
+        var min by remember {
+            mutableStateOf(
+                parts.getOrNull(1)
+                    ?.toIntOrNull() ?: 0
+            )
+        }
 
         AlertDialog(
             onDismissRequest = { showDialog = false },
@@ -106,7 +114,10 @@ fun TimeField(
                     // Hour picker
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         IconButton(onClick = { hour = (hour + 1) % 24 }) {
-                            Icon(Icons.Filled.Add, contentDescription = "Hour +", tint = RevLensTheme.colors.textPrimary)
+                            Icon(
+                                Icons.Filled.Add, contentDescription = "Hour +",
+                                tint = RevLensTheme.colors.textPrimary
+                            )
                         }
                         Text(
                             text = if (hour < 10) "0$hour" else "$hour",
@@ -115,7 +126,10 @@ fun TimeField(
                             color = RevLensTheme.colors.textPrimary
                         )
                         IconButton(onClick = { hour = if (hour == 0) 23 else hour - 1 }) {
-                            Icon(Icons.Filled.Remove, contentDescription = "Hour -", tint = RevLensTheme.colors.textPrimary)
+                            Icon(
+                                Icons.Filled.Remove, contentDescription = "Hour -",
+                                tint = RevLensTheme.colors.textPrimary
+                            )
                         }
                     }
 
@@ -130,7 +144,10 @@ fun TimeField(
                     // Minute picker
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         IconButton(onClick = { min = (min + 15) % 60 }) {
-                            Icon(Icons.Filled.Add, contentDescription = "Min +", tint = RevLensTheme.colors.textPrimary)
+                            Icon(
+                                Icons.Filled.Add, contentDescription = "Min +",
+                                tint = RevLensTheme.colors.textPrimary
+                            )
                         }
                         Text(
                             text = if (min < 10) "0$min" else "$min",
@@ -139,7 +156,10 @@ fun TimeField(
                             color = RevLensTheme.colors.textPrimary
                         )
                         IconButton(onClick = { min = if (min < 15) 45 else min - 15 }) {
-                            Icon(Icons.Filled.Remove, contentDescription = "Min -", tint = RevLensTheme.colors.textPrimary)
+                            Icon(
+                                Icons.Filled.Remove, contentDescription = "Min -",
+                                tint = RevLensTheme.colors.textPrimary
+                            )
                         }
                     }
                 }

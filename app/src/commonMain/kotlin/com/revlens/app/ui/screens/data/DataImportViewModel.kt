@@ -39,6 +39,7 @@ class DataImportViewModel(
                     )
                 }
             }
+
             DataImportEvent.PickFile -> pickFile()
             is DataImportEvent.FilePicked -> processFile(event.file)
             DataImportEvent.RemoveFile -> {
@@ -53,9 +54,15 @@ class DataImportViewModel(
                     )
                 }
             }
+
             is DataImportEvent.UpdateMapping -> updateMapping(event.field, event.header)
             is DataImportEvent.ToggleSkipErrors -> update { copy(skipErrors = event.enabled) }
-            is DataImportEvent.ToggleUpdateBaseline -> update { copy(updateBaseline = event.enabled) }
+            is DataImportEvent.ToggleUpdateBaseline -> update {
+                copy(
+                    updateBaseline = event.enabled
+                )
+            }
+
             DataImportEvent.NextStep -> nextStep()
             DataImportEvent.PreviousStep -> previousStep()
             DataImportEvent.CommitImport -> commitImport()
@@ -71,7 +78,11 @@ class DataImportViewModel(
                     processFile(file)
                 }
             } catch (e: Exception) {
-                update { copy(errorMessage = UiText.DynamicString(e.message ?: "Failed to pick file")) }
+                update {
+                    copy(
+                        errorMessage = UiText.DynamicString(e.message ?: "Failed to pick file")
+                    )
+                }
             }
         }
     }
@@ -83,7 +94,9 @@ class DataImportViewModel(
             if (parsed.headers.isEmpty()) {
                 update {
                     copy(
-                        errorMessage = UiText.DynamicString("The selected CSV file appears to be empty.")
+                        errorMessage = UiText.DynamicString(
+                            "The selected CSV file appears to be empty."
+                        )
                     )
                 }
                 return
@@ -99,6 +112,7 @@ class DataImportViewModel(
                     CanonicalField.CHANNEL,
                     CanonicalField.COUNTRY
                 )
+
                 ImportDatasetType.MARKETING_SPEND -> listOf(
                     CanonicalField.MONTH,
                     CanonicalField.SPEND,
@@ -132,9 +146,10 @@ class DataImportViewModel(
         val currentMapping = state.value.mapping.toMutableMap()
         currentMapping[field] = header
 
-        val updatedAuto = state.value.autoMappedFields.toMutableSet().apply {
-            remove(field)
-        }
+        val updatedAuto = state.value.autoMappedFields.toMutableSet()
+            .apply {
+                remove(field)
+            }
 
         update {
             copy(
@@ -159,6 +174,7 @@ class DataImportViewModel(
                     update { copy(step = 3) }
                 }
             }
+
             3 -> commitImport()
         }
     }
@@ -178,6 +194,7 @@ class DataImportViewModel(
             ImportDatasetType.SUBSCRIPTIONS -> {
                 ImportValidator.validateSubscriptions(csv.headers, csv.rows, mapping)
             }
+
             ImportDatasetType.MARKETING_SPEND -> {
                 ImportValidator.validateMarketingSpend(csv.headers, csv.rows, mapping)
             }
@@ -211,6 +228,7 @@ class DataImportViewModel(
                             subscriptions = report.validRecords
                         )
                     }
+
                     ImportDatasetType.MARKETING_SPEND -> {
                         existing?.copy(
                             spend = report.validSpendRecords,
@@ -228,12 +246,18 @@ class DataImportViewModel(
 
                 analyticsRepository.saveDataset(updatedDataset)
                 update { copy(isLoading = false, step = 4) }
-                emit(DataImportEffect.ShowMessage(UiText.DynamicString("Successfully imported ${report.validCount} records")))
+                emit(
+                    DataImportEffect.ShowMessage(
+                        UiText.DynamicString("Successfully imported ${report.validCount} records")
+                    )
+                )
             } catch (e: Exception) {
                 update {
                     copy(
                         isLoading = false,
-                        errorMessage = UiText.DynamicString(e.message ?: "Failed to import dataset.")
+                        errorMessage = UiText.DynamicString(
+                            e.message ?: "Failed to import dataset."
+                        )
                     )
                 }
             }

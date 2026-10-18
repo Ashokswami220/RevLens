@@ -6,7 +6,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -71,7 +70,8 @@ fun WaterfallChart(
                 .pointerInput(steps) {
                     detectTapGestures { offset ->
                         val barWidthWithSpacing = size.width / steps.size
-                        val tappedIdx = (offset.x / barWidthWithSpacing).toInt().coerceIn(0, steps.size - 1)
+                        val tappedIdx = (offset.x / barWidthWithSpacing).toInt()
+                            .coerceIn(0, steps.size - 1)
                         selectedIndex = tappedIdx
                         onStepSelected?.invoke(steps[tappedIdx])
                     }
@@ -97,7 +97,8 @@ fun WaterfallChart(
                 }
                 if (running > maxVal) maxVal = running
             }
-            maxVal = (maxVal * 1.15).toLong().coerceAtLeast(1000L) // add 15% headroom
+            maxVal = (maxVal * 1.15).toLong()
+                .coerceAtLeast(1000L) // add 15% headroom
 
             val n = steps.size
             val barSlotWidth = canvasWidth / n
@@ -136,7 +137,10 @@ fun WaterfallChart(
                     val topY = baseY - (currentLevel.toFloat() / maxVal) * chartHeight
                     val nextLevel = (currentLevel - step.amountMinor).coerceAtLeast(0L)
                     val bottomY = baseY - (nextLevel.toFloat() / maxVal) * chartHeight
-                    val color = if (step.title.contains("Contraction", ignoreCase = true)) warningColor else errorColor
+                    val color = if (step.title.contains(
+                            "Contraction", ignoreCase = true
+                        )
+                    ) warningColor else errorColor
                     FourTuple(topY, bottomY, nextLevel, color)
                 }
 
@@ -210,7 +214,9 @@ fun WaterfallChart(
                 drawText(
                     textMeasurer = textMeasurer,
                     text = shortTitle,
-                    topLeft = Offset(slotCenterX - (titleLayout.size.width / 2f), baseY + 8.dp.toPx()),
+                    topLeft = Offset(
+                        slotCenterX - (titleLayout.size.width / 2f), baseY + 8.dp.toPx()
+                    ),
                     style = TextStyle(
                         fontSize = 11.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
@@ -219,7 +225,8 @@ fun WaterfallChart(
                 )
 
                 currentLevel = newLevel
-                prevEndY = if (step.isTotal) barTopY else (if (step.isPositive) barTopY else barBottomY)
+                prevEndY =
+                    if (step.isTotal) barTopY else (if (step.isPositive) barTopY else barBottomY)
             }
         }
     }

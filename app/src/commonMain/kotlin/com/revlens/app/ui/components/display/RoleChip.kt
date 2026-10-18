@@ -23,8 +23,14 @@ fun RoleChip(
 ) {
     val (bgColor, contentColor) = when (role) {
         Role.Owner -> RevLensTheme.colors.primaryAction to RevLensTheme.colors.onPrimaryAction
-        Role.Admin -> RevLensTheme.colors.brandSecondary.copy(alpha = 0.15f) to RevLensTheme.colors.brandSecondaryText
-        Role.Editor -> RevLensTheme.colors.brandPrimary.copy(alpha = 0.15f) to RevLensTheme.colors.brandPrimaryText
+        Role.Admin -> RevLensTheme.colors.brandSecondary.copy(
+            alpha = 0.15f
+        ) to RevLensTheme.colors.brandSecondaryText
+
+        Role.Editor -> RevLensTheme.colors.brandPrimary.copy(
+            alpha = 0.15f
+        ) to RevLensTheme.colors.brandPrimaryText
+
         Role.Viewer -> RevLensTheme.colors.surfaceElevated to RevLensTheme.colors.textSecondary
     }
 

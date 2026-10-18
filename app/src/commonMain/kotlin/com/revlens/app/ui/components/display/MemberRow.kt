@@ -14,7 +14,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -75,7 +74,8 @@ fun MemberRow(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                val initial = if (member.name.isNotBlank()) member.name.take(1).uppercase() else "U"
+                val initial = if (member.name.isNotBlank()) member.name.take(1)
+                    .uppercase() else "U"
                 Text(
                     text = initial,
                     style = RevLensTypography.titleSmall,

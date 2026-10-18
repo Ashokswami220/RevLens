@@ -83,14 +83,17 @@ fun RevLensStackedBarChart(
                     var currentBottomY = zeroY
 
                     // Non-zero segments indices
-                    val nonZeroIndices = item.segmentValues.mapIndexedNotNull { i, v -> if (v > 0f) i else null }
+                    val nonZeroIndices =
+                        item.segmentValues.mapIndexedNotNull { i, v -> if (v > 0f) i else null }
                     val topIndex = nonZeroIndices.lastOrNull()
 
                     item.segmentValues.forEachIndexed { segIndex, value ->
                         if (value > 0f) {
                             val segHeight = (value / maxVal * chartAreaHeight).coerceAtLeast(2f)
                             val segTop = (currentBottomY - segHeight).coerceAtLeast(0f)
-                            val color = segmentColors.getOrElse(segIndex % segmentColors.size) { defaultColor }
+                            val color = segmentColors.getOrElse(
+                                segIndex % segmentColors.size
+                            ) { defaultColor }
 
                             val isTopSegment = segIndex == topIndex
                             val cornerRadiusPx = if (isTopSegment) 4.dp.toPx() else 0f

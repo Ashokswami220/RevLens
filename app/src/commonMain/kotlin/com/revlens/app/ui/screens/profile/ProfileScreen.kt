@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,10 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.MonetizationOn
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.DropdownMenu
@@ -53,8 +49,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.revlens.app.ui.components.DestructiveButton
 import com.revlens.app.ui.components.PrimaryButton
-import com.revlens.app.ui.components.SecondaryButton
 import com.revlens.app.ui.components.RevLensTextField
+import com.revlens.app.ui.components.SecondaryButton
 import com.revlens.app.ui.components.display.RoleChip
 import com.revlens.app.ui.components.feedback.TypedConfirmDialog
 import com.revlens.app.ui.theme.RevLensTheme
@@ -157,7 +153,8 @@ fun ProfileScreen(
                         .background(RevLensTheme.colors.brandPrimary),
                     contentAlignment = Alignment.Center
                 ) {
-                    val initialChar = if (state.name.isNotBlank()) state.name.take(1).uppercase() else "G"
+                    val initialChar = if (state.name.isNotBlank()) state.name.take(1)
+                        .uppercase() else "G"
                     Text(
                         text = initialChar,
                         style = RevLensTypography.headlineMedium,
@@ -217,7 +214,10 @@ fun ProfileScreen(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(14.dp))
                         .background(RevLensTheme.colors.brandPrimary.copy(alpha = 0.08f))
-                        .border(1.dp, RevLensTheme.colors.brandPrimary.copy(alpha = 0.2f), RoundedCornerShape(14.dp))
+                        .border(
+                            1.dp, RevLensTheme.colors.brandPrimary.copy(alpha = 0.2f),
+                            RoundedCornerShape(14.dp)
+                        )
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
@@ -275,7 +275,9 @@ fun ProfileScreen(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
                             .background(RevLensTheme.colors.surfaceElevated)
-                            .border(1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(8.dp))
+                            .border(
+                                1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(8.dp)
+                            )
                             .padding(horizontal = 16.dp, vertical = 14.dp)
                     ) {
                         Row(
@@ -331,7 +333,10 @@ fun ProfileScreen(
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(RevLensTheme.colors.surfaceElevated)
-                                .border(1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(10.dp))
+                                .border(
+                                    1.dp, RevLensTheme.colors.borderDefault,
+                                    RoundedCornerShape(10.dp)
+                                )
                                 .clickable { timezoneMenuOpen = true }
                                 .padding(horizontal = 14.dp, vertical = 14.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -389,7 +394,10 @@ fun ProfileScreen(
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(RevLensTheme.colors.surfaceElevated)
-                                .border(1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(10.dp))
+                                .border(
+                                    1.dp, RevLensTheme.colors.borderDefault,
+                                    RoundedCornerShape(10.dp)
+                                )
                                 .clickable { currencyMenuOpen = true }
                                 .padding(horizontal = 14.dp, vertical = 14.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -405,7 +413,8 @@ fun ProfileScreen(
                                     tint = RevLensTheme.colors.brandPrimary,
                                     modifier = Modifier.size(18.dp)
                                 )
-                                val label = CURRENCIES.find { it.first == state.currency }?.second ?: state.currency
+                                val label = CURRENCIES.find { it.first == state.currency }?.second
+                                    ?: state.currency
                                 Text(
                                     text = label,
                                     style = RevLensTypography.bodyMedium,

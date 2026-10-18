@@ -42,7 +42,8 @@ class FakeAuthRepository(
         name: String?,
         avatarUrl: String?
     ): Result<UserAccount> {
-        val userEmail = email?.trim()?.lowercase() ?: "alex.vance@gmail.com"
+        val userEmail = email?.trim()
+            ?.lowercase() ?: "alex.vance@gmail.com"
         val userName = name?.trim() ?: "Alex Vance"
         val userAvatar = avatarUrl ?: "https://lh3.googleusercontent.com/a/default-user"
 
@@ -68,7 +69,8 @@ class FakeAuthRepository(
     }
 
     override suspend fun login(email: String, password: String): Result<UserAccount> {
-        val normalized = email.trim().lowercase()
+        val normalized = email.trim()
+            .lowercase()
         val entry = usersByEmail[normalized]
 
         if (entry == null || entry.second != password) {
@@ -88,11 +90,16 @@ class FakeAuthRepository(
         return Result.success(user)
     }
 
-    override suspend fun signUp(name: String, email: String, password: String): Result<UserAccount> {
-        val normalized = email.trim().lowercase()
+    override suspend fun signUp(
+        name: String, email: String, password: String
+    ): Result<UserAccount> {
+        val normalized = email.trim()
+            .lowercase()
         if (usersByEmail.containsKey(normalized)) {
             return Result.failure(
-                AppException(AppError.Conflict("An account with this email address already exists."))
+                AppException(
+                    AppError.Conflict("An account with this email address already exists.")
+                )
             )
         }
 
@@ -118,7 +125,8 @@ class FakeAuthRepository(
     }
 
     override suspend fun requestPasswordReset(email: String): Result<Unit> {
-        val normalized = email.trim().lowercase()
+        val normalized = email.trim()
+            .lowercase()
         if (usersByEmail.containsKey(normalized)) {
             val token = "tok_reset_${usersByEmail.size}"
             resetTokens[token] = normalized
@@ -133,7 +141,8 @@ class FakeAuthRepository(
     }
 
     override suspend fun resetPassword(token: String, newPassword: String): Result<Unit> {
-        val email = resetTokens[token] ?: if (token == "mock-reset-token-valid") "alex@revlens.com" else null
+        val email = resetTokens[token]
+            ?: if (token == "mock-reset-token-valid") "alex@revlens.com" else null
         if (email == null) {
             return Result.failure(AppException(AppError.Unauthorized))
         }
@@ -174,7 +183,8 @@ class FakeAuthRepository(
         if (currentTokens != null) return currentTokens
         val raw = secureStorage?.get("auth_tokens") ?: return null
         return try {
-            json.decodeFromString<AuthTokens>(raw).also { currentTokens = it }
+            json.decodeFromString<AuthTokens>(raw)
+                .also { currentTokens = it }
         } catch (_: Exception) {
             null
         }

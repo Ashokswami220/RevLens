@@ -53,7 +53,8 @@ object RevenueBreakdownCalculator {
         if (profile.plans.isNotEmpty()) {
             for (p in profile.plans) {
                 val planMrr = (p.customerCount * p.price.toDouble() * 100).toLong()
-                val pct = if (baseTotalMinor > 0) (planMrr.toDouble() / baseTotalMinor.toDouble()) * 100 else 0.0
+                val pct =
+                    if (baseTotalMinor > 0) (planMrr.toDouble() / baseTotalMinor.toDouble()) * 100 else 0.0
                 planShares.add(
                     PlanRevenueShare(
                         planName = p.name,
@@ -85,7 +86,8 @@ object RevenueBreakdownCalculator {
         val contractionMrr = (startMrr * conPct).toLong()
         val churnMrr = (startMrr * churnPct).toLong()
 
-        val endingMrr = (startMrr + newMrr + expansionMrr - contractionMrr - churnMrr).coerceAtLeast(0L)
+        val endingMrr =
+            (startMrr + newMrr + expansionMrr - contractionMrr - churnMrr).coerceAtLeast(0L)
         val netChange = endingMrr - startMrr
 
         val lossSum = contractionMrr + churnMrr
@@ -104,7 +106,9 @@ object RevenueBreakdownCalculator {
             WaterfallStep("Expansion", expansionMrr, isTotal = false, isPositive = true),
             WaterfallStep("Contraction", contractionMrr, isTotal = false, isPositive = false),
             WaterfallStep("Churn", churnMrr, isTotal = false, isPositive = false),
-            WaterfallStep("Ending MRR", endingMrr, isTotal = true, isPositive = endingMrr >= startMrr)
+            WaterfallStep(
+                "Ending MRR", endingMrr, isTotal = true, isPositive = endingMrr >= startMrr
+            )
         )
 
         return RevenueBreakdownResult(
@@ -152,7 +156,8 @@ object RevenueBreakdownCalculator {
         val newMrr = (endingMrr * 0.12).toLong()
         val expansionMrr = (endingMrr * 0.04).toLong()
         val contractionMrr = (endingMrr * 0.02).toLong()
-        val startMrr = (endingMrr - newMrr - expansionMrr + contractionMrr + churnMrr).coerceAtLeast(0L)
+        val startMrr =
+            (endingMrr - newMrr - expansionMrr + contractionMrr + churnMrr).coerceAtLeast(0L)
 
         val netChange = endingMrr - startMrr
         val losses = contractionMrr + churnMrr
@@ -169,7 +174,8 @@ object RevenueBreakdownCalculator {
                 percentage = pct,
                 customerCount = records.size
             )
-        }.sortedByDescending { it.mrrMinor }
+        }
+            .sortedByDescending { it.mrrMinor }
 
         val steps = listOf(
             WaterfallStep("Starting MRR", startMrr, isTotal = true, isPositive = true),
@@ -177,7 +183,9 @@ object RevenueBreakdownCalculator {
             WaterfallStep("Expansion", expansionMrr, isTotal = false, isPositive = true),
             WaterfallStep("Contraction", contractionMrr, isTotal = false, isPositive = false),
             WaterfallStep("Churn", churnMrr, isTotal = false, isPositive = false),
-            WaterfallStep("Ending MRR", endingMrr, isTotal = true, isPositive = endingMrr >= startMrr)
+            WaterfallStep(
+                "Ending MRR", endingMrr, isTotal = true, isPositive = endingMrr >= startMrr
+            )
         )
 
         return RevenueBreakdownResult(

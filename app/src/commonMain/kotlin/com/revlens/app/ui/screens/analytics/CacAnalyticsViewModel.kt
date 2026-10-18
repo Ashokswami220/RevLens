@@ -49,12 +49,15 @@ class CacAnalyticsViewModel(
                 update { copy(simulatedBudgetMinor = event.budgetMinor) }
                 recalculate()
             }
+
             is CacAnalyticsEvent.ToggleAddSpendSheet -> {
                 update { copy(isAddSpendSheetOpen = event.isOpen) }
             }
+
             is CacAnalyticsEvent.AddManualSpend -> {
                 addManualSpend(event.channel, event.amountMinor, event.newCustomers)
             }
+
             CacAnalyticsEvent.Refresh -> recalculate()
             CacAnalyticsEvent.OpenGrowthSimulator -> {
                 emit(CacAnalyticsEffect.NavigateToGrowthSimulator)

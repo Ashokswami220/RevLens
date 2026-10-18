@@ -47,13 +47,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.revlens.app.domain.calc.AlertRuleEvaluator
-import com.revlens.app.domain.model.AlertSeverity
-import com.revlens.app.domain.model.NotificationPrefs
-import com.revlens.app.domain.model.TriggeredAlert
-import com.revlens.app.domain.repository.NotificationPreferencesRepository
-import kotlinx.coroutines.launch
-import org.koin.compose.koinInject
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -64,7 +57,12 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.revlens.app.domain.calc.AlertRuleEvaluator
 import com.revlens.app.domain.calc.LtvCalculator
+import com.revlens.app.domain.model.AlertSeverity
+import com.revlens.app.domain.model.NotificationPrefs
+import com.revlens.app.domain.model.TriggeredAlert
+import com.revlens.app.domain.repository.NotificationPreferencesRepository
 import com.revlens.app.model.BigDecimal
 import com.revlens.app.model.BusinessProfile
 import com.revlens.app.presentation.MainViewModel
@@ -75,6 +73,8 @@ import com.revlens.app.ui.theme.RevLensTheme
 import com.revlens.app.utils.CurrencyUtils
 import com.revlens.app.utils.DateUtils
 import com.revlens.app.utils.RevLensFormatter
+import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.pow
 
@@ -107,7 +107,9 @@ fun DashboardScreen(
     val profile by viewModel.profile.collectAsState()
     val notifPrefsRepo: NotificationPreferencesRepository = koinInject()
     val notifPrefs by notifPrefsRepo.preferencesFlow.collectAsState(initial = NotificationPrefs())
-    val dismissedAlertIds by notifPrefsRepo.dismissedAlertIdsFlow.collectAsState(initial = emptySet())
+    val dismissedAlertIds by notifPrefsRepo.dismissedAlertIdsFlow.collectAsState(
+        initial = emptySet()
+    )
     val coroutineScope = rememberCoroutineScope()
 
     val activeAlerts = remember(notifPrefs, profile, dismissedAlertIds) {
@@ -201,7 +203,8 @@ private fun AlertBannerCard(
     onDismiss: () -> Unit
 ) {
     val isWarning = alert.severity == AlertSeverity.WARNING
-    val accentColor = if (isWarning) RevLensTheme.colors.warning else RevLensTheme.colors.brandPrimary
+    val accentColor =
+        if (isWarning) RevLensTheme.colors.warning else RevLensTheme.colors.brandPrimary
     val containerBg = accentColor.copy(alpha = 0.08f)
     val borderColor = accentColor.copy(alpha = 0.35f)
 

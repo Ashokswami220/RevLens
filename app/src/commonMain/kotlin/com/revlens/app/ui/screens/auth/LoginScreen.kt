@@ -22,14 +22,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -74,6 +72,7 @@ fun LoginScreen(
                 is LoginEffect.ShowMessage -> {
                     snackbarHostState.showSnackbar(effect.text.asString())
                 }
+
                 LoginEffect.NavigateToDashboard -> {
                     onNavigateBack?.invoke()
                 }
@@ -111,7 +110,10 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 // App Icon badge
-                val cardBorder = if (isDark) BorderStroke(1.dp, Color(0xFF262C38)) else BorderStroke(1.dp, RevLensTheme.colors.borderDefault)
+                val cardBorder =
+                    if (isDark) BorderStroke(1.dp, Color(0xFF262C38)) else BorderStroke(
+                        1.dp, RevLensTheme.colors.borderDefault
+                    )
                 Box(
                     modifier = Modifier
                         .size(80.dp)
@@ -196,7 +198,10 @@ fun LoginScreen(
 
                 // Google Sign-In Primary Button
                 val googleBtnBg = if (isDark) Color(0xFF1E232E) else Color.White
-                val googleBtnBorder = if (isDark) BorderStroke(1.dp, Color(0xFF333B4A)) else BorderStroke(1.dp, RevLensTheme.colors.borderDefault)
+                val googleBtnBorder =
+                    if (isDark) BorderStroke(1.dp, Color(0xFF333B4A)) else BorderStroke(
+                        1.dp, RevLensTheme.colors.borderDefault
+                    )
 
                 Button(
                     onClick = { googleSignInLauncher() },
@@ -210,7 +215,9 @@ fun LoginScreen(
                         containerColor = googleBtnBg,
                         contentColor = RevLensTheme.colors.textPrimary
                     ),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 1.dp, pressedElevation = 0.dp)
+                    elevation = ButtonDefaults.buttonElevation(
+                        defaultElevation = 1.dp, pressedElevation = 0.dp
+                    )
                 ) {
                     if (state.isLoading) {
                         CircularProgressIndicator(

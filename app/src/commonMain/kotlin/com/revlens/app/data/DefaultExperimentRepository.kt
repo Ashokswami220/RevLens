@@ -20,7 +20,8 @@ class DefaultExperimentRepository : ExperimentRepository {
         _experimentsFlow.update { list ->
             val existingIndex = list.indexOfFirst { it.id == experiment.id }
             if (existingIndex >= 0) {
-                list.toMutableList().apply { set(existingIndex, experiment) }
+                list.toMutableList()
+                    .apply { set(existingIndex, experiment) }
             } else {
                 list + experiment
             }
@@ -62,8 +63,14 @@ class DefaultExperimentRepository : ExperimentRepository {
                     controlDescription = "Standard $29.00/mo pricing",
                     treatmentDescription = "Increased to $39.00/mo for new cohorts",
                     observations = listOf(
-                        Observation("o1", "2026-10-05", controlValue = 41200.0, controlSampleSize = 150, treatmentValue = 44500.0, treatmentSampleSize = 150),
-                        Observation("o2", "2026-10-12", controlValue = 41500.0, controlSampleSize = 160, treatmentValue = 45200.0, treatmentSampleSize = 160)
+                        Observation(
+                            "o1", "2026-10-05", controlValue = 41200.0, controlSampleSize = 150,
+                            treatmentValue = 44500.0, treatmentSampleSize = 150
+                        ),
+                        Observation(
+                            "o2", "2026-10-12", controlValue = 41500.0, controlSampleSize = 160,
+                            treatmentValue = 45200.0, treatmentSampleSize = 160
+                        )
                     ),
                     notes = "Early lift is strong with minimal sign-up drop off."
                 ),
@@ -81,8 +88,14 @@ class DefaultExperimentRepository : ExperimentRepository {
                     controlDescription = "No prompt on dashboard",
                     treatmentDescription = "Sticky bottom banner offering 2 months free",
                     observations = listOf(
-                        Observation("o3", "2026-09-10", controlValue = 12.0, controlSampleSize = 300, treatmentValue = 18.0, treatmentSampleSize = 300),
-                        Observation("o4", "2026-09-20", controlValue = 13.0, controlSampleSize = 350, treatmentValue = 21.0, treatmentSampleSize = 350)
+                        Observation(
+                            "o3", "2026-09-10", controlValue = 12.0, controlSampleSize = 300,
+                            treatmentValue = 18.0, treatmentSampleSize = 300
+                        ),
+                        Observation(
+                            "o4", "2026-09-20", controlValue = 13.0, controlSampleSize = 350,
+                            treatmentValue = 21.0, treatmentSampleSize = 350
+                        )
                     ),
                     notes = "Won with high significance. Applied discount to regular billing."
                 )

@@ -158,8 +158,14 @@ fun PublicPricingScreen(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(if (isSelected) RevLensTheme.colors.primaryAction else Color.Transparent)
-                                    .clickable { viewModel.onEvent(PublicPricingEvent.SelectBillingPeriod(period)) }
+                                    .background(
+                                        if (isSelected) RevLensTheme.colors.primaryAction else Color.Transparent
+                                    )
+                                    .clickable {
+                                        viewModel.onEvent(
+                                            PublicPricingEvent.SelectBillingPeriod(period)
+                                        )
+                                    }
                                     .padding(horizontal = 20.dp, vertical = 10.dp),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -184,7 +190,11 @@ fun PublicPricingScreen(
                             tier = tier,
                             period = state.billingPeriod,
                             isCurrentPlan = false,
-                            onSelectPlan = { viewModel.onEvent(PublicPricingEvent.SelectPlan(tier)) }
+                            onSelectPlan = {
+                                viewModel.onEvent(
+                                    PublicPricingEvent.SelectPlan(tier)
+                                )
+                            }
                         )
                     }
                 }

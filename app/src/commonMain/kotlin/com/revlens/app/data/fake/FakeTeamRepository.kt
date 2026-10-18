@@ -60,20 +60,29 @@ class FakeTeamRepository : TeamRepository {
         }
     }
 
-    override fun getMembers(workspaceId: String): Flow<List<Member>> = getMembersFlow(workspaceId).asStateFlow()
+    override fun getMembers(workspaceId: String): Flow<List<Member>> =
+        getMembersFlow(workspaceId).asStateFlow()
 
-    override fun getInvites(workspaceId: String): Flow<List<TeamInvite>> = getInvitesFlow(workspaceId).asStateFlow()
+    override fun getInvites(workspaceId: String): Flow<List<TeamInvite>> =
+        getInvitesFlow(workspaceId).asStateFlow()
 
-    override suspend fun inviteMember(workspaceId: String, email: String, role: Role): Result<TeamInvite> {
-        val normalized = email.trim().lowercase()
+    override suspend fun inviteMember(
+        workspaceId: String, email: String, role: Role
+    ): Result<TeamInvite> {
+        val normalized = email.trim()
+            .lowercase()
         val currentMembers = getMembersFlow(workspaceId).value
         if (currentMembers.any { it.email.lowercase() == normalized }) {
-            return Result.failure(IllegalArgumentException("User is already a member of this workspace."))
+            return Result.failure(
+                IllegalArgumentException("User is already a member of this workspace.")
+            )
         }
 
         val currentInvites = getInvitesFlow(workspaceId).value
         if (currentInvites.any { it.email.lowercase() == normalized }) {
-            return Result.failure(IllegalArgumentException("An invitation is already pending for this email."))
+            return Result.failure(
+                IllegalArgumentException("An invitation is already pending for this email.")
+            )
         }
 
         val invite = TeamInvite(
@@ -87,7 +96,9 @@ class FakeTeamRepository : TeamRepository {
         return Result.success(invite)
     }
 
-    override suspend fun updateMemberRole(workspaceId: String, memberId: String, newRole: Role): Result<Unit> {
+    override suspend fun updateMemberRole(
+        workspaceId: String, memberId: String, newRole: Role
+    ): Result<Unit> {
         val flow = getMembersFlow(workspaceId)
         val current = flow.value
         val member = current.find { it.id == memberId }
@@ -96,7 +107,11 @@ class FakeTeamRepository : TeamRepository {
         if (member.role == Role.Owner && newRole != Role.Owner) {
             val ownerCount = current.count { it.role == Role.Owner }
             if (ownerCount <= 1) {
-                return Result.failure(IllegalStateException("Cannot demote the sole workspace Owner. Transfer ownership first."))
+                return Result.failure(
+                    IllegalStateException(
+                        "Cannot demote the sole workspace Owner. Transfer ownership first."
+                    )
+                )
             }
         }
 
@@ -115,7 +130,9 @@ class FakeTeamRepository : TeamRepository {
         if (member.role == Role.Owner) {
             val ownerCount = current.count { it.role == Role.Owner }
             if (ownerCount <= 1) {
-                return Result.failure(IllegalStateException("Cannot remove the sole workspace Owner."))
+                return Result.failure(
+                    IllegalStateException("Cannot remove the sole workspace Owner.")
+                )
             }
         }
 

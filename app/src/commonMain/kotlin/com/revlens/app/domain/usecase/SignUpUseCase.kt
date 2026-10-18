@@ -9,10 +9,13 @@ class SignUpUseCase(
     private val sessionManager: SessionManager,
     private val migrateGuestDataUseCase: MigrateGuestDataUseCase? = null
 ) {
-    suspend operator fun invoke(name: String, email: String, password: String): Result<UserAccount> {
-        return authRepository.signUp(name, email, password).onSuccess { user ->
-            sessionManager.onLoggedIn(user)
-            migrateGuestDataUseCase?.invoke(user.id)
-        }
+    suspend operator fun invoke(
+        name: String, email: String, password: String
+    ): Result<UserAccount> {
+        return authRepository.signUp(name, email, password)
+            .onSuccess { user ->
+                sessionManager.onLoggedIn(user)
+                migrateGuestDataUseCase?.invoke(user.id)
+            }
     }
 }

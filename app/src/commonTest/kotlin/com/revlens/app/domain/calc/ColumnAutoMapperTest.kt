@@ -8,7 +8,10 @@ class ColumnAutoMapperTest {
 
     @Test
     fun testAutoMapSubscriptionHeaders() {
-        val headers = listOf("User_Id", "Plan_Name", "Signup_Date", "Cancelled_At", "Monthly_Amount", "UTM_Source", "Geo_Location")
+        val headers = listOf(
+            "User_Id", "Plan_Name", "Signup_Date", "Cancelled_At", "Monthly_Amount", "UTM_Source",
+            "Geo_Location"
+        )
         val targetFields = listOf(
             CanonicalField.CUSTOMER_ID,
             CanonicalField.PLAN,

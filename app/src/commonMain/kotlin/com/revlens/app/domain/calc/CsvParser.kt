@@ -39,29 +39,42 @@ object CsvParser {
                     '"' -> {
                         inQuotes = true
                     }
+
                     delimiter -> {
-                        currentRow.add(currentField.toString().trim())
+                        currentRow.add(
+                            currentField.toString()
+                                .trim()
+                        )
                         currentField.clear()
                     }
+
                     '\r' -> {
                         if (i + 1 < len && sanitized[i + 1] == '\n') {
                             i++
                         }
-                        currentRow.add(currentField.toString().trim())
+                        currentRow.add(
+                            currentField.toString()
+                                .trim()
+                        )
                         currentField.clear()
                         if (currentRow.any { it.isNotBlank() }) {
                             allRows.add(currentRow.toList())
                         }
                         currentRow.clear()
                     }
+
                     '\n' -> {
-                        currentRow.add(currentField.toString().trim())
+                        currentRow.add(
+                            currentField.toString()
+                                .trim()
+                        )
                         currentField.clear()
                         if (currentRow.any { it.isNotBlank() }) {
                             allRows.add(currentRow.toList())
                         }
                         currentRow.clear()
                     }
+
                     else -> {
                         currentField.append(c)
                     }
@@ -71,7 +84,10 @@ object CsvParser {
         }
 
         if (currentField.isNotEmpty() || currentRow.isNotEmpty()) {
-            currentRow.add(currentField.toString().trim())
+            currentRow.add(
+                currentField.toString()
+                    .trim()
+            )
             if (currentRow.any { it.isNotBlank() }) {
                 allRows.add(currentRow.toList())
             }
@@ -87,7 +103,8 @@ object CsvParser {
     }
 
     private fun detectDelimiter(content: String): Char {
-        val firstLine = content.lines().firstOrNull { it.isNotBlank() } ?: return ','
+        val firstLine = content.lines()
+            .firstOrNull { it.isNotBlank() } ?: return ','
         var commaCount = 0
         var semicolonCount = 0
         var tabCount = 0

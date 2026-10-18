@@ -19,21 +19,40 @@ enum class CanonicalField(val displayName: String, val isRequired: Boolean) {
 object ColumnAutoMapper {
 
     private val SYNONYMS = mapOf(
-        CanonicalField.CUSTOMER_ID to listOf("cust_id", "customer_id", "customer id", "user_id", "userid", "id", "account_id"),
+        CanonicalField.CUSTOMER_ID to listOf(
+            "cust_id", "customer_id", "customer id", "user_id", "userid", "id", "account_id"
+        ),
         CanonicalField.PLAN to listOf("plan", "plan_name", "tier", "subscription", "product"),
-        CanonicalField.START_DATE to listOf("start_date", "started", "created_at", "signup_date", "date_joined", "start"),
-        CanonicalField.END_DATE to listOf("end_date", "ended", "cancelled_at", "churn_date", "expiration", "end"),
-        CanonicalField.MRR to listOf("mrr", "amount", "revenue", "price", "monthly_amount", "value"),
-        CanonicalField.CHANNEL to listOf("channel", "source", "acquisition_channel", "utm_source", "medium"),
+        CanonicalField.START_DATE to listOf(
+            "start_date", "started", "created_at", "signup_date", "date_joined", "start"
+        ),
+        CanonicalField.END_DATE to listOf(
+            "end_date", "ended", "cancelled_at", "churn_date", "expiration", "end"
+        ),
+        CanonicalField.MRR to listOf(
+            "mrr", "amount", "revenue", "price", "monthly_amount", "value"
+        ),
+        CanonicalField.CHANNEL to listOf(
+            "channel", "source", "acquisition_channel", "utm_source", "medium"
+        ),
         CanonicalField.COUNTRY to listOf("country", "region", "geo", "location"),
         CanonicalField.MONTH to listOf("month", "date", "period", "spend_month"),
         CanonicalField.SPEND to listOf("spend", "cost", "budget", "marketing_spend", "ad_spend"),
-        CanonicalField.NEW_CUSTOMERS to listOf("new_customers", "customers", "acquisitions", "signups", "conversions")
+        CanonicalField.NEW_CUSTOMERS to listOf(
+            "new_customers", "customers", "acquisitions", "signups", "conversions"
+        )
     )
 
-    fun autoMap(headers: List<String>, targetFields: List<CanonicalField>): Map<CanonicalField, String?> {
+    fun autoMap(
+        headers: List<String>, targetFields: List<CanonicalField>
+    ): Map<CanonicalField, String?> {
         val result = mutableMapOf<CanonicalField, String?>()
-        val normalizedHeaders = headers.map { it.trim().lowercase().replace("-", "_").replace(" ", "_") }
+        val normalizedHeaders = headers.map {
+            it.trim()
+                .lowercase()
+                .replace("-", "_")
+                .replace(" ", "_")
+        }
 
         for (field in targetFields) {
             val synonyms = SYNONYMS[field] ?: emptyList()

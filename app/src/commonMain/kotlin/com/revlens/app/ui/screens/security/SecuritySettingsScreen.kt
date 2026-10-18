@@ -75,7 +75,9 @@ fun SecuritySettingsScreen(
     LaunchedEffect(Unit) {
         viewModel.effects.collect { effect ->
             when (effect) {
-                is SecuritySettingsEffect.ShowToast -> snackbarHostState.showSnackbar(effect.message)
+                is SecuritySettingsEffect.ShowToast -> snackbarHostState.showSnackbar(
+                    effect.message
+                )
             }
         }
     }
@@ -160,7 +162,11 @@ fun SecuritySettingsScreen(
 
                     Switch(
                         checked = state.isBiometricEnabled,
-                        onCheckedChange = { viewModel.onEvent(SecuritySettingsEvent.ToggleBiometric(it)) },
+                        onCheckedChange = {
+                            viewModel.onEvent(
+                                SecuritySettingsEvent.ToggleBiometric(it)
+                            )
+                        },
                         enabled = state.isBiometricSupported,
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color.White,
@@ -217,7 +223,9 @@ fun SecuritySettingsScreen(
                                 DropdownMenuItem(
                                     text = { Text(timeout.displayName) },
                                     onClick = {
-                                        viewModel.onEvent(SecuritySettingsEvent.ChangeTimeout(timeout))
+                                        viewModel.onEvent(
+                                            SecuritySettingsEvent.ChangeTimeout(timeout)
+                                        )
                                         timeoutMenuExpanded = false
                                     }
                                 )
@@ -236,7 +244,9 @@ fun SecuritySettingsScreen(
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .border(1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(8.dp))
+                            .border(
+                                1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(8.dp)
+                            )
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Lock,
@@ -385,7 +395,11 @@ fun SecuritySettingsScreen(
                                             Box(
                                                 modifier = Modifier
                                                     .clip(RoundedCornerShape(4.dp))
-                                                    .background(RevLensTheme.colors.brandPrimary.copy(alpha = 0.15f))
+                                                    .background(
+                                                        RevLensTheme.colors.brandPrimary.copy(
+                                                            alpha = 0.15f
+                                                        )
+                                                    )
                                                     .padding(horizontal = 6.dp, vertical = 2.dp)
                                             ) {
                                                 Text(
@@ -413,7 +427,11 @@ fun SecuritySettingsScreen(
                                     color = RevLensTheme.colors.error,
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(6.dp))
-                                        .clickable { viewModel.onEvent(SecuritySettingsEvent.RevokeSession(session.id)) }
+                                        .clickable {
+                                            viewModel.onEvent(
+                                                SecuritySettingsEvent.RevokeSession(session.id)
+                                            )
+                                        }
                                         .padding(horizontal = 8.dp, vertical = 6.dp)
                                 )
                             }
@@ -424,7 +442,11 @@ fun SecuritySettingsScreen(
                         Spacer(modifier = Modifier.height(4.dp))
                         SecondaryButton(
                             text = "Sign Out Other Sessions",
-                            onClick = { viewModel.onEvent(SecuritySettingsEvent.RevokeAllOtherSessions) },
+                            onClick = {
+                                viewModel.onEvent(
+                                    SecuritySettingsEvent.RevokeAllOtherSessions
+                                )
+                            },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }

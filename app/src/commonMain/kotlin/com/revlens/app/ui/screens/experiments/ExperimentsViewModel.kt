@@ -6,7 +6,6 @@ import com.revlens.app.domain.context.WorkspaceContext
 import com.revlens.app.domain.model.Experiment
 import com.revlens.app.domain.model.ExperimentStatus
 import com.revlens.app.domain.repository.ExperimentRepository
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
@@ -37,6 +36,7 @@ class ExperimentsViewModel(
                 update { copy(filter = event.filter) }
                 applyFilter()
             }
+
             ExperimentsEvent.OpenCreateSheet -> update { copy(showCreateSheet = true) }
             ExperimentsEvent.DismissCreateSheet -> update { copy(showCreateSheet = false) }
             is ExperimentsEvent.CreateExperiment -> {
@@ -64,12 +64,14 @@ class ExperimentsViewModel(
                     emit(ExperimentsEffect.NavigateToDetails(newExperiment.id))
                 }
             }
+
             is ExperimentsEvent.DeleteExperiment -> {
                 viewModelScope.launch {
                     experimentRepository.deleteExperiment(event.experimentId)
                     emit(ExperimentsEffect.ShowToast("Experiment deleted"))
                 }
             }
+
             is ExperimentsEvent.DuplicateExperiment -> {
                 viewModelScope.launch {
                     val existing = experimentRepository.getExperimentById(event.experimentId)
@@ -86,6 +88,7 @@ class ExperimentsViewModel(
                     }
                 }
             }
+
             is ExperimentsEvent.ClickExperiment -> {
                 emit(ExperimentsEffect.NavigateToDetails(event.experimentId))
             }
@@ -100,6 +103,7 @@ class ExperimentsViewModel(
             ExperimentFilter.DONE -> allExperiments.filter {
                 it.status == ExperimentStatus.WON || it.status == ExperimentStatus.LOST || it.status == ExperimentStatus.INCONCLUSIVE
             }
+
             ExperimentFilter.DRAFT -> allExperiments.filter { it.status == ExperimentStatus.DRAFT }
         }
         update { copy(experiments = filtered, isLoading = false) }

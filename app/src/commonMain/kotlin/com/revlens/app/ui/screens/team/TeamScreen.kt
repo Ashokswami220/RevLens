@@ -7,10 +7,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -19,7 +17,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Mail
@@ -47,7 +44,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.revlens.app.domain.model.Role
@@ -167,7 +163,9 @@ fun TeamScreen(
                 contentColor = RevLensTheme.colors.brandPrimary,
                 indicator = { tabPositions ->
                     TabRowDefaults.SecondaryIndicator(
-                        modifier = Modifier.tabIndicatorOffset(tabPositions[state.activeTab.ordinal]),
+                        modifier = Modifier.tabIndicatorOffset(
+                            tabPositions[state.activeTab.ordinal]
+                        ),
                         color = RevLensTheme.colors.brandPrimary
                     )
                 }
@@ -201,7 +199,9 @@ fun TeamScreen(
                                 member = member,
                                 canManage = state.userRole == Role.Owner || state.userRole == Role.Admin,
                                 onRoleChange = { newRole ->
-                                    viewModel.onEvent(TeamEvent.ChangeMemberRole(member.id, newRole))
+                                    viewModel.onEvent(
+                                        TeamEvent.ChangeMemberRole(member.id, newRole)
+                                    )
                                 },
                                 onRemove = {
                                     viewModel.onEvent(TeamEvent.PromptRemoveMember(member))
@@ -235,7 +235,10 @@ fun TeamScreen(
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(12.dp))
                                         .background(RevLensTheme.colors.surfaceElevated)
-                                        .border(1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(12.dp))
+                                        .border(
+                                            1.dp, RevLensTheme.colors.borderDefault,
+                                            RoundedCornerShape(12.dp)
+                                        )
                                         .padding(14.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
@@ -286,10 +289,18 @@ fun TeamScreen(
                                     ) {
                                         TextLinkButton(
                                             text = "Resend",
-                                            onClick = { viewModel.onEvent(TeamEvent.ResendInvite(invite.id)) }
+                                            onClick = {
+                                                viewModel.onEvent(
+                                                    TeamEvent.ResendInvite(invite.id)
+                                                )
+                                            }
                                         )
                                         IconButton(
-                                            onClick = { viewModel.onEvent(TeamEvent.RevokeInvite(invite.id)) },
+                                            onClick = {
+                                                viewModel.onEvent(
+                                                    TeamEvent.RevokeInvite(invite.id)
+                                                )
+                                            },
                                             modifier = Modifier.size(28.dp)
                                         ) {
                                             Icon(
@@ -312,7 +323,9 @@ fun TeamScreen(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp))
                             .background(RevLensTheme.colors.surface)
-                            .border(1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(16.dp))
+                            .border(
+                                1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(16.dp)
+                            )
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
@@ -344,7 +357,8 @@ fun TeamScreen(
                                     color = RevLensTheme.colors.textSecondary
                                 )
                                 Row(
-                                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                        .padding(top = 4.dp),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     RolePermissionBadge("Owner", perm.owner)
@@ -399,7 +413,11 @@ fun TeamScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .background(if (isSelected) RevLensTheme.colors.brandPrimary.copy(alpha = 0.12f) else RevLensTheme.colors.surfaceElevated)
+                            .background(
+                                if (isSelected) RevLensTheme.colors.brandPrimary.copy(
+                                    alpha = 0.12f
+                                ) else RevLensTheme.colors.surfaceElevated
+                            )
                             .clickable { viewModel.onEvent(TeamEvent.InviteRoleChanged(role)) }
                             .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically,

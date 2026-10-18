@@ -25,7 +25,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.ui.draw.clip
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
@@ -40,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.revlens.app.ui.components.NumberField
@@ -61,7 +61,9 @@ fun NotificationSettingsScreen(
     LaunchedEffect(Unit) {
         viewModel.effects.collect { effect ->
             when (effect) {
-                is NotificationSettingsEffect.ShowToast -> snackbarHostState.showSnackbar(effect.message)
+                is NotificationSettingsEffect.ShowToast -> snackbarHostState.showSnackbar(
+                    effect.message
+                )
             }
         }
     }
@@ -146,7 +148,11 @@ fun NotificationSettingsScreen(
                         style = RevLensTypography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = RevLensTheme.colors.brandPrimary,
-                        modifier = Modifier.clickable { viewModel.onEvent(NotificationSettingsEvent.RetrySync) }
+                        modifier = Modifier.clickable {
+                            viewModel.onEvent(
+                                NotificationSettingsEvent.RetrySync
+                            )
+                        }
                     )
                 }
             }
@@ -158,13 +164,21 @@ fun NotificationSettingsScreen(
                         title = "Push Notifications",
                         subtitle = "Instant system alerts on critical metric anomalies",
                         checked = prefs.pushEnabled,
-                        onCheckedChange = { viewModel.onEvent(NotificationSettingsEvent.TogglePush(it)) }
+                        onCheckedChange = {
+                            viewModel.onEvent(
+                                NotificationSettingsEvent.TogglePush(it)
+                            )
+                        }
                     )
                     PreferenceSwitchRow(
                         title = "Email Notifications",
                         subtitle = "Weekly executive digests and monthly reports",
                         checked = prefs.emailEnabled,
-                        onCheckedChange = { viewModel.onEvent(NotificationSettingsEvent.ToggleEmail(it)) }
+                        onCheckedChange = {
+                            viewModel.onEvent(
+                                NotificationSettingsEvent.ToggleEmail(it)
+                            )
+                        }
                     )
                 }
             }
@@ -176,14 +190,22 @@ fun NotificationSettingsScreen(
                         title = "Goal Milestones",
                         subtitle = "Notify when MRR crosses 25%, 50%, 75%, and 100% of target",
                         checked = prefs.goalMilestones,
-                        onCheckedChange = { viewModel.onEvent(NotificationSettingsEvent.ToggleGoalMilestones(it)) }
+                        onCheckedChange = {
+                            viewModel.onEvent(
+                                NotificationSettingsEvent.ToggleGoalMilestones(it)
+                            )
+                        }
                     )
 
                     PreferenceSwitchRow(
                         title = "Off-Track Warnings",
                         subtitle = "Alert when growth velocity falls below planned scenario run-rate",
                         checked = prefs.offTrackWarnings,
-                        onCheckedChange = { viewModel.onEvent(NotificationSettingsEvent.ToggleOffTrackWarnings(it)) }
+                        onCheckedChange = {
+                            viewModel.onEvent(
+                                NotificationSettingsEvent.ToggleOffTrackWarnings(it)
+                            )
+                        }
                     )
 
                     // Churn Spike with Inline NumberField
@@ -192,14 +214,20 @@ fun NotificationSettingsScreen(
                             title = "Churn Spike Alert",
                             subtitle = "Trigger alert when monthly customer churn spikes above threshold",
                             checked = prefs.churnSpikeEnabled,
-                            onCheckedChange = { viewModel.onEvent(NotificationSettingsEvent.ToggleChurnSpike(it)) }
+                            onCheckedChange = {
+                                viewModel.onEvent(
+                                    NotificationSettingsEvent.ToggleChurnSpike(it)
+                                )
+                            }
                         )
                         if (prefs.churnSpikeEnabled) {
                             NumberField(
                                 value = prefs.churnSpikeThresholdPercent.toString(),
                                 onValueChange = {
                                     val d = it.toDoubleOrNull() ?: 0.0
-                                    viewModel.onEvent(NotificationSettingsEvent.UpdateChurnThreshold(d))
+                                    viewModel.onEvent(
+                                        NotificationSettingsEvent.UpdateChurnThreshold(d)
+                                    )
                                 },
                                 label = "Churn Alert Threshold",
                                 suffix = "% / mo",
@@ -214,14 +242,20 @@ fun NotificationSettingsScreen(
                             title = "MRR Drop Warning",
                             subtitle = "Trigger warning when net monthly expansion falls below limit",
                             checked = prefs.mrrDropEnabled,
-                            onCheckedChange = { viewModel.onEvent(NotificationSettingsEvent.ToggleMrrDrop(it)) }
+                            onCheckedChange = {
+                                viewModel.onEvent(
+                                    NotificationSettingsEvent.ToggleMrrDrop(it)
+                                )
+                            }
                         )
                         if (prefs.mrrDropEnabled) {
                             NumberField(
                                 value = prefs.mrrDropThresholdPercent.toString(),
                                 onValueChange = {
                                     val d = it.toDoubleOrNull() ?: 0.0
-                                    viewModel.onEvent(NotificationSettingsEvent.UpdateMrrDropThreshold(d))
+                                    viewModel.onEvent(
+                                        NotificationSettingsEvent.UpdateMrrDropThreshold(d)
+                                    )
                                 },
                                 label = "MRR Drop Threshold",
                                 suffix = "% / mo",
@@ -234,7 +268,11 @@ fun NotificationSettingsScreen(
                         title = "Experiment Completed",
                         subtitle = "Notify when statistical sample size reaches statistical confidence",
                         checked = prefs.experimentFinished,
-                        onCheckedChange = { viewModel.onEvent(NotificationSettingsEvent.ToggleExperimentFinished(it)) }
+                        onCheckedChange = {
+                            viewModel.onEvent(
+                                NotificationSettingsEvent.ToggleExperimentFinished(it)
+                            )
+                        }
                     )
                 }
             }
@@ -246,14 +284,22 @@ fun NotificationSettingsScreen(
                         title = "Weekly Summary Digest",
                         subtitle = "Send recap of net additions, top plans & ARR velocity (${prefs.weeklyDay} at ${prefs.weeklyTime})",
                         checked = prefs.weeklySummaryEnabled,
-                        onCheckedChange = { viewModel.onEvent(NotificationSettingsEvent.ToggleWeeklySummary(it)) }
+                        onCheckedChange = {
+                            viewModel.onEvent(
+                                NotificationSettingsEvent.ToggleWeeklySummary(it)
+                            )
+                        }
                     )
 
                     PreferenceSwitchRow(
                         title = "Monthly Report Ready",
                         subtitle = "Notify automatically when monthly revenue reconciliation finishes",
                         checked = prefs.monthlyReportReady,
-                        onCheckedChange = { viewModel.onEvent(NotificationSettingsEvent.ToggleMonthlyReport(it)) }
+                        onCheckedChange = {
+                            viewModel.onEvent(
+                                NotificationSettingsEvent.ToggleMonthlyReport(it)
+                            )
+                        }
                     )
                 }
             }
@@ -265,7 +311,11 @@ fun NotificationSettingsScreen(
                         title = "Enable Quiet Hours",
                         subtitle = "Mute push notifications overnight during selected window",
                         checked = prefs.quietHoursEnabled,
-                        onCheckedChange = { viewModel.onEvent(NotificationSettingsEvent.ToggleQuietHours(it)) }
+                        onCheckedChange = {
+                            viewModel.onEvent(
+                                NotificationSettingsEvent.ToggleQuietHours(it)
+                            )
+                        }
                     )
 
                     if (prefs.quietHoursEnabled) {
@@ -277,7 +327,11 @@ fun NotificationSettingsScreen(
                                 label = "Quiet Start",
                                 time = prefs.quietHoursStart,
                                 onTimeChange = {
-                                    viewModel.onEvent(NotificationSettingsEvent.UpdateQuietHoursTimes(it, prefs.quietHoursEnd))
+                                    viewModel.onEvent(
+                                        NotificationSettingsEvent.UpdateQuietHoursTimes(
+                                            it, prefs.quietHoursEnd
+                                        )
+                                    )
                                 },
                                 modifier = Modifier.weight(1f)
                             )
@@ -285,7 +339,11 @@ fun NotificationSettingsScreen(
                                 label = "Quiet End",
                                 time = prefs.quietHoursEnd,
                                 onTimeChange = {
-                                    viewModel.onEvent(NotificationSettingsEvent.UpdateQuietHoursTimes(prefs.quietHoursStart, it))
+                                    viewModel.onEvent(
+                                        NotificationSettingsEvent.UpdateQuietHoursTimes(
+                                            prefs.quietHoursStart, it
+                                        )
+                                    )
                                 },
                                 modifier = Modifier.weight(1f)
                             )
@@ -332,7 +390,9 @@ fun NotificationSettingsScreen(
                         enabled = false,
                         colors = SwitchDefaults.colors(
                             disabledCheckedThumbColor = RevLensTheme.colors.brandPrimary,
-                            disabledCheckedTrackColor = RevLensTheme.colors.brandPrimary.copy(alpha = 0.3f)
+                            disabledCheckedTrackColor = RevLensTheme.colors.brandPrimary.copy(
+                                alpha = 0.3f
+                            )
                         )
                     )
                 }

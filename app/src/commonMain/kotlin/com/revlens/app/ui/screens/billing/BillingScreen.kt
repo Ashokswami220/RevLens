@@ -50,7 +50,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.revlens.app.domain.model.BillingPeriod
 import com.revlens.app.domain.model.PlanTier
 import com.revlens.app.ui.components.DestructiveButton
@@ -138,7 +137,9 @@ fun BillingScreen(
                                 modifier = Modifier
                                     .size(36.dp)
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(RevLensTheme.colors.brandPrimary.copy(alpha = 0.15f)),
+                                    .background(
+                                        RevLensTheme.colors.brandPrimary.copy(alpha = 0.15f)
+                                    ),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
@@ -283,13 +284,21 @@ fun BillingScreen(
                         if (state.subscription.cancelAtPeriodEnd) {
                             SecondaryButton(
                                 text = "Reactivate",
-                                onClick = { viewModel.onEvent(BillingEvent.ReactivateSubscription) },
+                                onClick = {
+                                    viewModel.onEvent(
+                                        BillingEvent.ReactivateSubscription
+                                    )
+                                },
                                 modifier = Modifier.weight(1f)
                             )
                         } else if (state.subscription.planTier != PlanTier.FREE) {
                             SecondaryButton(
                                 text = "Cancel",
-                                onClick = { viewModel.onEvent(BillingEvent.PromptCancelSubscription) },
+                                onClick = {
+                                    viewModel.onEvent(
+                                        BillingEvent.PromptCancelSubscription
+                                    )
+                                },
                                 modifier = Modifier.weight(0.6f)
                             )
                         }
@@ -369,7 +378,9 @@ fun BillingScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = RevLensTheme.colors.surface),
+                        colors = CardDefaults.cardColors(
+                            containerColor = RevLensTheme.colors.surface
+                        ),
                         border = BorderStroke(1.dp, RevLensTheme.colors.borderDefault)
                     ) {
                         Column(
@@ -413,7 +424,9 @@ fun BillingScreen(
                                         Box(
                                             modifier = Modifier
                                                 .clip(CircleShape)
-                                                .background(RevLensTheme.colors.success.copy(alpha = 0.15f))
+                                                .background(
+                                                    RevLensTheme.colors.success.copy(alpha = 0.15f)
+                                                )
                                                 .padding(horizontal = 8.dp, vertical = 2.dp)
                                         ) {
                                             Text(
@@ -425,7 +438,11 @@ fun BillingScreen(
                                         }
 
                                         IconButton(
-                                            onClick = { viewModel.onEvent(BillingEvent.DownloadInvoice(invoice.id)) },
+                                            onClick = {
+                                                viewModel.onEvent(
+                                                    BillingEvent.DownloadInvoice(invoice.id)
+                                                )
+                                            },
                                             modifier = Modifier.size(32.dp)
                                         ) {
                                             Icon(
@@ -443,7 +460,9 @@ fun BillingScreen(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .height(1.dp)
-                                            .background(RevLensTheme.colors.borderDefault.copy(alpha = 0.4f))
+                                            .background(
+                                                RevLensTheme.colors.borderDefault.copy(alpha = 0.4f)
+                                            )
                                     )
                                 }
                             }
@@ -491,8 +510,14 @@ fun BillingScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSelected) RevLensTheme.colors.primaryAction else Color.Transparent)
-                                .clickable { viewModel.onEvent(BillingEvent.SelectBillingPeriod(period)) }
+                                .background(
+                                    if (isSelected) RevLensTheme.colors.primaryAction else Color.Transparent
+                                )
+                                .clickable {
+                                    viewModel.onEvent(
+                                        BillingEvent.SelectBillingPeriod(period)
+                                    )
+                                }
                                 .padding(vertical = 10.dp),
                             contentAlignment = Alignment.Center
                         ) {
@@ -547,7 +572,8 @@ fun BillingScreen(
                 )
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.onEvent(BillingEvent.DismissCancelSubscription) }) {
+                TextButton(
+                    onClick = { viewModel.onEvent(BillingEvent.DismissCancelSubscription) }) {
                     Text(
                         text = "Keep Plan",
                         style = RevLensTypography.bodyMedium,

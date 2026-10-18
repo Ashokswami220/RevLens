@@ -47,13 +47,16 @@ class RevenueBreakdownViewModel(
                 update { copy(sourceMode = event.mode) }
                 recompute()
             }
+
             is RevenueBreakdownEvent.SelectPeriod -> {
                 update { copy(period = event.period) }
                 recompute()
             }
+
             is RevenueBreakdownEvent.SelectWaterfallStep -> {
                 update { copy(selectedStep = event.step) }
             }
+
             RevenueBreakdownEvent.Refresh -> recompute()
         }
     }
@@ -66,19 +69,20 @@ class RevenueBreakdownViewModel(
             BridgePeriod.YEAR -> 12.0
         }
 
-        val result: RevenueBreakdownResult? = if (s.sourceMode == RevenueSourceMode.ACTUAL && cachedDataset != null && cachedDataset!!.subscriptions.isNotEmpty()) {
-            RevenueBreakdownCalculator.calculateActual(cachedDataset!!.subscriptions)
-        } else if (cachedProfile != null) {
-            val baseProfile = cachedProfile!!
-            RevenueBreakdownCalculator.calculateModeled(
-                profile = baseProfile,
-                newGrowthRatePercent = 6.5 * multiplier,
-                expansionRatePercent = 2.0 * multiplier,
-                contractionRatePercent = 1.0 * multiplier
-            )
-        } else {
-            null
-        }
+        val result: RevenueBreakdownResult? =
+            if (s.sourceMode == RevenueSourceMode.ACTUAL && cachedDataset != null && cachedDataset!!.subscriptions.isNotEmpty()) {
+                RevenueBreakdownCalculator.calculateActual(cachedDataset!!.subscriptions)
+            } else if (cachedProfile != null) {
+                val baseProfile = cachedProfile!!
+                RevenueBreakdownCalculator.calculateModeled(
+                    profile = baseProfile,
+                    newGrowthRatePercent = 6.5 * multiplier,
+                    expansionRatePercent = 2.0 * multiplier,
+                    contractionRatePercent = 1.0 * multiplier
+                )
+            } else {
+                null
+            }
 
         update { copy(result = result) }
     }

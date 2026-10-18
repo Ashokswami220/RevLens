@@ -156,7 +156,11 @@ fun CohortHeatmap(
                                             .width(cellWidth)
                                             .height(cellHeight)
                                             .clip(RoundedCornerShape(6.dp))
-                                            .background(RevLensTheme.colors.surfaceElevated.copy(alpha = 0.3f)),
+                                            .background(
+                                                RevLensTheme.colors.surfaceElevated.copy(
+                                                    alpha = 0.3f
+                                                )
+                                            ),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
@@ -167,9 +171,12 @@ fun CohortHeatmap(
                                     }
                                 } else {
                                     // Rendered Retention Cell with Cyan intensity
-                                    val alpha = (cell.retentionPercent / 100.0).toFloat().coerceIn(0.12f, 0.95f)
-                                    val cellBg = RevLensTheme.colors.brandPrimary.copy(alpha = alpha)
-                                    val textColor = if (alpha > 0.5f) Color.White else RevLensTheme.colors.textPrimary
+                                    val alpha = (cell.retentionPercent / 100.0).toFloat()
+                                        .coerceIn(0.12f, 0.95f)
+                                    val cellBg =
+                                        RevLensTheme.colors.brandPrimary.copy(alpha = alpha)
+                                    val textColor =
+                                        if (alpha > 0.5f) Color.White else RevLensTheme.colors.textPrimary
 
                                     Box(
                                         modifier = Modifier
@@ -201,9 +208,11 @@ fun CohortHeatmap(
                     ) {
                         for (i in 0 until maxOffsets) {
                             val avg = averageCurve.getOrNull(i) ?: 0.0
-                            val alpha = (avg / 100.0).toFloat().coerceIn(0.12f, 0.95f)
+                            val alpha = (avg / 100.0).toFloat()
+                                .coerceIn(0.12f, 0.95f)
                             val cellBg = RevLensTheme.colors.brandSecondary.copy(alpha = alpha)
-                            val textColor = if (alpha > 0.5f) Color.White else RevLensTheme.colors.textPrimary
+                            val textColor =
+                                if (alpha > 0.5f) Color.White else RevLensTheme.colors.textPrimary
 
                             Box(
                                 modifier = Modifier

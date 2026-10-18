@@ -260,13 +260,25 @@ fun RevLensNavGraph(
                 "input" -> navController.navigate(InputDataRoute) { launchSingleTop = true }
                 "reports" -> navController.navigate(ReportsRoute) { launchSingleTop = true }
                 "security" -> navController.navigate(SecurityRoute) { launchSingleTop = true }
-                "notifications" -> navController.navigate(NotificationsRoute) { launchSingleTop = true }
+                "notifications" -> navController.navigate(NotificationsRoute) {
+                    launchSingleTop = true
+                }
+
                 "login" -> navController.navigate(LoginRoute) { launchSingleTop = true }
                 "team" -> navController.navigate(TeamRoute) { launchSingleTop = true }
                 "billing" -> navController.navigate(BillingRoute) { launchSingleTop = true }
-                "integrations" -> navController.navigate(IntegrationsRoute) { launchSingleTop = true }
-                "developer", "apiwebhooks", "webhooks" -> navController.navigate(ApiWebhooksRoute) { launchSingleTop = true }
-                "pricing", "plans" -> navController.navigate(PublicPricingRoute) { launchSingleTop = true }
+                "integrations" -> navController.navigate(IntegrationsRoute) {
+                    launchSingleTop = true
+                }
+
+                "developer", "apiwebhooks", "webhooks" -> navController.navigate(
+                    ApiWebhooksRoute
+                ) { launchSingleTop = true }
+
+                "pricing", "plans" -> navController.navigate(PublicPricingRoute) {
+                    launchSingleTop = true
+                }
+
                 "landing" -> navController.navigate(LandingRoute) { launchSingleTop = true }
                 "compare" -> navController.navigate(ScenarioComparisonRoute) {
                     launchSingleTop = true
@@ -298,13 +310,25 @@ fun RevLensNavGraph(
                     "input" -> navController.navigate(InputDataRoute) { launchSingleTop = true }
                     "reports" -> navController.navigate(ReportsRoute) { launchSingleTop = true }
                     "security" -> navController.navigate(SecurityRoute) { launchSingleTop = true }
-                    "notifications" -> navController.navigate(NotificationsRoute) { launchSingleTop = true }
+                    "notifications" -> navController.navigate(
+                        NotificationsRoute
+                    ) { launchSingleTop = true }
+
                     "login" -> navController.navigate(LoginRoute) { launchSingleTop = true }
                     "team" -> navController.navigate(TeamRoute) { launchSingleTop = true }
                     "billing" -> navController.navigate(BillingRoute) { launchSingleTop = true }
-                    "integrations" -> navController.navigate(IntegrationsRoute) { launchSingleTop = true }
-                    "developer", "apiwebhooks", "webhooks" -> navController.navigate(ApiWebhooksRoute) { launchSingleTop = true }
-                    "pricing", "plans" -> navController.navigate(PublicPricingRoute) { launchSingleTop = true }
+                    "integrations" -> navController.navigate(IntegrationsRoute) {
+                        launchSingleTop = true
+                    }
+
+                    "developer", "apiwebhooks", "webhooks" -> navController.navigate(
+                        ApiWebhooksRoute
+                    ) { launchSingleTop = true }
+
+                    "pricing", "plans" -> navController.navigate(
+                        PublicPricingRoute
+                    ) { launchSingleTop = true }
+
                     "landing" -> navController.navigate(LandingRoute) { launchSingleTop = true }
                     "compare" -> navController.navigate(ScenarioComparisonRoute) {
                         launchSingleTop = true
@@ -318,8 +342,10 @@ fun RevLensNavGraph(
         }
     }
 
-    val appLockRepository: com.revlens.app.domain.repository.AppLockRepository = org.koin.compose.koinInject()
-    val biometricAuthenticator: com.revlens.app.core.platform.BiometricAuthenticator = org.koin.compose.koinInject()
+    val appLockRepository: com.revlens.app.domain.repository.AppLockRepository =
+        org.koin.compose.koinInject()
+    val biometricAuthenticator: com.revlens.app.core.platform.BiometricAuthenticator =
+        org.koin.compose.koinInject()
 
     AppLockGate(
         appLockRepository = appLockRepository,
@@ -330,417 +356,484 @@ fun RevLensNavGraph(
             LocalCurrentTab provides (currentTab ?: "Home")
         ) {
             Scaffold(
-            contentWindowInsets = WindowInsets(0, 0, 0, 0),
-            bottomBar = {
-                if (showBottomBar) {
-                    RevLensBottomBar(
-                        items = bottomNavItems,
-                        currentRoute = currentTab,
-                        onNavigate = navigateToTab
-                    )
-                }
-            }
-        ) { innerPadding ->
-            val isNonDashboardTab =
-                currentTab != null && currentTab != "Home" && currentTab != "Dashboard"
-
-            PlatformBackHandler(enabled = isNonDashboardTab) {
-                navController.navigate(DashboardRoute) {
-                    popUpTo(DashboardRoute) {
-                        inclusive = false
-                    }
-                    launchSingleTop = true
-                }
-            }
-            NavHost(
-                navController = navController,
-                startDestination = if (isOnboardingCompleted == true) DashboardRoute else IntroRoute,
-                modifier = modifier.padding(innerPadding),
-                enterTransition = {
-                    val isTargetMainTab = isMainTab(targetState.destination.route)
-                    val isInitialMainTab = isMainTab(initialState.destination.route)
-                    if (isTargetMainTab && isInitialMainTab) {
-                        fadeIn(animationSpec = tween(ANIM_DURATION))
-                    } else {
-                        slideInHorizontally(
-                            initialOffsetX = { it },
-                            animationSpec = tween(ANIM_DURATION, easing = ANIM_EASING)
-                        )
-                    }
-                },
-                exitTransition = {
-                    val isTargetMainTab = isMainTab(targetState.destination.route)
-                    val isInitialMainTab = isMainTab(initialState.destination.route)
-                    if (isTargetMainTab && isInitialMainTab) {
-                        fadeOut(animationSpec = tween(ANIM_DURATION))
-                    } else {
-                        slideOutHorizontally(
-                            targetOffsetX = { -it / 3 },
-                            animationSpec = tween(ANIM_DURATION, easing = ANIM_EASING)
-                        )
-                    }
-                },
-                popEnterTransition = {
-                    val isTargetMainTab = isMainTab(targetState.destination.route)
-                    val isInitialMainTab = isMainTab(initialState.destination.route)
-                    if (isTargetMainTab && isInitialMainTab) {
-                        fadeIn(animationSpec = tween(ANIM_DURATION))
-                    } else {
-                        slideInHorizontally(
-                            initialOffsetX = { -it / 3 },
-                            animationSpec = tween(ANIM_DURATION, easing = ANIM_EASING)
-                        )
-                    }
-                },
-                popExitTransition = {
-                    val isTargetMainTab = isMainTab(targetState.destination.route)
-                    val isInitialMainTab = isMainTab(initialState.destination.route)
-                    if (isTargetMainTab && isInitialMainTab) {
-                        fadeOut(animationSpec = tween(ANIM_DURATION))
-                    } else {
-                        slideOutHorizontally(
-                            targetOffsetX = { it },
-                            animationSpec = tween(ANIM_DURATION, easing = ANIM_EASING)
+                contentWindowInsets = WindowInsets(0, 0, 0, 0),
+                bottomBar = {
+                    if (showBottomBar) {
+                        RevLensBottomBar(
+                            items = bottomNavItems,
+                            currentRoute = currentTab,
+                            onNavigate = navigateToTab
                         )
                     }
                 }
-            ) {
-                composable<IntroRoute> {
-                    IntroScreen(
-                        onGetStarted = {
-                            navController.navigate(CreateWorkspaceRoute)
-                        },
-                        onLoginClick = {
-                            navController.navigate(LoginRoute)
+            ) { innerPadding ->
+                val isNonDashboardTab =
+                    currentTab != null && currentTab != "Home" && currentTab != "Dashboard"
+
+                PlatformBackHandler(enabled = isNonDashboardTab) {
+                    navController.navigate(DashboardRoute) {
+                        popUpTo(DashboardRoute) {
+                            inclusive = false
                         }
-                    )
+                        launchSingleTop = true
+                    }
                 }
-
-                composable<CreateWorkspaceRoute> {
-                    CreateWorkspaceScreen(
-                        onNavigateToOnboarding = {
-                            navController.navigate(OnboardingRoute)
-                        },
-                        onBackClick = {
-                            navController.popBackStack()
+                NavHost(
+                    navController = navController,
+                    startDestination = if (isOnboardingCompleted == true) DashboardRoute else IntroRoute,
+                    modifier = modifier.padding(innerPadding),
+                    enterTransition = {
+                        val isTargetMainTab = isMainTab(targetState.destination.route)
+                        val isInitialMainTab = isMainTab(initialState.destination.route)
+                        if (isTargetMainTab && isInitialMainTab) {
+                            fadeIn(animationSpec = tween(ANIM_DURATION))
+                        } else {
+                            slideInHorizontally(
+                                initialOffsetX = { it },
+                                animationSpec = tween(ANIM_DURATION, easing = ANIM_EASING)
+                            )
                         }
-                    )
-                }
-
-                composable<OnboardingRoute> {
-                    OnboardingDataScreen(
-                        onNavigateBack = {
-                            navController.popBackStack()
-                        },
-                        onFinishOnboarding = { newProfile ->
-                            viewModel.completeOnboarding(newProfile)
-                            navController.navigate(DashboardRoute) {
-                                popUpTo(IntroRoute) { inclusive = true }
-                            }
-                            BrowserRouter.updateUrl("home")
+                    },
+                    exitTransition = {
+                        val isTargetMainTab = isMainTab(targetState.destination.route)
+                        val isInitialMainTab = isMainTab(initialState.destination.route)
+                        if (isTargetMainTab && isInitialMainTab) {
+                            fadeOut(animationSpec = tween(ANIM_DURATION))
+                        } else {
+                            slideOutHorizontally(
+                                targetOffsetX = { -it / 3 },
+                                animationSpec = tween(ANIM_DURATION, easing = ANIM_EASING)
+                            )
                         }
-                    )
-                }
-
-                composable<DashboardRoute> {
-                    DashboardScreen(
-                        onNavigateToInput = {
-                            navController.navigate(InputDataRoute)
-                        },
-                        onNavigateToPricing = {
-                            navController.navigate(PricingSimulatorRoute(initialTab = 0)) {
-                                launchSingleTop = true
-                            }
-                        },
-                        onNavigateToWhatIf = {
-                            navController.navigate(PricingSimulatorRoute(initialTab = 1)) {
-                                launchSingleTop = true
-                            }
-                        },
-                        onNavigateToBreakEven = {
-                            navController.navigate(PricingSimulatorRoute(initialTab = 2)) {
-                                launchSingleTop = true
-                            }
-                        },
-                        onNavigateToGrowth = {
-                            navController.navigate(PricingSimulatorRoute(initialTab = 3)) {
-                                launchSingleTop = true
-                            }
-                        },
-                        onNavigateToMetrics = {
-                            navController.navigate(MetricsRoute)
-                        },
-                        onNavigateToGoalPlanner = {
-                            navController.navigate(GoalPlannerRoute)
+                    },
+                    popEnterTransition = {
+                        val isTargetMainTab = isMainTab(targetState.destination.route)
+                        val isInitialMainTab = isMainTab(initialState.destination.route)
+                        if (isTargetMainTab && isInitialMainTab) {
+                            fadeIn(animationSpec = tween(ANIM_DURATION))
+                        } else {
+                            slideInHorizontally(
+                                initialOffsetX = { -it / 3 },
+                                animationSpec = tween(ANIM_DURATION, easing = ANIM_EASING)
+                            )
                         }
-                    )
-                }
-
-                composable<InputDataRoute> {
-                    BusinessSetupScreen(
-                        onNavigateBack = { navController.popBackStack() }
-                    )
-                }
-
-                composable<PricingSimulatorRoute> { backStackEntry ->
-                    val route = backStackEntry.toRoute<PricingSimulatorRoute>()
-                    SimulatorScreen(
-                        initialTab = route.initialTab,
-                        onNavigateToMetrics = { navController.navigate(MetricsRoute) }
-                    )
-                }
-
-                composable<ScenarioBuilderRoute> {
-                    ScenarioBuilderScreen(
-                        onNavigateToCreate = {
-                            navController.navigate(PricingSimulatorRoute(initialTab = 0)) {
-                                launchSingleTop = true
-                            }
-                        },
-                        onNavigateToCompare = { navController.navigate(ScenarioComparisonRoute) },
-                        onNavigateToMetrics = { navController.navigate(MetricsRoute) },
-                        onNavigateToExperiments = { navController.navigate(ExperimentsRoute) }
-                    )
-                }
-
-                composable<ScenarioComparisonRoute> {
-                    ScenarioComparisonScreen(
-                        onNavigateBack = { navController.popBackStack() }
-                    )
-                }
-
-                composable<ForecastRoute> {
-                    ForecastScreen(
-                        onNavigateToGoalPlanner = { navController.navigate(GoalPlannerRoute) },
-                        onNavigateToMetrics = { navController.navigate(MetricsRoute) }
-                    )
-                }
-
-                composable<GoalPlannerRoute> {
-                    GoalPlannerScreen(
-                        onNavigateBack = { navController.popBackStack() }
-                    )
-                }
-
-                composable<MetricsRoute> {
-                    SaaSMetricsScreen(
-                        onNavigateBack = { navController.popBackStack() },
-                        onNavigateToRevenueBreakdown = { navController.navigate(RevenueBreakdownRoute) },
-                        onNavigateToLtvAnalysis = { navController.navigate(LtvAnalysisRoute) },
-                        onNavigateToCacAnalytics = { navController.navigate(CacAnalyticsRoute) },
-                        onNavigateToCustomerAnalytics = { navController.navigate(CustomerAnalyticsRoute) },
-                        onNavigateToCohortAnalysis = { navController.navigate(CohortAnalysisRoute) }
-                    )
-                }
-
-                composable<SettingsRoute> {
-                    SettingsScreen(
-                        onNavigateToWorkspace = { navController.navigate(WorkspaceManagementRoute) },
-                        onNavigateToTeam = { navController.navigate(TeamRoute) },
-                        onNavigateToBaseline = { navController.navigate(InputDataRoute) },
-                        onNavigateToDataImport = { navController.navigate(DataImportRoute) },
-                        onNavigateToSignUp = { navController.navigate(LoginRoute) },
-                        onNavigateToProfile = { navController.navigate(ProfileRoute) },
-                        onNavigateToReports = { navController.navigate(ReportsRoute) },
-                        onNavigateToSecurity = { navController.navigate(SecurityRoute) },
-                        onNavigateToNotifications = { navController.navigate(NotificationsRoute) },
-                        onNavigateToBilling = { navController.navigate(BillingRoute) },
-                        onNavigateToIntegrations = { navController.navigate(IntegrationsRoute) },
-                        onNavigateToApiWebhooks = { navController.navigate(ApiWebhooksRoute) }
-                    )
-                }
-
-                composable<WorkspaceManagementRoute> {
-                    WorkspaceManagementScreen(
-                        onBackClick = { navController.popBackStack() },
-                        onNavigateToBaseline = { navController.navigate(InputDataRoute) },
-                        onNavigateToCreateWorkspace = { navController.navigate(CreateWorkspaceRoute) }
-                    )
-                }
-
-                composable<DataImportRoute> {
-                    val importViewModel: com.revlens.app.ui.screens.data.DataImportViewModel = org.koin.compose.viewmodel.koinViewModel()
-                    com.revlens.app.ui.screens.data.DataImportScreen(
-                        viewModel = importViewModel,
-                        onNavigateBack = { navController.popBackStack() },
-                        onNavigateToAnalytics = {
-                            navController.navigate(RevenueBreakdownRoute) {
-                                popUpTo(DashboardRoute) { inclusive = false }
-                            }
+                    },
+                    popExitTransition = {
+                        val isTargetMainTab = isMainTab(targetState.destination.route)
+                        val isInitialMainTab = isMainTab(initialState.destination.route)
+                        if (isTargetMainTab && isInitialMainTab) {
+                            fadeOut(animationSpec = tween(ANIM_DURATION))
+                        } else {
+                            slideOutHorizontally(
+                                targetOffsetX = { it },
+                                animationSpec = tween(ANIM_DURATION, easing = ANIM_EASING)
+                            )
                         }
-                    )
-                }
+                    }
+                ) {
+                    composable<IntroRoute> {
+                        IntroScreen(
+                            onGetStarted = {
+                                navController.navigate(CreateWorkspaceRoute)
+                            },
+                            onLoginClick = {
+                                navController.navigate(LoginRoute)
+                            }
+                        )
+                    }
 
-                composable<RevenueBreakdownRoute> {
-                    val breakdownViewModel: com.revlens.app.ui.screens.analytics.RevenueBreakdownViewModel = org.koin.compose.viewmodel.koinViewModel()
-                    com.revlens.app.ui.screens.analytics.RevenueBreakdownScreen(
-                        viewModel = breakdownViewModel,
-                        onNavigateBack = { navController.popBackStack() },
-                        onNavigateToDataImport = { navController.navigate(DataImportRoute) },
-                        onNavigateToSimulator = { navController.navigate(PricingSimulatorRoute(0)) }
-                    )
-                }
+                    composable<CreateWorkspaceRoute> {
+                        CreateWorkspaceScreen(
+                            onNavigateToOnboarding = {
+                                navController.navigate(OnboardingRoute)
+                            },
+                            onBackClick = {
+                                navController.popBackStack()
+                            }
+                        )
+                    }
 
-                composable<LtvAnalysisRoute> {
-                    val ltvViewModel: com.revlens.app.ui.screens.analytics.LtvAnalysisViewModel = org.koin.compose.viewmodel.koinViewModel()
-                    com.revlens.app.ui.screens.analytics.LtvAnalysisScreen(
-                        viewModel = ltvViewModel,
-                        onNavigateBack = { navController.popBackStack() },
-                        onNavigateToWhatIf = {
-                            navController.navigate(PricingSimulatorRoute(1))
-                        },
-                        onNavigateToBaseline = { navController.navigate(InputDataRoute) }
-                    )
-                }
-
-                composable<CacAnalyticsRoute> {
-                    val cacViewModel: com.revlens.app.ui.screens.analytics.CacAnalyticsViewModel = org.koin.compose.viewmodel.koinViewModel()
-                    com.revlens.app.ui.screens.analytics.CacAnalyticsScreen(
-                        viewModel = cacViewModel,
-                        onNavigateBack = { navController.popBackStack() },
-                        onNavigateToGrowthSimulator = { navController.navigate(PricingSimulatorRoute(3)) }
-                    )
-                }
-
-                composable<CustomerAnalyticsRoute> {
-                    val customerViewModel: com.revlens.app.ui.screens.analytics.CustomerAnalyticsViewModel = org.koin.compose.viewmodel.koinViewModel()
-                    com.revlens.app.ui.screens.analytics.CustomerAnalyticsScreen(
-                        viewModel = customerViewModel,
-                        onNavigateBack = { navController.popBackStack() },
-                        onNavigateToDataImport = { navController.navigate(DataImportRoute) }
-                    )
-                }
-
-                composable<CohortAnalysisRoute> {
-                    val cohortViewModel: com.revlens.app.ui.screens.analytics.CohortAnalysisViewModel = org.koin.compose.viewmodel.koinViewModel()
-                    com.revlens.app.ui.screens.analytics.CohortAnalysisScreen(
-                        viewModel = cohortViewModel,
-                        onNavigateBack = { navController.popBackStack() },
-                        onNavigateToDataImport = { navController.navigate(DataImportRoute) }
-                    )
-                }
-
-                composable<ExperimentsRoute> {
-                    val expViewModel: com.revlens.app.ui.screens.experiments.ExperimentsViewModel = org.koin.compose.viewmodel.koinViewModel()
-                    com.revlens.app.ui.screens.experiments.ExperimentsScreen(
-                        viewModel = expViewModel,
-                        onNavigateBack = { navController.popBackStack() },
-                        onNavigateToDetails = { id -> navController.navigate(ExperimentDetailsRoute(id)) }
-                    )
-                }
-
-                composable<ExperimentDetailsRoute> { backStackEntry ->
-                    val route = backStackEntry.toRoute<ExperimentDetailsRoute>()
-                    val detailsViewModel: com.revlens.app.ui.screens.experiments.ExperimentDetailsViewModel = org.koin.compose.viewmodel.koinViewModel()
-                    com.revlens.app.ui.screens.experiments.ExperimentDetailsScreen(
-                        experimentId = route.id,
-                        viewModel = detailsViewModel,
-                        onNavigateBack = { navController.popBackStack() }
-                    )
-                }
-
-                composable<ReportsRoute> {
-                    val reportsViewModel: com.revlens.app.ui.screens.reports.ReportsViewModel = org.koin.compose.viewmodel.koinViewModel()
-                    com.revlens.app.ui.screens.reports.ReportsScreen(
-                        viewModel = reportsViewModel,
-                        onNavigateBack = { navController.popBackStack() }
-                    )
-                }
-
-                composable<SecurityRoute> {
-                    val securityViewModel: com.revlens.app.ui.screens.security.SecuritySettingsViewModel = org.koin.compose.viewmodel.koinViewModel()
-                    com.revlens.app.ui.screens.security.SecuritySettingsScreen(
-                        viewModel = securityViewModel,
-                        onNavigateBack = { navController.popBackStack() },
-                        onNavigateToSignUp = { navController.navigate(LoginRoute) }
-                    )
-                }
-
-                composable<NotificationsRoute> {
-                    val notifViewModel: com.revlens.app.ui.screens.notifications.NotificationSettingsViewModel = org.koin.compose.viewmodel.koinViewModel()
-                    com.revlens.app.ui.screens.notifications.NotificationSettingsScreen(
-                        viewModel = notifViewModel,
-                        onNavigateBack = { navController.popBackStack() }
-                    )
-                }
-
-                composable<LoginRoute> {
-                    val loginViewModel: com.revlens.app.ui.screens.auth.LoginViewModel = org.koin.compose.viewmodel.koinViewModel()
-                    com.revlens.app.ui.screens.auth.LoginScreen(
-                        viewModel = loginViewModel,
-                        onNavigateBack = {
-                            if (!navController.popBackStack()) {
+                    composable<OnboardingRoute> {
+                        OnboardingDataScreen(
+                            onNavigateBack = {
+                                navController.popBackStack()
+                            },
+                            onFinishOnboarding = { newProfile ->
+                                viewModel.completeOnboarding(newProfile)
                                 navController.navigate(DashboardRoute) {
-                                    popUpTo(0) { inclusive = true }
+                                    popUpTo(IntroRoute) { inclusive = true }
+                                }
+                                BrowserRouter.updateUrl("home")
+                            }
+                        )
+                    }
+
+                    composable<DashboardRoute> {
+                        DashboardScreen(
+                            onNavigateToInput = {
+                                navController.navigate(InputDataRoute)
+                            },
+                            onNavigateToPricing = {
+                                navController.navigate(PricingSimulatorRoute(initialTab = 0)) {
+                                    launchSingleTop = true
+                                }
+                            },
+                            onNavigateToWhatIf = {
+                                navController.navigate(PricingSimulatorRoute(initialTab = 1)) {
+                                    launchSingleTop = true
+                                }
+                            },
+                            onNavigateToBreakEven = {
+                                navController.navigate(PricingSimulatorRoute(initialTab = 2)) {
+                                    launchSingleTop = true
+                                }
+                            },
+                            onNavigateToGrowth = {
+                                navController.navigate(PricingSimulatorRoute(initialTab = 3)) {
+                                    launchSingleTop = true
+                                }
+                            },
+                            onNavigateToMetrics = {
+                                navController.navigate(MetricsRoute)
+                            },
+                            onNavigateToGoalPlanner = {
+                                navController.navigate(GoalPlannerRoute)
+                            }
+                        )
+                    }
+
+                    composable<InputDataRoute> {
+                        BusinessSetupScreen(
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+
+                    composable<PricingSimulatorRoute> { backStackEntry ->
+                        val route = backStackEntry.toRoute<PricingSimulatorRoute>()
+                        SimulatorScreen(
+                            initialTab = route.initialTab,
+                            onNavigateToMetrics = { navController.navigate(MetricsRoute) }
+                        )
+                    }
+
+                    composable<ScenarioBuilderRoute> {
+                        ScenarioBuilderScreen(
+                            onNavigateToCreate = {
+                                navController.navigate(PricingSimulatorRoute(initialTab = 0)) {
+                                    launchSingleTop = true
+                                }
+                            },
+                            onNavigateToCompare = {
+                                navController.navigate(
+                                    ScenarioComparisonRoute
+                                )
+                            },
+                            onNavigateToMetrics = { navController.navigate(MetricsRoute) },
+                            onNavigateToExperiments = { navController.navigate(ExperimentsRoute) }
+                        )
+                    }
+
+                    composable<ScenarioComparisonRoute> {
+                        ScenarioComparisonScreen(
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+
+                    composable<ForecastRoute> {
+                        ForecastScreen(
+                            onNavigateToGoalPlanner = { navController.navigate(GoalPlannerRoute) },
+                            onNavigateToMetrics = { navController.navigate(MetricsRoute) }
+                        )
+                    }
+
+                    composable<GoalPlannerRoute> {
+                        GoalPlannerScreen(
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+
+                    composable<MetricsRoute> {
+                        SaaSMetricsScreen(
+                            onNavigateBack = { navController.popBackStack() },
+                            onNavigateToRevenueBreakdown = {
+                                navController.navigate(
+                                    RevenueBreakdownRoute
+                                )
+                            },
+                            onNavigateToLtvAnalysis = { navController.navigate(LtvAnalysisRoute) },
+                            onNavigateToCacAnalytics = {
+                                navController.navigate(
+                                    CacAnalyticsRoute
+                                )
+                            },
+                            onNavigateToCustomerAnalytics = {
+                                navController.navigate(
+                                    CustomerAnalyticsRoute
+                                )
+                            },
+                            onNavigateToCohortAnalysis = {
+                                navController.navigate(
+                                    CohortAnalysisRoute
+                                )
+                            }
+                        )
+                    }
+
+                    composable<SettingsRoute> {
+                        SettingsScreen(
+                            onNavigateToWorkspace = {
+                                navController.navigate(
+                                    WorkspaceManagementRoute
+                                )
+                            },
+                            onNavigateToTeam = { navController.navigate(TeamRoute) },
+                            onNavigateToBaseline = { navController.navigate(InputDataRoute) },
+                            onNavigateToDataImport = { navController.navigate(DataImportRoute) },
+                            onNavigateToSignUp = { navController.navigate(LoginRoute) },
+                            onNavigateToProfile = { navController.navigate(ProfileRoute) },
+                            onNavigateToReports = { navController.navigate(ReportsRoute) },
+                            onNavigateToSecurity = { navController.navigate(SecurityRoute) },
+                            onNavigateToNotifications = {
+                                navController.navigate(
+                                    NotificationsRoute
+                                )
+                            },
+                            onNavigateToBilling = { navController.navigate(BillingRoute) },
+                            onNavigateToIntegrations = {
+                                navController.navigate(
+                                    IntegrationsRoute
+                                )
+                            },
+                            onNavigateToApiWebhooks = { navController.navigate(ApiWebhooksRoute) }
+                        )
+                    }
+
+                    composable<WorkspaceManagementRoute> {
+                        WorkspaceManagementScreen(
+                            onBackClick = { navController.popBackStack() },
+                            onNavigateToBaseline = { navController.navigate(InputDataRoute) },
+                            onNavigateToCreateWorkspace = {
+                                navController.navigate(
+                                    CreateWorkspaceRoute
+                                )
+                            }
+                        )
+                    }
+
+                    composable<DataImportRoute> {
+                        val importViewModel: com.revlens.app.ui.screens.data.DataImportViewModel =
+                            org.koin.compose.viewmodel.koinViewModel()
+                        com.revlens.app.ui.screens.data.DataImportScreen(
+                            viewModel = importViewModel,
+                            onNavigateBack = { navController.popBackStack() },
+                            onNavigateToAnalytics = {
+                                navController.navigate(RevenueBreakdownRoute) {
+                                    popUpTo(DashboardRoute) { inclusive = false }
                                 }
                             }
-                        }
-                    )
-                }
+                        )
+                    }
 
-                composable<ProfileRoute> {
-                    val profileViewModel: com.revlens.app.ui.screens.profile.ProfileViewModel = org.koin.compose.viewmodel.koinViewModel()
-                    com.revlens.app.ui.screens.profile.ProfileScreen(
-                        viewModel = profileViewModel,
-                        onNavigateBack = { navController.popBackStack() },
-                        onNavigateToLogin = { navController.navigate(LoginRoute) }
-                    )
-                }
+                    composable<RevenueBreakdownRoute> {
+                        val breakdownViewModel: com.revlens.app.ui.screens.analytics.RevenueBreakdownViewModel =
+                            org.koin.compose.viewmodel.koinViewModel()
+                        com.revlens.app.ui.screens.analytics.RevenueBreakdownScreen(
+                            viewModel = breakdownViewModel,
+                            onNavigateBack = { navController.popBackStack() },
+                            onNavigateToDataImport = { navController.navigate(DataImportRoute) },
+                            onNavigateToSimulator = {
+                                navController.navigate(
+                                    PricingSimulatorRoute(0)
+                                )
+                            }
+                        )
+                    }
 
-                composable<TeamRoute> {
-                    val teamViewModel: com.revlens.app.ui.screens.team.TeamViewModel = org.koin.compose.viewmodel.koinViewModel()
-                    com.revlens.app.ui.screens.team.TeamScreen(
-                        viewModel = teamViewModel,
-                        onNavigateBack = { navController.popBackStack() }
-                    )
-                }
+                    composable<LtvAnalysisRoute> {
+                        val ltvViewModel: com.revlens.app.ui.screens.analytics.LtvAnalysisViewModel =
+                            org.koin.compose.viewmodel.koinViewModel()
+                        com.revlens.app.ui.screens.analytics.LtvAnalysisScreen(
+                            viewModel = ltvViewModel,
+                            onNavigateBack = { navController.popBackStack() },
+                            onNavigateToWhatIf = {
+                                navController.navigate(PricingSimulatorRoute(1))
+                            },
+                            onNavigateToBaseline = { navController.navigate(InputDataRoute) }
+                        )
+                    }
 
-                composable<BillingRoute> {
-                    val billingViewModel: com.revlens.app.ui.screens.billing.BillingViewModel = org.koin.compose.viewmodel.koinViewModel()
-                    com.revlens.app.ui.screens.billing.BillingScreen(
-                        viewModel = billingViewModel,
-                        onNavigateBack = { navController.popBackStack() }
-                    )
-                }
+                    composable<CacAnalyticsRoute> {
+                        val cacViewModel: com.revlens.app.ui.screens.analytics.CacAnalyticsViewModel =
+                            org.koin.compose.viewmodel.koinViewModel()
+                        com.revlens.app.ui.screens.analytics.CacAnalyticsScreen(
+                            viewModel = cacViewModel,
+                            onNavigateBack = { navController.popBackStack() },
+                            onNavigateToGrowthSimulator = {
+                                navController.navigate(
+                                    PricingSimulatorRoute(3)
+                                )
+                            }
+                        )
+                    }
 
-                composable<IntegrationsRoute> {
-                    val integrationsViewModel: com.revlens.app.ui.screens.integrations.IntegrationsViewModel = org.koin.compose.viewmodel.koinViewModel()
-                    com.revlens.app.ui.screens.integrations.IntegrationsScreen(
-                        viewModel = integrationsViewModel,
-                        onNavigateBack = { navController.popBackStack() }
-                    )
-                }
+                    composable<CustomerAnalyticsRoute> {
+                        val customerViewModel: com.revlens.app.ui.screens.analytics.CustomerAnalyticsViewModel =
+                            org.koin.compose.viewmodel.koinViewModel()
+                        com.revlens.app.ui.screens.analytics.CustomerAnalyticsScreen(
+                            viewModel = customerViewModel,
+                            onNavigateBack = { navController.popBackStack() },
+                            onNavigateToDataImport = { navController.navigate(DataImportRoute) }
+                        )
+                    }
 
-                composable<ApiWebhooksRoute> {
-                    val developerViewModel: com.revlens.app.ui.screens.developer.ApiWebhooksViewModel = org.koin.compose.viewmodel.koinViewModel()
-                    com.revlens.app.ui.screens.developer.ApiWebhooksScreen(
-                        viewModel = developerViewModel,
-                        onNavigateBack = { navController.popBackStack() }
-                    )
-                }
+                    composable<CohortAnalysisRoute> {
+                        val cohortViewModel: com.revlens.app.ui.screens.analytics.CohortAnalysisViewModel =
+                            org.koin.compose.viewmodel.koinViewModel()
+                        com.revlens.app.ui.screens.analytics.CohortAnalysisScreen(
+                            viewModel = cohortViewModel,
+                            onNavigateBack = { navController.popBackStack() },
+                            onNavigateToDataImport = { navController.navigate(DataImportRoute) }
+                        )
+                    }
 
-                composable<LandingRoute> {
-                    val landingViewModel: com.revlens.app.ui.screens.marketing.LandingViewModel = org.koin.compose.viewmodel.koinViewModel()
-                    com.revlens.app.ui.screens.marketing.LandingScreen(
-                        viewModel = landingViewModel,
-                        onNavigateToAuth = { navController.navigate(LoginRoute) },
-                        onNavigateToDemo = { navController.navigate(DashboardRoute) },
-                        onNavigateToPricing = { navController.navigate(PublicPricingRoute) }
-                    )
-                }
+                    composable<ExperimentsRoute> {
+                        val expViewModel: com.revlens.app.ui.screens.experiments.ExperimentsViewModel =
+                            org.koin.compose.viewmodel.koinViewModel()
+                        com.revlens.app.ui.screens.experiments.ExperimentsScreen(
+                            viewModel = expViewModel,
+                            onNavigateBack = { navController.popBackStack() },
+                            onNavigateToDetails = { id ->
+                                navController.navigate(
+                                    ExperimentDetailsRoute(id)
+                                )
+                            }
+                        )
+                    }
 
-                composable<PublicPricingRoute> {
-                    val pricingViewModel: com.revlens.app.ui.screens.marketing.PublicPricingViewModel = org.koin.compose.viewmodel.koinViewModel()
-                    com.revlens.app.ui.screens.marketing.PublicPricingScreen(
-                        viewModel = pricingViewModel,
-                        onNavigateToAuth = { navController.navigate(LoginRoute) },
-                        onNavigateToHome = { navController.navigate(LandingRoute) }
-                    )
+                    composable<ExperimentDetailsRoute> { backStackEntry ->
+                        val route = backStackEntry.toRoute<ExperimentDetailsRoute>()
+                        val detailsViewModel: com.revlens.app.ui.screens.experiments.ExperimentDetailsViewModel =
+                            org.koin.compose.viewmodel.koinViewModel()
+                        com.revlens.app.ui.screens.experiments.ExperimentDetailsScreen(
+                            experimentId = route.id,
+                            viewModel = detailsViewModel,
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+
+                    composable<ReportsRoute> {
+                        val reportsViewModel: com.revlens.app.ui.screens.reports.ReportsViewModel =
+                            org.koin.compose.viewmodel.koinViewModel()
+                        com.revlens.app.ui.screens.reports.ReportsScreen(
+                            viewModel = reportsViewModel,
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+
+                    composable<SecurityRoute> {
+                        val securityViewModel: com.revlens.app.ui.screens.security.SecuritySettingsViewModel =
+                            org.koin.compose.viewmodel.koinViewModel()
+                        com.revlens.app.ui.screens.security.SecuritySettingsScreen(
+                            viewModel = securityViewModel,
+                            onNavigateBack = { navController.popBackStack() },
+                            onNavigateToSignUp = { navController.navigate(LoginRoute) }
+                        )
+                    }
+
+                    composable<NotificationsRoute> {
+                        val notifViewModel: com.revlens.app.ui.screens.notifications.NotificationSettingsViewModel =
+                            org.koin.compose.viewmodel.koinViewModel()
+                        com.revlens.app.ui.screens.notifications.NotificationSettingsScreen(
+                            viewModel = notifViewModel,
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+
+                    composable<LoginRoute> {
+                        val loginViewModel: com.revlens.app.ui.screens.auth.LoginViewModel =
+                            org.koin.compose.viewmodel.koinViewModel()
+                        com.revlens.app.ui.screens.auth.LoginScreen(
+                            viewModel = loginViewModel,
+                            onNavigateBack = {
+                                if (!navController.popBackStack()) {
+                                    navController.navigate(DashboardRoute) {
+                                        popUpTo(0) { inclusive = true }
+                                    }
+                                }
+                            }
+                        )
+                    }
+
+                    composable<ProfileRoute> {
+                        val profileViewModel: com.revlens.app.ui.screens.profile.ProfileViewModel =
+                            org.koin.compose.viewmodel.koinViewModel()
+                        com.revlens.app.ui.screens.profile.ProfileScreen(
+                            viewModel = profileViewModel,
+                            onNavigateBack = { navController.popBackStack() },
+                            onNavigateToLogin = { navController.navigate(LoginRoute) }
+                        )
+                    }
+
+                    composable<TeamRoute> {
+                        val teamViewModel: com.revlens.app.ui.screens.team.TeamViewModel =
+                            org.koin.compose.viewmodel.koinViewModel()
+                        com.revlens.app.ui.screens.team.TeamScreen(
+                            viewModel = teamViewModel,
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+
+                    composable<BillingRoute> {
+                        val billingViewModel: com.revlens.app.ui.screens.billing.BillingViewModel =
+                            org.koin.compose.viewmodel.koinViewModel()
+                        com.revlens.app.ui.screens.billing.BillingScreen(
+                            viewModel = billingViewModel,
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+
+                    composable<IntegrationsRoute> {
+                        val integrationsViewModel: com.revlens.app.ui.screens.integrations.IntegrationsViewModel =
+                            org.koin.compose.viewmodel.koinViewModel()
+                        com.revlens.app.ui.screens.integrations.IntegrationsScreen(
+                            viewModel = integrationsViewModel,
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+
+                    composable<ApiWebhooksRoute> {
+                        val developerViewModel: com.revlens.app.ui.screens.developer.ApiWebhooksViewModel =
+                            org.koin.compose.viewmodel.koinViewModel()
+                        com.revlens.app.ui.screens.developer.ApiWebhooksScreen(
+                            viewModel = developerViewModel,
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+
+                    composable<LandingRoute> {
+                        val landingViewModel: com.revlens.app.ui.screens.marketing.LandingViewModel =
+                            org.koin.compose.viewmodel.koinViewModel()
+                        com.revlens.app.ui.screens.marketing.LandingScreen(
+                            viewModel = landingViewModel,
+                            onNavigateToAuth = { navController.navigate(LoginRoute) },
+                            onNavigateToDemo = { navController.navigate(DashboardRoute) },
+                            onNavigateToPricing = { navController.navigate(PublicPricingRoute) }
+                        )
+                    }
+
+                    composable<PublicPricingRoute> {
+                        val pricingViewModel: com.revlens.app.ui.screens.marketing.PublicPricingViewModel =
+                            org.koin.compose.viewmodel.koinViewModel()
+                        com.revlens.app.ui.screens.marketing.PublicPricingScreen(
+                            viewModel = pricingViewModel,
+                            onNavigateToAuth = { navController.navigate(LoginRoute) },
+                            onNavigateToHome = { navController.navigate(LandingRoute) }
+                        )
+                    }
                 }
             }
         }
     }
-}
 }
 
 

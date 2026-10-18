@@ -13,13 +13,10 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -62,7 +59,9 @@ fun CreateWorkspaceScreen(
             when (effect) {
                 CreateWorkspaceEffect.NavigateToOnboarding -> onNavigateToOnboarding()
                 CreateWorkspaceEffect.NavigateBack -> onBackClick?.invoke()
-                is CreateWorkspaceEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.text.asString())
+                is CreateWorkspaceEffect.ShowMessage -> snackbarHostState.showSnackbar(
+                    effect.text.asString()
+                )
             }
         }
     }
@@ -206,25 +205,35 @@ fun CreateWorkspaceScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        currencies.take(3).forEach { curr ->
-                            ChoiceChip(
-                                text = curr,
-                                selected = state.currency == curr,
-                                onClick = { viewModel.onEvent(CreateWorkspaceEvent.CurrencyChanged(curr)) }
-                            )
-                        }
+                        currencies.take(3)
+                            .forEach { curr ->
+                                ChoiceChip(
+                                    text = curr,
+                                    selected = state.currency == curr,
+                                    onClick = {
+                                        viewModel.onEvent(
+                                            CreateWorkspaceEvent.CurrencyChanged(curr)
+                                        )
+                                    }
+                                )
+                            }
                     }
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        currencies.drop(3).forEach { curr ->
-                            ChoiceChip(
-                                text = curr,
-                                selected = state.currency == curr,
-                                onClick = { viewModel.onEvent(CreateWorkspaceEvent.CurrencyChanged(curr)) }
-                            )
-                        }
+                        currencies.drop(3)
+                            .forEach { curr ->
+                                ChoiceChip(
+                                    text = curr,
+                                    selected = state.currency == curr,
+                                    onClick = {
+                                        viewModel.onEvent(
+                                            CreateWorkspaceEvent.CurrencyChanged(curr)
+                                        )
+                                    }
+                                )
+                            }
                     }
                 }
             }

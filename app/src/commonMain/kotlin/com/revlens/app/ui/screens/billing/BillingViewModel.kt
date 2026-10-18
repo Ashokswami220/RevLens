@@ -3,7 +3,6 @@ package com.revlens.app.ui.screens.billing
 import androidx.lifecycle.viewModelScope
 import com.revlens.app.core.ui.MviViewModel
 import com.revlens.app.domain.context.WorkspaceContext
-import com.revlens.app.domain.model.BillingPeriod
 import com.revlens.app.domain.model.PlanTier
 import com.revlens.app.domain.repository.BillingRepository
 import kotlinx.coroutines.Job
@@ -32,19 +31,21 @@ class BillingViewModel(
         observeJob?.cancel()
         observeJob = viewModelScope.launch {
             launch {
-                billingRepository.getSubscription(wsId).collect { sub ->
-                    update {
-                        copy(
-                            subscription = sub,
-                            selectedPeriod = sub.period
-                        )
+                billingRepository.getSubscription(wsId)
+                    .collect { sub ->
+                        update {
+                            copy(
+                                subscription = sub,
+                                selectedPeriod = sub.period
+                            )
+                        }
                     }
-                }
             }
             launch {
-                billingRepository.getInvoices(wsId).collect { invoices ->
-                    update { copy(invoices = invoices) }
-                }
+                billingRepository.getInvoices(wsId)
+                    .collect { invoices ->
+                        update { copy(invoices = invoices) }
+                    }
             }
         }
     }
@@ -54,6 +55,7 @@ class BillingViewModel(
             BillingEvent.OpenChangePlanSheet -> update {
                 copy(isChangePlanSheetVisible = true, selectedPeriod = subscription.period)
             }
+
             BillingEvent.DismissChangePlanSheet -> update { copy(isChangePlanSheetVisible = false) }
             is BillingEvent.SelectBillingPeriod -> update { copy(selectedPeriod = event.period) }
             is BillingEvent.SelectPlan -> changePlan(event.tier)
@@ -72,15 +74,17 @@ class BillingViewModel(
     private fun changePlan(tier: PlanTier) {
         viewModelScope.launch {
             update { copy(isLoading = true) }
-            val res = billingRepository.changePlan(currentWorkspaceId, tier, state.value.selectedPeriod)
+            val res =
+                billingRepository.changePlan(currentWorkspaceId, tier, state.value.selectedPeriod)
             update { copy(isLoading = false) }
 
             res.onSuccess {
                 update { copy(isChangePlanSheetVisible = false) }
                 emit(BillingEffect.ShowToast("Plan successfully updated to ${tier.title}!"))
-            }.onFailure { err ->
-                emit(BillingEffect.ShowToast(err.message ?: "Failed to update plan."))
             }
+                .onFailure { err ->
+                    emit(BillingEffect.ShowToast(err.message ?: "Failed to update plan."))
+                }
         }
     }
 
@@ -92,9 +96,10 @@ class BillingViewModel(
 
             res.onSuccess {
                 emit(BillingEffect.ShowToast("Subscription will cancel at end of billing cycle."))
-            }.onFailure { err ->
-                emit(BillingEffect.ShowToast(err.message ?: "Failed to cancel subscription."))
             }
+                .onFailure { err ->
+                    emit(BillingEffect.ShowToast(err.message ?: "Failed to cancel subscription."))
+                }
         }
     }
 
@@ -106,9 +111,12 @@ class BillingViewModel(
 
             res.onSuccess {
                 emit(BillingEffect.ShowToast("Subscription reactivated successfully!"))
-            }.onFailure { err ->
-                emit(BillingEffect.ShowToast(err.message ?: "Failed to reactivate subscription."))
             }
+                .onFailure { err ->
+                    emit(
+                        BillingEffect.ShowToast(err.message ?: "Failed to reactivate subscription.")
+                    )
+                }
         }
     }
 }

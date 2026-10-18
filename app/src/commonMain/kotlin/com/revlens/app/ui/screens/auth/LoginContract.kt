@@ -14,6 +14,7 @@ sealed interface LoginEvent {
         val email: String? = null,
         val displayName: String? = null
     ) : LoginEvent
+
     data object ContinueAsGuestClicked : LoginEvent
 }
 

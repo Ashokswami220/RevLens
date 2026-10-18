@@ -16,16 +16,22 @@ private external fun jsTriggerGoogleSignIn()
 @JsFun("() => window.revlensFirebase ? window.revlensFirebase.authStatus : 'error'")
 private external fun jsGetAuthStatus(): String
 
-@JsFun("() => (window.revlensFirebase && window.revlensFirebase.lastAuthResultJson) ? window.revlensFirebase.lastAuthResultJson : ''")
+@JsFun(
+    "() => (window.revlensFirebase && window.revlensFirebase.lastAuthResultJson) ? window.revlensFirebase.lastAuthResultJson : ''"
+)
 private external fun jsGetLastAuthResultJson(): String
 
-@JsFun("() => (window.revlensFirebase && window.revlensFirebase.lastAuthError) ? window.revlensFirebase.lastAuthError : ''")
+@JsFun(
+    "() => (window.revlensFirebase && window.revlensFirebase.lastAuthError) ? window.revlensFirebase.lastAuthError : ''"
+)
 private external fun jsGetLastAuthError(): String
 
 @JsFun("() => { if (window.revlensFirebase) { window.revlensFirebase.triggerSignOut(); } }")
 private external fun jsTriggerSignOut()
 
-@JsFun("() => (window.revlensFirebase && window.revlensFirebase.getCurrentUserJson()) ? window.revlensFirebase.getCurrentUserJson() : ''")
+@JsFun(
+    "() => (window.revlensFirebase && window.revlensFirebase.getCurrentUserJson()) ? window.revlensFirebase.getCurrentUserJson() : ''"
+)
 private external fun jsGetCurrentUserJson(): String
 
 @JsFun("(name) => { if (window.revlensFirebase) { window.revlensFirebase.updateProfile(name); } }")
@@ -70,7 +76,8 @@ class WebFirebaseAuthRepository(
                 }
             }
 
-            val errorMsg = jsGetLastAuthError().ifBlank { "Google sign-in was cancelled or encountered an error" }
+            val errorMsg =
+                jsGetLastAuthError().ifBlank { "Google sign-in was cancelled or encountered an error" }
             return Result.failure(AppException(AppError.Conflict(errorMsg)))
         } catch (e: Exception) {
             return Result.failure(e)
@@ -81,8 +88,12 @@ class WebFirebaseAuthRepository(
         return Result.failure(AppException(AppError.InvalidCredentials))
     }
 
-    override suspend fun signUp(name: String, email: String, password: String): Result<UserAccount> {
-        return Result.failure(AppException(AppError.Conflict("Sign up is handled via Google Sign-In")))
+    override suspend fun signUp(
+        name: String, email: String, password: String
+    ): Result<UserAccount> {
+        return Result.failure(
+            AppException(AppError.Conflict("Sign up is handled via Google Sign-In"))
+        )
     }
 
     override suspend fun requestPasswordReset(email: String): Result<Unit> {
@@ -109,7 +120,9 @@ class WebFirebaseAuthRepository(
     }
 
     override suspend fun refreshToken(): Result<AuthTokens> {
-        val user = cachedUser ?: getCurrentUser() ?: return Result.failure(AppException(AppError.Unauthorized))
+        val user = cachedUser ?: getCurrentUser() ?: return Result.failure(
+            AppException(AppError.Unauthorized)
+        )
         val tokens = AuthTokens(
             accessToken = "web_fb_acc_${user.id}",
             refreshToken = "web_fb_ref_${user.id}"
@@ -122,7 +135,8 @@ class WebFirebaseAuthRepository(
         val userJson = jsGetCurrentUserJson()
         if (userJson.isNotBlank()) {
             return try {
-                json.decodeFromString<UserAccount>(userJson).also { cachedUser = it }
+                json.decodeFromString<UserAccount>(userJson)
+                    .also { cachedUser = it }
             } catch (_: Exception) {
                 null
             }
@@ -139,7 +153,9 @@ class WebFirebaseAuthRepository(
     }
 
     override suspend fun updateProfile(name: String, jobTitle: String?): Result<UserAccount> {
-        val current = cachedUser ?: getCurrentUser() ?: return Result.failure(AppException(AppError.Unauthorized))
+        val current = cachedUser ?: getCurrentUser() ?: return Result.failure(
+            AppException(AppError.Unauthorized)
+        )
         try {
             jsUpdateProfile(name.trim())
             val updated = current.copy(name = name.trim(), jobTitle = jobTitle)

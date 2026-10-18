@@ -1,10 +1,8 @@
 package com.revlens.app.ui.screens.simulator
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,7 +17,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.BookmarkAdd
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
@@ -39,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.revlens.app.ui.components.ChartLegend
 import com.revlens.app.ui.components.DeltaChip
@@ -119,7 +115,11 @@ fun GrowthSimulatorScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = "${state.currencySymbol}${formatNumberWithCommas(finalMrrDollars)}",
+                            text = "${state.currencySymbol}${
+                                formatNumberWithCommas(
+                                    finalMrrDollars
+                                )
+                            }",
                             style = RevLensTypography.displayLarge,
                             color = RevLensTheme.colors.textPrimary
                         )
@@ -180,7 +180,8 @@ fun GrowthSimulatorScreen(
         SectionCard(
             title = "Acquisition Channels",
             trailingAction = {
-                TextButton(onClick = { viewModel.onEvent(GrowthSimulatorIntent.OpenAddChannelSheet) }) {
+                TextButton(
+                    onClick = { viewModel.onEvent(GrowthSimulatorIntent.OpenAddChannelSheet) }) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = null,
@@ -201,13 +202,19 @@ fun GrowthSimulatorScreen(
                     ChannelRow(
                         channel = channel,
                         onSpendChange = { newSpend ->
-                            viewModel.onEvent(GrowthSimulatorIntent.UpdateChannelSpend(channel.id, newSpend))
+                            viewModel.onEvent(
+                                GrowthSimulatorIntent.UpdateChannelSpend(channel.id, newSpend)
+                            )
                         },
                         onCacChange = { newCac ->
-                            viewModel.onEvent(GrowthSimulatorIntent.UpdateChannelCac(channel.id, newCac))
+                            viewModel.onEvent(
+                                GrowthSimulatorIntent.UpdateChannelCac(channel.id, newCac)
+                            )
                         },
                         onToggleEnabled = {
-                            viewModel.onEvent(GrowthSimulatorIntent.ToggleChannelEnabled(channel.id))
+                            viewModel.onEvent(
+                                GrowthSimulatorIntent.ToggleChannelEnabled(channel.id)
+                            )
                         },
                         onDelete = if (state.assumptions.channels.size > 1) {
                             { viewModel.onEvent(GrowthSimulatorIntent.RemoveChannel(channel.id)) }
@@ -223,7 +230,11 @@ fun GrowthSimulatorScreen(
                 LabeledSlider(
                     label = "Organic Growth Rate",
                     value = state.assumptions.organicGrowthPercent.toFloat(),
-                    onValueChange = { viewModel.onEvent(GrowthSimulatorIntent.UpdateOrganicGrowth(it.toDouble())) },
+                    onValueChange = {
+                        viewModel.onEvent(
+                            GrowthSimulatorIntent.UpdateOrganicGrowth(it.toDouble())
+                        )
+                    },
                     valueRange = 0f..10f,
                     valueString = "${(state.assumptions.organicGrowthPercent * 10).roundToInt() / 10.0}% / mo"
                 )
@@ -231,7 +242,11 @@ fun GrowthSimulatorScreen(
                 LabeledSlider(
                     label = "Referral Rate",
                     value = state.assumptions.referralRatePercent.toFloat(),
-                    onValueChange = { viewModel.onEvent(GrowthSimulatorIntent.UpdateReferralRate(it.toDouble())) },
+                    onValueChange = {
+                        viewModel.onEvent(
+                            GrowthSimulatorIntent.UpdateReferralRate(it.toDouble())
+                        )
+                    },
                     valueRange = 0f..10f,
                     valueString = "${(state.assumptions.referralRatePercent * 10).roundToInt() / 10.0}% / mo"
                 )
@@ -239,7 +254,11 @@ fun GrowthSimulatorScreen(
                 LabeledSlider(
                     label = "Expansion Revenue Rate",
                     value = state.assumptions.expansionRatePercent.toFloat(),
-                    onValueChange = { viewModel.onEvent(GrowthSimulatorIntent.UpdateExpansionRate(it.toDouble())) },
+                    onValueChange = {
+                        viewModel.onEvent(
+                            GrowthSimulatorIntent.UpdateExpansionRate(it.toDouble())
+                        )
+                    },
                     valueRange = 0f..5f,
                     valueString = "${(state.assumptions.expansionRatePercent * 10).roundToInt() / 10.0}% / mo"
                 )
@@ -257,13 +276,18 @@ fun GrowthSimulatorScreen(
                         )
                     )
 
-                    val simSeries = result.monthlySnapshots.map { (it.endingMrrMinor / 100).toFloat() }
-                    val baseSeries = List(result.monthlySnapshots.size) { (state.baselineMrrMinor / 100).toFloat() }
+                    val simSeries =
+                        result.monthlySnapshots.map { (it.endingMrrMinor / 100).toFloat() }
+                    val baseSeries = List(
+                        result.monthlySnapshots.size
+                    ) { (state.baselineMrrMinor / 100).toFloat() }
                     val xLabels = result.monthlySnapshots.mapIndexed { i, _ -> "M${i + 1}" }
 
                     RevLensLineChart(
                         data = listOf(simSeries, baseSeries),
-                        colors = listOf(RevLensTheme.colors.brandPrimary, RevLensTheme.colors.textTertiary),
+                        colors = listOf(
+                            RevLensTheme.colors.brandPrimary, RevLensTheme.colors.textTertiary
+                        ),
                         dashedIndices = listOf(1),
                         xLabels = xLabels,
                         chartHeight = 160.dp
@@ -335,7 +359,9 @@ fun GrowthSimulatorScreen(
             OutlinedButton(
                 onClick = { viewModel.onEvent(GrowthSimulatorIntent.ResetToDefaults) },
                 shape = RoundedCornerShape(10.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, RevLensTheme.colors.borderDefault)
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp, RevLensTheme.colors.borderDefault
+                )
             ) {
                 Icon(
                     imageVector = Icons.Default.Refresh,
@@ -361,7 +387,11 @@ fun GrowthSimulatorScreen(
     if (state.showSaveScenarioDialog) {
         var scenarioName by remember { mutableStateOf(state.scenarioNameInput) }
         AlertDialog(
-            onDismissRequest = { viewModel.onEvent(GrowthSimulatorIntent.DismissSaveScenarioDialog) },
+            onDismissRequest = {
+                viewModel.onEvent(
+                    GrowthSimulatorIntent.DismissSaveScenarioDialog
+                )
+            },
             containerColor = RevLensTheme.colors.surface,
             title = {
                 Text(
@@ -391,13 +421,20 @@ fun GrowthSimulatorScreen(
             confirmButton = {
                 Button(
                     onClick = { viewModel.onEvent(GrowthSimulatorIntent.SaveScenario) },
-                    colors = ButtonDefaults.buttonColors(containerColor = RevLensTheme.colors.primaryAction)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = RevLensTheme.colors.primaryAction
+                    )
                 ) {
                     Text("Save")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.onEvent(GrowthSimulatorIntent.DismissSaveScenarioDialog) }) {
+                TextButton(
+                    onClick = {
+                        viewModel.onEvent(
+                            GrowthSimulatorIntent.DismissSaveScenarioDialog
+                        )
+                    }) {
                     Text("Cancel", color = RevLensTheme.colors.textSecondary)
                 }
             }
@@ -455,13 +492,16 @@ fun GrowthSimulatorScreen(
                             )
                         )
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = RevLensTheme.colors.primaryAction)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = RevLensTheme.colors.primaryAction
+                    )
                 ) {
                     Text("Add")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.onEvent(GrowthSimulatorIntent.DismissAddChannelSheet) }) {
+                TextButton(
+                    onClick = { viewModel.onEvent(GrowthSimulatorIntent.DismissAddChannelSheet) }) {
                     Text("Cancel", color = RevLensTheme.colors.textSecondary)
                 }
             }
@@ -504,13 +544,16 @@ fun GrowthSimulatorScreen(
                         viewModel.onEvent(GrowthSimulatorIntent.UpdateStartingCash(minor))
                         viewModel.onEvent(GrowthSimulatorIntent.DismissCashSheet)
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = RevLensTheme.colors.primaryAction)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = RevLensTheme.colors.primaryAction
+                    )
                 ) {
                     Text("Update")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.onEvent(GrowthSimulatorIntent.DismissCashSheet) }) {
+                TextButton(
+                    onClick = { viewModel.onEvent(GrowthSimulatorIntent.DismissCashSheet) }) {
                     Text("Cancel", color = RevLensTheme.colors.textSecondary)
                 }
             }

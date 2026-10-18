@@ -38,7 +38,9 @@ data class ReportsUiState(
 
 sealed interface ReportsEvent {
     data class SelectFilter(val filter: ReportFilter) : ReportsEvent
-    data class OpenGenerateSheet(val template: ReportTemplate = ReportTemplate.INVESTOR_UPDATE) : ReportsEvent
+    data class OpenGenerateSheet(val template: ReportTemplate = ReportTemplate.INVESTOR_UPDATE) :
+        ReportsEvent
+
     data object DismissGenerateSheet : ReportsEvent
     data class UpdateTemplate(val template: ReportTemplate) : ReportsEvent
     data class UpdateTitle(val title: String) : ReportsEvent

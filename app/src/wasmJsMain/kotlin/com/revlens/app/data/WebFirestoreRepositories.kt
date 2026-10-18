@@ -11,22 +11,32 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
 
-@JsFun("(collection, docId, jsonStr) => { if (window.revlensFirebase) { window.revlensFirebase.triggerSaveDoc(collection, docId, jsonStr); } }")
+@JsFun(
+    "(collection, docId, jsonStr) => { if (window.revlensFirebase) { window.revlensFirebase.triggerSaveDoc(collection, docId, jsonStr); } }"
+)
 private external fun jsTriggerSaveDoc(collection: String, docId: String, jsonStr: String)
 
-@JsFun("(collection, docId) => { if (window.revlensFirebase) { window.revlensFirebase.triggerGetDoc(collection, docId); } }")
+@JsFun(
+    "(collection, docId) => { if (window.revlensFirebase) { window.revlensFirebase.triggerGetDoc(collection, docId); } }"
+)
 private external fun jsTriggerGetDoc(collection: String, docId: String)
 
-@JsFun("(collectionPath) => { if (window.revlensFirebase) { window.revlensFirebase.triggerGetCollection(collectionPath); } }")
+@JsFun(
+    "(collectionPath) => { if (window.revlensFirebase) { window.revlensFirebase.triggerGetCollection(collectionPath); } }"
+)
 private external fun jsTriggerGetCollection(collectionPath: String)
 
-@JsFun("(collection, docId) => { if (window.revlensFirebase) { window.revlensFirebase.triggerDeleteDoc(collection, docId); } }")
+@JsFun(
+    "(collection, docId) => { if (window.revlensFirebase) { window.revlensFirebase.triggerDeleteDoc(collection, docId); } }"
+)
 private external fun jsTriggerDeleteDoc(collection: String, docId: String)
 
 @JsFun("() => window.revlensFirebase ? window.revlensFirebase.lastFirestoreStatus : 'error'")
 private external fun jsGetFirestoreStatus(): String
 
-@JsFun("() => (window.revlensFirebase && window.revlensFirebase.lastFirestoreResult) ? window.revlensFirebase.lastFirestoreResult : ''")
+@JsFun(
+    "() => (window.revlensFirebase && window.revlensFirebase.lastFirestoreResult) ? window.revlensFirebase.lastFirestoreResult : ''"
+)
 private external fun jsGetFirestoreResult(): String
 
 class WebFirestoreWorkspaceRepository(

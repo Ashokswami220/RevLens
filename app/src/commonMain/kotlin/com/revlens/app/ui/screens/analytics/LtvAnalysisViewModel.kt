@@ -65,18 +65,22 @@ class LtvAnalysisViewModel(
                 update { copy(method = event.method) }
                 recalculate()
             }
+
             is LtvAnalysisEvent.UpdateSimulatedChurn -> {
                 update { copy(simulatedChurnPercent = event.churnPercent) }
                 recalculate()
             }
+
             is LtvAnalysisEvent.UpdateGrossMargin -> {
                 update { copy(grossMarginPercent = event.marginPercent) }
                 recalculate()
             }
+
             LtvAnalysisEvent.ResetSimulation -> {
                 update { copy(simulatedChurnPercent = baseChurnPercent) }
                 recalculate()
             }
+
             LtvAnalysisEvent.OpenInWhatIf -> {
                 emit(LtvAnalysisEffect.NavigateToWhatIf(state.value.simulatedChurnPercent))
             }
@@ -89,12 +93,18 @@ class LtvAnalysisViewModel(
         val margin = s.grossMarginPercent
 
         val baseLtv = when (s.method) {
-            LtvMethod.MARGIN_ADJUSTED -> LtvCalculator.calculateMarginAdjustedLtv(arpu, margin, s.baseChurnPercent)
+            LtvMethod.MARGIN_ADJUSTED -> LtvCalculator.calculateMarginAdjustedLtv(
+                arpu, margin, s.baseChurnPercent
+            )
+
             LtvMethod.SIMPLE -> LtvCalculator.calculateSimpleLtv(arpu, s.baseChurnPercent)
         }
 
         val simLtv = when (s.method) {
-            LtvMethod.MARGIN_ADJUSTED -> LtvCalculator.calculateMarginAdjustedLtv(arpu, margin, s.simulatedChurnPercent)
+            LtvMethod.MARGIN_ADJUSTED -> LtvCalculator.calculateMarginAdjustedLtv(
+                arpu, margin, s.simulatedChurnPercent
+            )
+
             LtvMethod.SIMPLE -> LtvCalculator.calculateSimpleLtv(arpu, s.simulatedChurnPercent)
         }
 

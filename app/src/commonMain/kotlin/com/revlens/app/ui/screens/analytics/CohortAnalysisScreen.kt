@@ -41,10 +41,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.revlens.app.domain.calc.CohortCell
 import com.revlens.app.domain.calc.CohortGranularity
 import com.revlens.app.domain.calc.CohortMetric
-import com.revlens.app.domain.calc.CohortRow
 import com.revlens.app.ui.components.ChartLegend
 import com.revlens.app.ui.components.FilterChip
 import com.revlens.app.ui.components.RevLensLineChart
@@ -132,7 +130,8 @@ fun CohortAnalysisScreen(
                 options = listOf("Logo Retention", "Revenue Retention"),
                 selectedIndex = if (state.metric == CohortMetric.LOGO_RETENTION) 0 else 1,
                 onOptionSelected = { idx ->
-                    val metric = if (idx == 0) CohortMetric.LOGO_RETENTION else CohortMetric.REVENUE_RETENTION
+                    val metric =
+                        if (idx == 0) CohortMetric.LOGO_RETENTION else CohortMetric.REVENUE_RETENTION
                     viewModel.onEvent(CohortAnalysisEvent.SelectMetric(metric))
                 }
             )
@@ -197,7 +196,11 @@ fun CohortAnalysisScreen(
                     // Retention Curves Chart
                     SectionCard(title = "Retention Curves") {
                         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            val selectedRows = result.rows.filter { state.selectedCohortNames.contains(it.cohortLabel) }
+                            val selectedRows = result.rows.filter {
+                                state.selectedCohortNames.contains(
+                                    it.cohortLabel
+                                )
+                            }
                             val curveColors = listOf(
                                 RevLensTheme.colors.brandPrimary,
                                 RevLensTheme.colors.brandSecondary,
@@ -206,7 +209,9 @@ fun CohortAnalysisScreen(
 
                             // Legend
                             val legendItems = selectedRows.mapIndexed { i, row ->
-                                row.cohortLabel to curveColors.getOrElse(i) { RevLensTheme.colors.brandPrimary }
+                                row.cohortLabel to curveColors.getOrElse(
+                                    i
+                                ) { RevLensTheme.colors.brandPrimary }
                             } + listOf("Average" to RevLensTheme.colors.textTertiary)
 
                             ChartLegend(items = legendItems)
@@ -214,14 +219,19 @@ fun CohortAnalysisScreen(
                             // Series data
                             val seriesList = ArrayList<List<Float>>()
                             selectedRows.forEach { row ->
-                                val pts = row.cells.map { if (it.isYounger) 0f else it.retentionPercent.toFloat() }
+                                val pts =
+                                    row.cells.map { if (it.isYounger) 0f else it.retentionPercent.toFloat() }
                                 seriesList.add(pts)
                             }
                             // Average series (dashed)
                             seriesList.add(result.averageCurve.map { it.toFloat() })
 
                             val dashedIndices = listOf(seriesList.size - 1)
-                            val colors = selectedRows.mapIndexed { i, _ -> curveColors.getOrElse(i) { RevLensTheme.colors.brandPrimary } } + listOf(RevLensTheme.colors.textTertiary)
+                            val colors = selectedRows.mapIndexed { i, _ ->
+                                curveColors.getOrElse(
+                                    i
+                                ) { RevLensTheme.colors.brandPrimary }
+                            } + listOf(RevLensTheme.colors.textTertiary)
                             val xLabels = List(12) { "M$it" }
 
                             RevLensLineChart(
@@ -245,12 +255,17 @@ fun CohortAnalysisScreen(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 result.rows.forEach { row ->
-                                    val isSelected = state.selectedCohortNames.contains(row.cohortLabel)
+                                    val isSelected =
+                                        state.selectedCohortNames.contains(row.cohortLabel)
                                     FilterChip(
                                         text = row.cohortLabel,
                                         selected = isSelected,
                                         onClick = {
-                                            viewModel.onEvent(CohortAnalysisEvent.ToggleCohortSelection(row.cohortLabel))
+                                            viewModel.onEvent(
+                                                CohortAnalysisEvent.ToggleCohortSelection(
+                                                    row.cohortLabel
+                                                )
+                                            )
                                         }
                                     )
                                 }
@@ -300,8 +315,14 @@ fun CohortAnalysisScreen(
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                 )
                                 Button(
-                                    onClick = { viewModel.onEvent(CohortAnalysisEvent.ImportDataClicked) },
-                                    colors = ButtonDefaults.buttonColors(containerColor = RevLensTheme.colors.primaryAction),
+                                    onClick = {
+                                        viewModel.onEvent(
+                                            CohortAnalysisEvent.ImportDataClicked
+                                        )
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = RevLensTheme.colors.primaryAction
+                                    ),
                                     shape = RoundedCornerShape(8.dp)
                                 ) {
                                     Icon(
@@ -310,7 +331,9 @@ fun CohortAnalysisScreen(
                                         modifier = Modifier.size(16.dp)
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text(text = "Import Data", style = RevLensTypography.labelMedium)
+                                    Text(
+                                        text = "Import Data", style = RevLensTypography.labelMedium
+                                    )
                                 }
                             }
                         }
@@ -350,8 +373,12 @@ fun CohortAnalysisScreen(
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        DetailItem(label = "Initial Cohort Size", value = "${row.initialSize} customers")
-                        DetailItem(label = "Retained Retention", value = "${cell.retentionPercent}%")
+                        DetailItem(
+                            label = "Initial Cohort Size", value = "${row.initialSize} customers"
+                        )
+                        DetailItem(
+                            label = "Retained Retention", value = "${cell.retentionPercent}%"
+                        )
                         DetailItem(
                             label = if (state.metric == CohortMetric.LOGO_RETENTION) "Retained Customers" else "Retained MRR",
                             value = if (state.metric == CohortMetric.LOGO_RETENTION) "${cell.retainedValue.toInt()}" else "$${cell.retainedValue.toInt()}"
@@ -370,7 +397,9 @@ fun CohortAnalysisScreen(
                     onClick = { viewModel.onEvent(CohortAnalysisEvent.DismissCellDetail) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = RevLensTheme.colors.surfaceElevated)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = RevLensTheme.colors.surfaceElevated
+                    )
                 ) {
                     Text(text = "Close", color = RevLensTheme.colors.textPrimary)
                 }

@@ -4,7 +4,6 @@ import com.revlens.app.core.platform.InMemorySecureStorage
 import com.revlens.app.data.DefaultWorkspaceRepository
 import com.revlens.app.data.fake.FakeAuthRepository
 import com.revlens.app.domain.context.DefaultWorkspaceContext
-import com.revlens.app.domain.model.Role
 import com.revlens.app.domain.model.SessionState
 import com.revlens.app.domain.model.UserAccount
 import com.revlens.app.domain.model.Workspace

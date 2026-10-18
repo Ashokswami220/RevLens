@@ -3,13 +3,11 @@ package com.revlens.app.domain.calc
 import com.revlens.app.domain.model.ReportFormat
 import com.revlens.app.domain.model.ReportSection
 import com.revlens.app.domain.model.ReportTemplate
-import com.revlens.app.model.Assumptions
 import com.revlens.app.model.BigDecimal
 import com.revlens.app.model.BusinessProfile
 import com.revlens.app.model.Plan
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class ReportBuilderTest {
@@ -37,7 +35,10 @@ class ReportBuilderTest {
             format = ReportFormat.PDF,
             periodStart = "2026-07-01",
             periodEnd = "2026-09-30",
-            sections = listOf(ReportSection.KPIS, ReportSection.MRR_BRIDGE, ReportSection.FORECAST, ReportSection.NOTES),
+            sections = listOf(
+                ReportSection.KPIS, ReportSection.MRR_BRIDGE, ReportSection.FORECAST,
+                ReportSection.NOTES
+            ),
             profile = testProfile,
             scenarios = emptyList(),
             customNotes = "High capital efficiency maintained."
@@ -48,7 +49,11 @@ class ReportBuilderTest {
         assertEquals(ReportFormat.PDF, snapshot.format)
         assertTrue(snapshot.summaryMetrics.isNotEmpty())
         assertTrue(snapshot.summaryMetrics.containsKey("Monthly Recurring Revenue (MRR)"))
-        assertTrue(snapshot.csvData.contains("CloudMetrics Inc") || snapshot.csvData.contains("Executive Q3 Review"))
+        assertTrue(
+            snapshot.csvData.contains("CloudMetrics Inc") || snapshot.csvData.contains(
+                "Executive Q3 Review"
+            )
+        )
         assertTrue(snapshot.csvData.contains("--- EXECUTIVE METRICS ---"))
         assertTrue(snapshot.csvData.contains("--- REVENUE BREAKDOWN (MRR BRIDGE) ---"))
         assertTrue(snapshot.csvData.contains("--- 12-MONTH PROJECTIONS ---"))

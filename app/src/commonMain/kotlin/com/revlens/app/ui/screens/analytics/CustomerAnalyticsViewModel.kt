@@ -34,7 +34,8 @@ class CustomerAnalyticsViewModel(
                 cachedProfile = profile
                 cachedDataset = dataset
                 val hasActual = dataset != null && dataset.subscriptions.isNotEmpty()
-                val symbol = if (profile?.currencyCode == "EUR") "€" else if (profile?.currencyCode == "GBP") "£" else "$"
+                val symbol =
+                    if (profile?.currencyCode == "EUR") "€" else if (profile?.currencyCode == "GBP") "£" else "$"
                 update {
                     copy(
                         hasActualData = hasActual,
@@ -52,19 +53,24 @@ class CustomerAnalyticsViewModel(
                 update { copy(period = event.period) }
                 recompute()
             }
+
             is CustomerAnalyticsEvent.SelectSegmentBy -> {
                 update { copy(segmentBy = event.segment) }
                 recompute()
             }
+
             is CustomerAnalyticsEvent.SelectCustomer -> {
                 update { copy(selectedCustomer = event.customer) }
             }
+
             CustomerAnalyticsEvent.DismissCustomerSheet -> {
                 update { copy(selectedCustomer = null) }
             }
+
             CustomerAnalyticsEvent.ImportDataClicked -> {
                 emit(CustomerAnalyticsEffect.NavigateToDataImport)
             }
+
             CustomerAnalyticsEvent.Refresh -> recompute()
         }
     }

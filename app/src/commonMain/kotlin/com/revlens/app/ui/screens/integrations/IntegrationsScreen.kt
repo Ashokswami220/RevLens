@@ -158,7 +158,9 @@ fun IntegrationsScreen(
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(if (isSelected) RevLensTheme.colors.primaryAction else Color.Transparent)
+                            .background(
+                                if (isSelected) RevLensTheme.colors.primaryAction else Color.Transparent
+                            )
                             .clickable { viewModel.onEvent(IntegrationsEvent.SelectCategory(cat)) }
                             .padding(vertical = 8.dp),
                         contentAlignment = Alignment.Center
@@ -188,9 +190,21 @@ fun IntegrationsScreen(
                     IntegrationCard(
                         connection = connection,
                         isSyncing = state.syncingProviders.contains(connection.provider),
-                        onConnect = { viewModel.onEvent(IntegrationsEvent.ConnectIntegration(connection.provider)) },
-                        onDisconnect = { viewModel.onEvent(IntegrationsEvent.PromptDisconnectIntegration(connection.provider)) },
-                        onSync = { viewModel.onEvent(IntegrationsEvent.SyncIntegration(connection.provider)) }
+                        onConnect = {
+                            viewModel.onEvent(
+                                IntegrationsEvent.ConnectIntegration(connection.provider)
+                            )
+                        },
+                        onDisconnect = {
+                            viewModel.onEvent(
+                                IntegrationsEvent.PromptDisconnectIntegration(connection.provider)
+                            )
+                        },
+                        onSync = {
+                            viewModel.onEvent(
+                                IntegrationsEvent.SyncIntegration(connection.provider)
+                            )
+                        }
                     )
                 }
             }
@@ -201,7 +215,11 @@ fun IntegrationsScreen(
     if (state.disconnectingProvider != null) {
         val provider = state.disconnectingProvider!!
         AlertDialog(
-            onDismissRequest = { viewModel.onEvent(IntegrationsEvent.DismissDisconnectIntegration) },
+            onDismissRequest = {
+                viewModel.onEvent(
+                    IntegrationsEvent.DismissDisconnectIntegration
+                )
+            },
             title = {
                 Text(
                     text = "Disconnect ${provider.displayName}?",
@@ -224,7 +242,12 @@ fun IntegrationsScreen(
                 )
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.onEvent(IntegrationsEvent.DismissDisconnectIntegration) }) {
+                TextButton(
+                    onClick = {
+                        viewModel.onEvent(
+                            IntegrationsEvent.DismissDisconnectIntegration
+                        )
+                    }) {
                     Text(
                         text = "Cancel",
                         style = RevLensTypography.bodyMedium,

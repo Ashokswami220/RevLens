@@ -12,7 +12,9 @@ import kotlinx.coroutines.launch
 class IntegrationsViewModel(
     private val integrationRepository: IntegrationRepository,
     private val workspaceContext: WorkspaceContext
-) : MviViewModel<IntegrationsUiState, IntegrationsEvent, IntegrationsEffect>(IntegrationsUiState()) {
+) : MviViewModel<IntegrationsUiState, IntegrationsEvent, IntegrationsEffect>(
+    IntegrationsUiState()
+) {
 
     private var currentWorkspaceId: String = "ws_default"
     private var observeJob: Job? = null
@@ -30,18 +32,34 @@ class IntegrationsViewModel(
     private fun startObserving(wsId: String) {
         observeJob?.cancel()
         observeJob = viewModelScope.launch {
-            integrationRepository.getConnections(wsId).collect { list ->
-                update { copy(connections = list) }
-            }
+            integrationRepository.getConnections(wsId)
+                .collect { list ->
+                    update { copy(connections = list) }
+                }
         }
     }
 
     override fun onEvent(event: IntegrationsEvent) {
         when (event) {
-            is IntegrationsEvent.SelectCategory -> update { copy(selectedCategory = event.category) }
+            is IntegrationsEvent.SelectCategory -> update {
+                copy(
+                    selectedCategory = event.category
+                )
+            }
+
             is IntegrationsEvent.ConnectIntegration -> connect(event.provider)
-            is IntegrationsEvent.PromptDisconnectIntegration -> update { copy(disconnectingProvider = event.provider) }
-            IntegrationsEvent.DismissDisconnectIntegration -> update { copy(disconnectingProvider = null) }
+            is IntegrationsEvent.PromptDisconnectIntegration -> update {
+                copy(
+                    disconnectingProvider = event.provider
+                )
+            }
+
+            IntegrationsEvent.DismissDisconnectIntegration -> update {
+                copy(
+                    disconnectingProvider = null
+                )
+            }
+
             IntegrationsEvent.ConfirmDisconnectIntegration -> confirmDisconnect()
             is IntegrationsEvent.SyncIntegration -> sync(event.provider)
         }
@@ -51,10 +69,17 @@ class IntegrationsViewModel(
         viewModelScope.launch {
             val res = integrationRepository.connectIntegration(currentWorkspaceId, provider)
             res.onSuccess {
-                emit(IntegrationsEffect.ShowToast("${provider.displayName} connected successfully!"))
-            }.onFailure { err ->
-                emit(IntegrationsEffect.ShowToast(err.message ?: "Failed to connect ${provider.displayName}."))
+                emit(
+                    IntegrationsEffect.ShowToast("${provider.displayName} connected successfully!")
+                )
             }
+                .onFailure { err ->
+                    emit(
+                        IntegrationsEffect.ShowToast(
+                            err.message ?: "Failed to connect ${provider.displayName}."
+                        )
+                    )
+                }
         }
     }
 
@@ -65,9 +90,14 @@ class IntegrationsViewModel(
             val res = integrationRepository.disconnectIntegration(currentWorkspaceId, provider)
             res.onSuccess {
                 emit(IntegrationsEffect.ShowToast("${provider.displayName} disconnected."))
-            }.onFailure { err ->
-                emit(IntegrationsEffect.ShowToast(err.message ?: "Could not disconnect ${provider.displayName}."))
             }
+                .onFailure { err ->
+                    emit(
+                        IntegrationsEffect.ShowToast(
+                            err.message ?: "Could not disconnect ${provider.displayName}."
+                        )
+                    )
+                }
         }
     }
 
@@ -79,9 +109,14 @@ class IntegrationsViewModel(
 
             res.onSuccess {
                 emit(IntegrationsEffect.ShowToast("${provider.displayName} synced successfully!"))
-            }.onFailure { err ->
-                emit(IntegrationsEffect.ShowToast(err.message ?: "Sync failed for ${provider.displayName}."))
             }
+                .onFailure { err ->
+                    emit(
+                        IntegrationsEffect.ShowToast(
+                            err.message ?: "Sync failed for ${provider.displayName}."
+                        )
+                    )
+                }
         }
     }
 }

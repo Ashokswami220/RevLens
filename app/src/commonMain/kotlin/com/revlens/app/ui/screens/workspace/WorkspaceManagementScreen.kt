@@ -42,10 +42,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.revlens.app.domain.model.BusinessModel
-import com.revlens.app.domain.model.Workspace
 import com.revlens.app.domain.model.Role
 import com.revlens.app.ui.components.ChoiceChip
-import com.revlens.app.ui.components.DestructiveButton
 import com.revlens.app.ui.components.PrimaryButton
 import com.revlens.app.ui.components.RevLensTextField
 import com.revlens.app.ui.components.RevLensTopAppBar
@@ -74,6 +72,7 @@ fun WorkspaceManagementScreen(
                 is WorkspaceManagementEffect.ShowMessage -> {
                     snackbarHostState.showSnackbar(effect.message.asString())
                 }
+
                 WorkspaceManagementEffect.NavigateToBaseline -> onNavigateToBaseline()
                 WorkspaceManagementEffect.NavigateToCreateWorkspace -> onNavigateToCreateWorkspace()
             }
@@ -121,7 +120,8 @@ fun WorkspaceManagementScreen(
                             .clip(CircleShape)
                             .background(RevLensTheme.colors.brandPrimary)
                     ) {
-                        val initials = workspace?.name?.take(2)?.uppercase() ?: "WS"
+                        val initials = workspace?.name?.take(2)
+                            ?.uppercase() ?: "WS"
                         Text(
                             text = initials,
                             style = RevLensTypography.headlineMedium,
@@ -150,7 +150,11 @@ fun WorkspaceManagementScreen(
                         modifier = Modifier
                             .clip(CircleShape)
                             .background(RevLensTheme.colors.surfaceElevated)
-                            .clickable { viewModel.onEvent(WorkspaceManagementEvent.ShowSwitchSheet) }
+                            .clickable {
+                                viewModel.onEvent(
+                                    WorkspaceManagementEvent.ShowSwitchSheet
+                                )
+                            }
                             .padding(horizontal = 12.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -205,7 +209,9 @@ fun WorkspaceManagementScreen(
                                 selected = workspace?.businessModel == BusinessModel.B2bSaas,
                                 onClick = {
                                     viewModel.onEvent(
-                                        WorkspaceManagementEvent.UpdateBusinessModel(BusinessModel.B2bSaas)
+                                        WorkspaceManagementEvent.UpdateBusinessModel(
+                                            BusinessModel.B2bSaas
+                                        )
                                     )
                                 }
                             )
@@ -214,7 +220,9 @@ fun WorkspaceManagementScreen(
                                 selected = workspace?.businessModel == BusinessModel.B2cSaas,
                                 onClick = {
                                     viewModel.onEvent(
-                                        WorkspaceManagementEvent.UpdateBusinessModel(BusinessModel.B2cSaas)
+                                        WorkspaceManagementEvent.UpdateBusinessModel(
+                                            BusinessModel.B2cSaas
+                                        )
                                     )
                                 }
                             )
@@ -269,7 +277,11 @@ fun WorkspaceManagementScreen(
                         title = "Transfer Workspace Ownership",
                         value = "Designate another team member as Owner",
                         valueColor = RevLensTheme.colors.brandPrimary,
-                        onClick = { viewModel.onEvent(WorkspaceManagementEvent.ShowTransferOwnershipDialog) }
+                        onClick = {
+                            viewModel.onEvent(
+                                WorkspaceManagementEvent.ShowTransferOwnershipDialog
+                            )
+                        }
                     )
                 }
             }
@@ -282,7 +294,11 @@ fun WorkspaceManagementScreen(
                             title = "Delete Workspace",
                             value = "Permanently remove this workspace",
                             valueColor = RevLensTheme.colors.error,
-                            onClick = { viewModel.onEvent(WorkspaceManagementEvent.ShowDeleteDialog) }
+                            onClick = {
+                                viewModel.onEvent(
+                                    WorkspaceManagementEvent.ShowDeleteDialog
+                                )
+                            }
                         )
                     }
                 }
@@ -352,7 +368,9 @@ fun WorkspaceManagementScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (workspace?.currency == curr) RevLensTheme.colors.surfaceElevated else RevLensTheme.colors.surface)
+                                .background(
+                                    if (workspace?.currency == curr) RevLensTheme.colors.surfaceElevated else RevLensTheme.colors.surface
+                                )
                                 .clickable {
                                     viewModel.onEvent(WorkspaceManagementEvent.UpdateCurrency(curr))
                                 }
@@ -360,9 +378,15 @@ fun WorkspaceManagementScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(curr, style = RevLensTypography.bodyLarge, color = RevLensTheme.colors.textPrimary)
+                            Text(
+                                curr, style = RevLensTypography.bodyLarge,
+                                color = RevLensTheme.colors.textPrimary
+                            )
                             if (workspace?.currency == curr) {
-                                Text("Active", style = RevLensTypography.labelSmall, color = RevLensTheme.colors.brandPrimary)
+                                Text(
+                                    "Active", style = RevLensTypography.labelSmall,
+                                    color = RevLensTheme.colors.brandPrimary
+                                )
                             }
                         }
                     }
@@ -408,7 +432,11 @@ fun WorkspaceManagementScreen(
     // Transfer Ownership Dialog
     if (state.isTransferOwnershipDialogVisible) {
         AlertDialog(
-            onDismissRequest = { viewModel.onEvent(WorkspaceManagementEvent.HideTransferOwnershipDialog) },
+            onDismissRequest = {
+                viewModel.onEvent(
+                    WorkspaceManagementEvent.HideTransferOwnershipDialog
+                )
+            },
             title = {
                 Text(
                     text = "Transfer Workspace Ownership",
@@ -437,8 +465,16 @@ fun WorkspaceManagementScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSelected) RevLensTheme.colors.brandPrimary.copy(alpha = 0.12f) else RevLensTheme.colors.surfaceElevated)
-                                .clickable { viewModel.onEvent(WorkspaceManagementEvent.SelectTransferMember(member)) }
+                                .background(
+                                    if (isSelected) RevLensTheme.colors.brandPrimary.copy(
+                                        alpha = 0.12f
+                                    ) else RevLensTheme.colors.surfaceElevated
+                                )
+                                .clickable {
+                                    viewModel.onEvent(
+                                        WorkspaceManagementEvent.SelectTransferMember(member)
+                                    )
+                                }
                                 .padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -450,7 +486,10 @@ fun WorkspaceManagementScreen(
                                 color = if (isSelected) RevLensTheme.colors.brandPrimary else RevLensTheme.colors.textPrimary
                             )
                             if (isSelected) {
-                                Text("Selected", style = RevLensTypography.labelSmall, color = RevLensTheme.colors.brandPrimary)
+                                Text(
+                                    "Selected", style = RevLensTypography.labelSmall,
+                                    color = RevLensTheme.colors.brandPrimary
+                                )
                             }
                         }
                     }
@@ -459,14 +498,22 @@ fun WorkspaceManagementScreen(
             confirmButton = {
                 PrimaryButton(
                     text = "Confirm Transfer",
-                    onClick = { viewModel.onEvent(WorkspaceManagementEvent.ConfirmTransferOwnership) },
+                    onClick = {
+                        viewModel.onEvent(
+                            WorkspaceManagementEvent.ConfirmTransferOwnership
+                        )
+                    },
                     modifier = Modifier.width(160.dp)
                 )
             },
             dismissButton = {
                 TextLinkButton(
                     text = "Cancel",
-                    onClick = { viewModel.onEvent(WorkspaceManagementEvent.HideTransferOwnershipDialog) }
+                    onClick = {
+                        viewModel.onEvent(
+                            WorkspaceManagementEvent.HideTransferOwnershipDialog
+                        )
+                    }
                 )
             },
             containerColor = RevLensTheme.colors.surface
@@ -499,8 +546,14 @@ fun WorkspaceManagementScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
-                            .background(if (isActive) RevLensTheme.colors.surfaceElevated else RevLensTheme.colors.surface)
-                            .clickable { viewModel.onEvent(WorkspaceManagementEvent.SwitchWorkspace(ws.id)) }
+                            .background(
+                                if (isActive) RevLensTheme.colors.surfaceElevated else RevLensTheme.colors.surface
+                            )
+                            .clickable {
+                                viewModel.onEvent(
+                                    WorkspaceManagementEvent.SwitchWorkspace(ws.id)
+                                )
+                            }
                             .padding(16.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
@@ -519,7 +572,10 @@ fun WorkspaceManagementScreen(
                             )
                         }
                         if (isActive) {
-                            Text("Current", style = RevLensTypography.labelSmall, color = RevLensTheme.colors.brandPrimary)
+                            Text(
+                                "Current", style = RevLensTypography.labelSmall,
+                                color = RevLensTheme.colors.brandPrimary
+                            )
                         }
                     }
                 }

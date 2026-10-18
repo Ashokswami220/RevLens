@@ -20,10 +20,14 @@ data class GrowthSimulatorUiState(
 
 sealed interface GrowthSimulatorIntent {
     data class ChangeHorizon(val months: Int) : GrowthSimulatorIntent
-    data class UpdateChannelSpend(val channelId: String, val spendMinor: Long) : GrowthSimulatorIntent
+    data class UpdateChannelSpend(val channelId: String, val spendMinor: Long) :
+        GrowthSimulatorIntent
+
     data class UpdateChannelCac(val channelId: String, val cacMinor: Long) : GrowthSimulatorIntent
     data class ToggleChannelEnabled(val channelId: String) : GrowthSimulatorIntent
-    data class AddChannel(val name: String, val spendMinor: Long, val cacMinor: Long) : GrowthSimulatorIntent
+    data class AddChannel(val name: String, val spendMinor: Long, val cacMinor: Long) :
+        GrowthSimulatorIntent
+
     data class RemoveChannel(val channelId: String) : GrowthSimulatorIntent
     data class UpdateReferralRate(val rate: Double) : GrowthSimulatorIntent
     data class UpdateOrganicGrowth(val rate: Double) : GrowthSimulatorIntent

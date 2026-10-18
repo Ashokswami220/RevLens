@@ -16,18 +16,23 @@ class CreateWorkspaceViewModel(
             is CreateWorkspaceEvent.NameChanged -> update {
                 copy(name = event.value, nameError = null)
             }
+
             is CreateWorkspaceEvent.CurrencyChanged -> update {
                 copy(currency = event.value)
             }
+
             is CreateWorkspaceEvent.BusinessModelChanged -> update {
                 copy(businessModel = event.model)
             }
+
             is CreateWorkspaceEvent.TimeZoneChanged -> update {
                 copy(timeZoneId = event.value)
             }
+
             is CreateWorkspaceEvent.FiscalMonthChanged -> update {
                 copy(fiscalYearStartMonth = event.month)
             }
+
             CreateWorkspaceEvent.Submit -> submit()
         }
     }

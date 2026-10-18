@@ -30,19 +30,22 @@ class ApiWebhooksViewModel(
         observeJob?.cancel()
         observeJob = viewModelScope.launch {
             launch {
-                developerRepository.getApiKeys(wsId).collect { keys ->
-                    update { copy(apiKeys = keys) }
-                }
+                developerRepository.getApiKeys(wsId)
+                    .collect { keys ->
+                        update { copy(apiKeys = keys) }
+                    }
             }
             launch {
-                developerRepository.getWebhooks(wsId).collect { hooks ->
-                    update { copy(webhooks = hooks) }
-                }
+                developerRepository.getWebhooks(wsId)
+                    .collect { hooks ->
+                        update { copy(webhooks = hooks) }
+                    }
             }
             launch {
-                developerRepository.getDeliveries(wsId).collect { dels ->
-                    update { copy(deliveries = dels) }
-                }
+                developerRepository.getDeliveries(wsId)
+                    .collect { dels ->
+                        update { copy(deliveries = dels) }
+                    }
             }
         }
     }
@@ -55,8 +58,19 @@ class ApiWebhooksViewModel(
             ApiWebhooksEvent.OpenCreateKeySheet -> update {
                 copy(isCreateKeySheetVisible = true, newKeyName = "", error = null)
             }
-            ApiWebhooksEvent.DismissCreateKeySheet -> update { copy(isCreateKeySheetVisible = false) }
-            is ApiWebhooksEvent.NewKeyNameChanged -> update { copy(newKeyName = event.name, error = null) }
+
+            ApiWebhooksEvent.DismissCreateKeySheet -> update {
+                copy(
+                    isCreateKeySheetVisible = false
+                )
+            }
+
+            is ApiWebhooksEvent.NewKeyNameChanged -> update {
+                copy(
+                    newKeyName = event.name, error = null
+                )
+            }
+
             is ApiWebhooksEvent.NewKeyScopeChanged -> update { copy(newKeyScope = event.scope) }
             ApiWebhooksEvent.SubmitCreateKey -> submitCreateKey()
             ApiWebhooksEvent.DismissKeyRevealDialog -> update { copy(createdKeyToken = null) }
@@ -74,12 +88,33 @@ class ApiWebhooksViewModel(
                     error = null
                 )
             }
-            ApiWebhooksEvent.DismissCreateWebhookSheet -> update { copy(isCreateWebhookSheetVisible = false) }
-            is ApiWebhooksEvent.NewWebhookUrlChanged -> update { copy(newWebhookUrl = event.url, error = null) }
-            is ApiWebhooksEvent.NewWebhookDescChanged -> update { copy(newWebhookDesc = event.desc) }
+
+            ApiWebhooksEvent.DismissCreateWebhookSheet -> update {
+                copy(
+                    isCreateWebhookSheetVisible = false
+                )
+            }
+
+            is ApiWebhooksEvent.NewWebhookUrlChanged -> update {
+                copy(
+                    newWebhookUrl = event.url, error = null
+                )
+            }
+
+            is ApiWebhooksEvent.NewWebhookDescChanged -> update {
+                copy(
+                    newWebhookDesc = event.desc
+                )
+            }
+
             is ApiWebhooksEvent.ToggleWebhookEvent -> toggleEvent(event.event)
             ApiWebhooksEvent.SubmitCreateWebhook -> submitCreateWebhook()
-            is ApiWebhooksEvent.PromptDeleteWebhook -> update { copy(webhookToDelete = event.endpoint) }
+            is ApiWebhooksEvent.PromptDeleteWebhook -> update {
+                copy(
+                    webhookToDelete = event.endpoint
+                )
+            }
+
             ApiWebhooksEvent.DismissDeleteWebhook -> update { copy(webhookToDelete = null) }
             ApiWebhooksEvent.ConfirmDeleteWebhook -> confirmDeleteWebhook()
             is ApiWebhooksEvent.RotateWebhookSecret -> rotateSecret(event.endpointId)
@@ -104,7 +139,8 @@ class ApiWebhooksViewModel(
 
         viewModelScope.launch {
             update { copy(isLoading = true) }
-            val res = developerRepository.createApiKey(currentWorkspaceId, name, state.value.newKeyScope)
+            val res =
+                developerRepository.createApiKey(currentWorkspaceId, name, state.value.newKeyScope)
             update { copy(isLoading = false) }
 
             res.onSuccess { (_, secretToken) ->
@@ -115,9 +151,10 @@ class ApiWebhooksViewModel(
                         newKeyName = ""
                     )
                 }
-            }.onFailure { err ->
-                update { copy(error = err.message ?: "Failed to generate API key.") }
             }
+                .onFailure { err ->
+                    update { copy(error = err.message ?: "Failed to generate API key.") }
+                }
         }
     }
 
@@ -128,9 +165,10 @@ class ApiWebhooksViewModel(
             val res = developerRepository.deleteApiKey(currentWorkspaceId, key.id)
             res.onSuccess {
                 emit(ApiWebhooksEffect.ShowToast("API key ${key.name} revoked."))
-            }.onFailure { err ->
-                emit(ApiWebhooksEffect.ShowToast(err.message ?: "Failed to revoke key."))
             }
+                .onFailure { err ->
+                    emit(ApiWebhooksEffect.ShowToast(err.message ?: "Failed to revoke key."))
+                }
         }
     }
 
@@ -164,9 +202,10 @@ class ApiWebhooksViewModel(
             res.onSuccess {
                 update { copy(isCreateWebhookSheetVisible = false) }
                 emit(ApiWebhooksEffect.ShowToast("Webhook endpoint registered successfully!"))
-            }.onFailure { err ->
-                update { copy(error = err.message ?: "Failed to create webhook.") }
             }
+                .onFailure { err ->
+                    update { copy(error = err.message ?: "Failed to create webhook.") }
+                }
         }
     }
 
@@ -177,9 +216,10 @@ class ApiWebhooksViewModel(
             val res = developerRepository.deleteWebhook(currentWorkspaceId, endpoint.id)
             res.onSuccess {
                 emit(ApiWebhooksEffect.ShowToast("Webhook endpoint removed."))
-            }.onFailure { err ->
-                emit(ApiWebhooksEffect.ShowToast(err.message ?: "Could not remove endpoint."))
             }
+                .onFailure { err ->
+                    emit(ApiWebhooksEffect.ShowToast(err.message ?: "Could not remove endpoint."))
+                }
         }
     }
 
@@ -188,9 +228,10 @@ class ApiWebhooksViewModel(
             val res = developerRepository.rotateWebhookSecret(currentWorkspaceId, endpointId)
             res.onSuccess {
                 emit(ApiWebhooksEffect.ShowToast("Webhook signing secret rotated!"))
-            }.onFailure { err ->
-                emit(ApiWebhooksEffect.ShowToast(err.message ?: "Failed to rotate secret."))
             }
+                .onFailure { err ->
+                    emit(ApiWebhooksEffect.ShowToast(err.message ?: "Failed to rotate secret."))
+                }
         }
     }
 
@@ -198,10 +239,15 @@ class ApiWebhooksViewModel(
         viewModelScope.launch {
             val res = developerRepository.retryDelivery(currentWorkspaceId, deliveryId)
             res.onSuccess {
-                emit(ApiWebhooksEffect.ShowToast("Webhook delivery redelivered successfully (Status: 200)"))
-            }.onFailure { err ->
-                emit(ApiWebhooksEffect.ShowToast(err.message ?: "Redelivery failed."))
+                emit(
+                    ApiWebhooksEffect.ShowToast(
+                        "Webhook delivery redelivered successfully (Status: 200)"
+                    )
+                )
             }
+                .onFailure { err ->
+                    emit(ApiWebhooksEffect.ShowToast(err.message ?: "Redelivery failed."))
+                }
         }
     }
 }

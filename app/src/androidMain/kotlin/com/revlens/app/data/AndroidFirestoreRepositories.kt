@@ -30,7 +30,10 @@ class AndroidFirestoreWorkspaceRepository(
         if (inMem != null) return inMem
 
         try {
-            val snapshot = db.collection("workspaces").document(id).get().await()
+            val snapshot = db.collection("workspaces")
+                .document(id)
+                .get()
+                .await()
             if (snapshot.exists()) {
                 val data = snapshot.data
                 if (data != null) {
@@ -64,7 +67,9 @@ class AndroidFirestoreWorkspaceRepository(
                 "businessModel" to workspace.businessModel.name,
                 "createdAtMillis" to workspace.createdAtMillis
             )
-            db.collection("workspaces").document(workspace.id).set(map)
+            db.collection("workspaces")
+                .document(workspace.id)
+                .set(map)
         } catch (_: Exception) {
         }
     }
@@ -77,7 +82,9 @@ class AndroidFirestoreWorkspaceRepository(
         _workspaces.value = _workspaces.value.filter { it.id != id }
         localFallback.deleteWorkspace(id)
         try {
-            db.collection("workspaces").document(id).delete()
+            db.collection("workspaces")
+                .document(id)
+                .delete()
         } catch (_: Exception) {
         }
     }
@@ -101,7 +108,9 @@ class AndroidFirestoreProfileRepository(
         try {
             val serialized = json.encodeToString(BusinessProfile.serializer(), profile)
             val map = mapOf("payload" to serialized, "updatedAt" to System.currentTimeMillis())
-            db.collection("profiles").document("current").set(map)
+            db.collection("profiles")
+                .document("current")
+                .set(map)
         } catch (_: Exception) {
         }
     }
@@ -135,7 +144,9 @@ class AndroidFirestoreScenarioRepository(
         try {
             val serialized = json.encodeToString(Scenario.serializer(), scenario)
             val map = mapOf("id" to scenario.id, "payload" to serialized)
-            db.collection("scenarios").document(scenario.id).set(map)
+            db.collection("scenarios")
+                .document(scenario.id)
+                .set(map)
         } catch (_: Exception) {
         }
     }
@@ -144,7 +155,9 @@ class AndroidFirestoreScenarioRepository(
         _scenarios.value = _scenarios.value.filter { it.id != scenarioId }
         localFallback.deleteScenario(scenarioId)
         try {
-            db.collection("scenarios").document(scenarioId).delete()
+            db.collection("scenarios")
+                .document(scenarioId)
+                .delete()
         } catch (_: Exception) {
         }
     }

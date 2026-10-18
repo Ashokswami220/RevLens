@@ -33,6 +33,7 @@ sealed interface ExperimentsEvent {
         val controlDesc: String,
         val treatmentDesc: String
     ) : ExperimentsEvent
+
     data class DeleteExperiment(val experimentId: String) : ExperimentsEvent
     data class DuplicateExperiment(val experimentId: String) : ExperimentsEvent
     data class ClickExperiment(val experimentId: String) : ExperimentsEvent

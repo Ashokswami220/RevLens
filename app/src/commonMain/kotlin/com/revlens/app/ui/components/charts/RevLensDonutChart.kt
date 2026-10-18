@@ -7,12 +7,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -69,7 +66,8 @@ fun RevLensDonutChart(
             Canvas(modifier = Modifier.size(chartSize)) {
                 val strokePx = strokeWidth.toPx()
                 val radius = (size.minDimension - strokePx) / 2f
-                val topLeft = Offset((size.width - 2 * radius) / 2f, (size.height - 2 * radius) / 2f)
+                val topLeft =
+                    Offset((size.width - 2 * radius) / 2f, (size.height - 2 * radius) / 2f)
                 val arcSize = Size(radius * 2, radius * 2)
 
                 if (slices.isEmpty() || slices.all { it.percentage <= 0.0 }) {
@@ -87,7 +85,8 @@ fun RevLensDonutChart(
                     for (slice in slices) {
                         val sweep = ((slice.percentage / 100.0) * 360f).toFloat()
                         // Small gap between slices if multiple
-                        val effectiveSweep = if (slices.size > 1 && sweep > 4f) sweep - 2f else sweep
+                        val effectiveSweep =
+                            if (slices.size > 1 && sweep > 4f) sweep - 2f else sweep
                         drawArc(
                             color = slice.color,
                             startAngle = currentAngle,

@@ -47,9 +47,16 @@ class RevenueBreakdownCalculatorTest {
     @Test
     fun testCalculateActual() {
         val subscriptions = listOf(
-            SubscriptionRecord(customerId = "C1", plan = "Pro", startDate = "2024-01-01", mrrMinor = 7900L),
-            SubscriptionRecord(customerId = "C2", plan = "Starter", startDate = "2024-01-10", mrrMinor = 2900L),
-            SubscriptionRecord(customerId = "C3", plan = "Starter", startDate = "2024-01-01", endDate = "2024-02-01", mrrMinor = 2900L)
+            SubscriptionRecord(
+                customerId = "C1", plan = "Pro", startDate = "2024-01-01", mrrMinor = 7900L
+            ),
+            SubscriptionRecord(
+                customerId = "C2", plan = "Starter", startDate = "2024-01-10", mrrMinor = 2900L
+            ),
+            SubscriptionRecord(
+                customerId = "C3", plan = "Starter", startDate = "2024-01-01",
+                endDate = "2024-02-01", mrrMinor = 2900L
+            )
         )
 
         val result = RevenueBreakdownCalculator.calculateActual(subscriptions)

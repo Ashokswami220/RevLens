@@ -55,23 +55,24 @@ fun CsvPreviewTable(
             HorizontalDivider(color = RevLensTheme.colors.divider)
 
             // Rows (preview up to 5)
-            rows.take(5).forEach { row ->
-                Row(modifier = Modifier.padding(vertical = 6.dp)) {
-                    headers.indices.forEach { colIndex ->
-                        val cellValue = row.getOrNull(colIndex) ?: ""
-                        Text(
-                            text = cellValue,
-                            style = RevLensTypography.bodySmall,
-                            color = RevLensTheme.colors.textSecondary,
-                            maxLines = 1,
-                            modifier = Modifier
-                                .width(130.dp)
-                                .padding(horizontal = 4.dp)
-                        )
+            rows.take(5)
+                .forEach { row ->
+                    Row(modifier = Modifier.padding(vertical = 6.dp)) {
+                        headers.indices.forEach { colIndex ->
+                            val cellValue = row.getOrNull(colIndex) ?: ""
+                            Text(
+                                text = cellValue,
+                                style = RevLensTypography.bodySmall,
+                                color = RevLensTheme.colors.textSecondary,
+                                maxLines = 1,
+                                modifier = Modifier
+                                    .width(130.dp)
+                                    .padding(horizontal = 4.dp)
+                            )
+                        }
                     }
+                    HorizontalDivider(color = RevLensTheme.colors.divider.copy(alpha = 0.5f))
                 }
-                HorizontalDivider(color = RevLensTheme.colors.divider.copy(alpha = 0.5f))
-            }
         }
     }
 }

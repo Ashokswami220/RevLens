@@ -3,7 +3,9 @@ package com.revlens.app.domain.model
 enum class ReportTemplate(val displayName: String, val description: String) {
     INVESTOR_UPDATE("Investor Update", "Key SaaS metrics, MRR trajectory, runway & top highlights"),
     MONTHLY_REVENUE("Monthly Revenue", "MRR bridge, churn decay, ARPU & plan-tier breakdown"),
-    SCENARIO_COMPARISON("Scenario Comparison", "Side-by-side impact analysis across modeled scenarios"),
+    SCENARIO_COMPARISON(
+        "Scenario Comparison", "Side-by-side impact analysis across modeled scenarios"
+    ),
     FORECAST_SUMMARY("Forecast Summary", "12-month projections, cash runway & target milestones")
 }
 

@@ -31,8 +31,14 @@ class ExperimentAnalyzerTest {
     @Test
     fun testSignificantPositiveExperiment() {
         val observations = listOf(
-            Observation("o1", "2026-10-01", controlValue = 100.0, controlSampleSize = 100, treatmentValue = 115.0, treatmentSampleSize = 100),
-            Observation("o2", "2026-10-02", controlValue = 102.0, controlSampleSize = 120, treatmentValue = 118.0, treatmentSampleSize = 120)
+            Observation(
+                "o1", "2026-10-01", controlValue = 100.0, controlSampleSize = 100,
+                treatmentValue = 115.0, treatmentSampleSize = 100
+            ),
+            Observation(
+                "o2", "2026-10-02", controlValue = 102.0, controlSampleSize = 120,
+                treatmentValue = 118.0, treatmentSampleSize = 120
+            )
         )
 
         val experiment = Experiment(
@@ -60,7 +66,10 @@ class ExperimentAnalyzerTest {
     @Test
     fun testInsufficientDataExperiment() {
         val observations = listOf(
-            Observation("o1", "2026-10-01", controlValue = 50.0, controlSampleSize = 5, treatmentValue = 70.0, treatmentSampleSize = 5)
+            Observation(
+                "o1", "2026-10-01", controlValue = 50.0, controlSampleSize = 5,
+                treatmentValue = 70.0, treatmentSampleSize = 5
+            )
         )
 
         val experiment = Experiment(

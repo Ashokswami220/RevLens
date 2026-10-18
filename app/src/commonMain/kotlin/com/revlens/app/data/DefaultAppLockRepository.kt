@@ -34,7 +34,8 @@ class DefaultAppLockRepository : AppLockRepository {
         if (!current.isBiometricEnabled) return false
 
         val elapsed = currentTimestampMillis - current.lastBackgroundTimestamp
-        val shouldLock = current.lastBackgroundTimestamp > 0 && elapsed >= current.timeout.durationMillis
+        val shouldLock =
+            current.lastBackgroundTimestamp > 0 && elapsed >= current.timeout.durationMillis
         if (shouldLock) {
             _preferencesFlow.update { it.copy(isLocked = true) }
         }

@@ -38,7 +38,8 @@ object GrowthEngine {
         var currentCustomers = safeStartingCustomers
         var currentMrr = safeStartingMrr
 
-        var cashMinor: Long? = if (assumptions.startingCashMinor > 0) assumptions.startingCashMinor else null
+        var cashMinor: Long? =
+            if (assumptions.startingCashMinor > 0) assumptions.startingCashMinor else null
         var runwayMonths: Int? = null
 
         var totalSpendAccumulator = 0L
@@ -62,22 +63,34 @@ object GrowthEngine {
             }
 
             // 2. Referral & Organic
-            val referralCustomers = max(0, (currentCustomers * (assumptions.referralRatePercent.coerceIn(0.0, 100.0) / 100.0)).roundToInt())
-            val organicCustomers = max(0, (currentCustomers * (assumptions.organicGrowthPercent.coerceIn(0.0, 100.0) / 100.0)).roundToInt())
+            val referralCustomers = max(
+                0, (currentCustomers * (assumptions.referralRatePercent.coerceIn(
+                    0.0, 100.0
+                ) / 100.0)).roundToInt()
+            )
+            val organicCustomers = max(
+                0, (currentCustomers * (assumptions.organicGrowthPercent.coerceIn(
+                    0.0, 100.0
+                ) / 100.0)).roundToInt()
+            )
 
             val totalNewCustomers = paidCustomers + referralCustomers + organicCustomers
             totalAcquiredCustomers += totalNewCustomers
             totalSpendAccumulator += monthlyAdSpend
 
             // 3. Churn
-            val churnedCustomers = (currentCustomers * (safeChurnPercent / 100.0)).roundToInt().coerceAtMost(currentCustomers)
+            val churnedCustomers = (currentCustomers * (safeChurnPercent / 100.0)).roundToInt()
+                .coerceAtMost(currentCustomers)
 
             // 4. Ending customers
             val endingCustomers = max(0, currentCustomers + totalNewCustomers - churnedCustomers)
 
             // 5. MRR Compounding
-            val churnedMrr = (currentMrr * (safeChurnPercent / 100.0)).toLong().coerceAtMost(currentMrr)
-            val expansionMrr = (currentMrr * (assumptions.expansionRatePercent.coerceIn(0.0, 100.0) / 100.0)).toLong()
+            val churnedMrr = (currentMrr * (safeChurnPercent / 100.0)).toLong()
+                .coerceAtMost(currentMrr)
+            val expansionMrr = (currentMrr * (assumptions.expansionRatePercent.coerceIn(
+                0.0, 100.0
+            ) / 100.0)).toLong()
             val newMrr = (totalNewCustomers.toLong() * arpuMinor)
             val endingMrrMinor = max(0L, currentMrr - churnedMrr + expansionMrr + newMrr)
 

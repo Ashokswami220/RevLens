@@ -119,9 +119,21 @@ class WasmScenarioRepository : ScenarioRepository {
 }
 
 val wasmModule = module {
-    single<ProfileRepository> { com.revlens.app.data.WebFirestoreProfileRepository(WasmProfileRepository()) }
-    single<ScenarioRepository> { com.revlens.app.data.WebFirestoreScenarioRepository(WasmScenarioRepository()) }
-    single<WorkspaceRepository> { com.revlens.app.data.WebFirestoreWorkspaceRepository(com.revlens.app.data.DefaultWorkspaceRepository()) }
+    single<ProfileRepository> {
+        com.revlens.app.data.WebFirestoreProfileRepository(
+            WasmProfileRepository()
+        )
+    }
+    single<ScenarioRepository> {
+        com.revlens.app.data.WebFirestoreScenarioRepository(
+            WasmScenarioRepository()
+        )
+    }
+    single<WorkspaceRepository> {
+        com.revlens.app.data.WebFirestoreWorkspaceRepository(
+            com.revlens.app.data.DefaultWorkspaceRepository()
+        )
+    }
     single<com.revlens.app.domain.context.WorkspaceContext> { com.revlens.app.domain.context.DefaultWorkspaceContext() }
     single<com.revlens.app.domain.session.SessionManager> { com.revlens.app.domain.session.DefaultSessionManager() }
     single { com.revlens.app.domain.usecase.ResolveGateUseCase() }
@@ -135,7 +147,11 @@ val wasmModule = module {
     single<com.revlens.app.domain.repository.ReportRepository> { com.revlens.app.data.DefaultReportRepository() }
     single<com.revlens.app.domain.repository.AppLockRepository> { com.revlens.app.data.DefaultAppLockRepository() }
     single<com.revlens.app.domain.repository.NotificationPreferencesRepository> { com.revlens.app.data.DefaultNotificationPreferencesRepository() }
-    single<com.revlens.app.domain.repository.AuthRepository> { com.revlens.app.data.WebFirebaseAuthRepository(get()) }
+    single<com.revlens.app.domain.repository.AuthRepository> {
+        com.revlens.app.data.WebFirebaseAuthRepository(
+            get()
+        )
+    }
     single<com.revlens.app.domain.repository.TeamRepository> { com.revlens.app.data.fake.FakeTeamRepository() }
     single<com.revlens.app.domain.repository.BillingRepository> { com.revlens.app.data.fake.FakeBillingRepository() }
     single<com.revlens.app.domain.repository.IntegrationRepository> { com.revlens.app.data.fake.FakeIntegrationRepository() }
@@ -149,20 +165,40 @@ val wasmModule = module {
     single { com.revlens.app.domain.usecase.CreateWorkspaceUseCase(get(), get(), get()) }
     viewModel { MainViewModel(get(), get(), get(), get(), get(), get(), get()) }
     viewModel { BusinessSetupViewModel() }
-    viewModel { com.revlens.app.ui.screens.workspace.WorkspaceManagementViewModel(get(), get(), get(), get()) }
+    viewModel {
+        com.revlens.app.ui.screens.workspace.WorkspaceManagementViewModel(
+            get(), get(), get(), get()
+        )
+    }
     viewModel { com.revlens.app.ui.screens.workspace.CreateWorkspaceViewModel(get()) }
     viewModel { com.revlens.app.ui.screens.data.DataImportViewModel(get(), get(), get()) }
-    viewModel { com.revlens.app.ui.screens.analytics.RevenueBreakdownViewModel(get(), get(), get()) }
+    viewModel {
+        com.revlens.app.ui.screens.analytics.RevenueBreakdownViewModel(
+            get(), get(), get()
+        )
+    }
     viewModel { com.revlens.app.ui.screens.analytics.LtvAnalysisViewModel(get(), get()) }
     viewModel { com.revlens.app.ui.screens.analytics.CacAnalyticsViewModel(get(), get(), get()) }
     viewModel { com.revlens.app.ui.screens.simulator.GrowthSimulatorViewModel(get(), get()) }
-    viewModel { com.revlens.app.ui.screens.analytics.CustomerAnalyticsViewModel(get(), get(), get()) }
+    viewModel {
+        com.revlens.app.ui.screens.analytics.CustomerAnalyticsViewModel(
+            get(), get(), get()
+        )
+    }
     viewModel { com.revlens.app.ui.screens.analytics.CohortAnalysisViewModel(get(), get(), get()) }
     viewModel { com.revlens.app.ui.screens.experiments.ExperimentsViewModel(get(), get()) }
     viewModel { com.revlens.app.ui.screens.experiments.ExperimentDetailsViewModel(get()) }
-    viewModel { com.revlens.app.ui.screens.reports.ReportsViewModel(get(), get(), get(), get(), get()) }
+    viewModel {
+        com.revlens.app.ui.screens.reports.ReportsViewModel(
+            get(), get(), get(), get(), get()
+        )
+    }
     viewModel { com.revlens.app.ui.screens.security.SecuritySettingsViewModel(get(), get(), get()) }
-    viewModel { com.revlens.app.ui.screens.notifications.NotificationSettingsViewModel(get(), get()) }
+    viewModel {
+        com.revlens.app.ui.screens.notifications.NotificationSettingsViewModel(
+            get(), get()
+        )
+    }
     viewModel { com.revlens.app.ui.screens.auth.LoginViewModel(get(), get()) }
     viewModel { com.revlens.app.ui.screens.profile.ProfileViewModel(get(), get(), get(), get()) }
     viewModel { com.revlens.app.ui.screens.team.TeamViewModel(get(), get()) }

@@ -25,6 +25,7 @@ sealed interface ExperimentDetailsEvent {
         val treatmentN: Int,
         val notes: String
     ) : ExperimentDetailsEvent
+
     data object OpenCompleteDialog : ExperimentDetailsEvent
     data object DismissCompleteDialog : ExperimentDetailsEvent
     data class CompleteExperiment(val verdict: ExperimentStatus) : ExperimentDetailsEvent

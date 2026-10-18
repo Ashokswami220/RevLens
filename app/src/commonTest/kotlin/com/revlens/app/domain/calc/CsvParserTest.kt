@@ -2,8 +2,6 @@ package com.revlens.app.domain.calc
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 class CsvParserTest {
 
@@ -39,7 +37,8 @@ class CsvParserTest {
 
     @Test
     fun testColumnAutoMapper() {
-        val headers = listOf("User ID", "Subscription Tier", "Signup Date", "Monthly Revenue", "UTM Source")
+        val headers =
+            listOf("User ID", "Subscription Tier", "Signup Date", "Monthly Revenue", "UTM Source")
         val targetFields = listOf(
             CanonicalField.CUSTOMER_ID,
             CanonicalField.PLAN,

@@ -38,11 +38,18 @@ class CacCalculatorTest {
     @Test
     fun testCalculateActual() {
         val spend = listOf(
-            MarketingSpendRecord(month = "2024-01-01", channel = "Google Ads", spendMinor = 100000L, newCustomers = 10),
-            MarketingSpendRecord(month = "2024-01-01", channel = "Meta Ads", spendMinor = 50000L, newCustomers = 5)
+            MarketingSpendRecord(
+                month = "2024-01-01", channel = "Google Ads", spendMinor = 100000L,
+                newCustomers = 10
+            ),
+            MarketingSpendRecord(
+                month = "2024-01-01", channel = "Meta Ads", spendMinor = 50000L, newCustomers = 5
+            )
         )
         val subs = listOf(
-            SubscriptionRecord(customerId = "C1", plan = "Starter", startDate = "2024-01-01", mrrMinor = 5000L)
+            SubscriptionRecord(
+                customerId = "C1", plan = "Starter", startDate = "2024-01-01", mrrMinor = 5000L
+            )
         )
 
         val result = CacCalculator.calculateActual(

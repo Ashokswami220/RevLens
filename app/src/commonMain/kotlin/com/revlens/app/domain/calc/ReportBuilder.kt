@@ -23,7 +23,8 @@ object ReportBuilder {
         customNotes: String,
         timestampEpoch: Long = 1760000000L
     ): ReportSnapshot {
-        val totalMrr = profile?.currentMrr?.toDouble() ?: profile?.plans?.sumOf { it.price.toDouble() * it.customerCount } ?: 42500.0
+        val totalMrr = profile?.currentMrr?.toDouble()
+            ?: profile?.plans?.sumOf { it.price.toDouble() * it.customerCount } ?: 42500.0
         val totalCustomers = profile?.plans?.sumOf { it.customerCount } ?: 520
         val arpu = if (totalCustomers > 0) totalMrr / totalCustomers else 81.73
         val churnRate = profile?.monthlyChurnRate ?: 4.2
@@ -55,7 +56,8 @@ object ReportBuilder {
             sections.size >= 3 -> 2
             else -> 1
         }
-        val estimatedSize = if (format == ReportFormat.PDF) (estimatedPages * 24576L) else csvContent.encodeToByteArray().size.toLong()
+        val estimatedSize =
+            if (format == ReportFormat.PDF) (estimatedPages * 24576L) else csvContent.encodeToByteArray().size.toLong()
 
         return ReportSnapshot(
             id = id,
@@ -87,15 +89,25 @@ object ReportBuilder {
     ): String {
         val sb = StringBuilder()
         sb.append("\"RevLens SaaS Intelligence Report\"\n")
-        sb.append("\"Title:\",\"").append(title.replace("\"", "\"\"")).append("\"\n")
-        sb.append("\"Template:\",\"").append(template.displayName).append("\"\n")
-        sb.append("\"Period:\",\"").append(period).append("\"\n\n")
+        sb.append("\"Title:\",\"")
+            .append(title.replace("\"", "\"\""))
+            .append("\"\n")
+        sb.append("\"Template:\",\"")
+            .append(template.displayName)
+            .append("\"\n")
+        sb.append("\"Period:\",\"")
+            .append(period)
+            .append("\"\n\n")
 
         if (sections.contains(ReportSection.KPIS)) {
             sb.append("\"--- EXECUTIVE METRICS ---\"\n")
             sb.append("\"Metric\",\"Value\"\n")
             for ((key, value) in metrics) {
-                sb.append("\"").append(key).append("\",\"").append(value).append("\"\n")
+                sb.append("\"")
+                    .append(key)
+                    .append("\",\"")
+                    .append(value)
+                    .append("\"\n")
             }
             sb.append("\n")
         }
@@ -104,20 +116,36 @@ object ReportBuilder {
             sb.append("\"--- REVENUE BREAKDOWN (MRR BRIDGE) ---\"\n")
             sb.append("\"Component\",\"Amount ($)\",\"Share (%)\"\n")
             val base = 42500.0
-            sb.append("\"Starting MRR\",").append(formatCurrency(base)).append(",\"100%\"\n")
-            sb.append("\"New Customer MRR\",").append(formatCurrency(4800.0)).append(",\"11.3%\"\n")
-            sb.append("\"Expansion MRR\",").append(formatCurrency(1900.0)).append(",\"4.5%\"\n")
-            sb.append("\"Contraction MRR\",-").append(formatCurrency(650.0)).append(",\"-1.5%\"\n")
-            sb.append("\"Churned MRR\",-").append(formatCurrency(1350.0)).append(",\"-3.2%\"\n")
-            sb.append("\"Net New MRR\",").append(formatCurrency(4700.0)).append(",\"11.1%\"\n")
-            sb.append("\"Ending MRR\",").append(formatCurrency(base + 4700.0)).append(",\"111.1%\"\n\n")
+            sb.append("\"Starting MRR\",")
+                .append(formatCurrency(base))
+                .append(",\"100%\"\n")
+            sb.append("\"New Customer MRR\",")
+                .append(formatCurrency(4800.0))
+                .append(",\"11.3%\"\n")
+            sb.append("\"Expansion MRR\",")
+                .append(formatCurrency(1900.0))
+                .append(",\"4.5%\"\n")
+            sb.append("\"Contraction MRR\",-")
+                .append(formatCurrency(650.0))
+                .append(",\"-1.5%\"\n")
+            sb.append("\"Churned MRR\",-")
+                .append(formatCurrency(1350.0))
+                .append(",\"-3.2%\"\n")
+            sb.append("\"Net New MRR\",")
+                .append(formatCurrency(4700.0))
+                .append(",\"11.1%\"\n")
+            sb.append("\"Ending MRR\",")
+                .append(formatCurrency(base + 4700.0))
+                .append(",\"111.1%\"\n\n")
         }
 
         if (sections.contains(ReportSection.SCENARIOS) && scenarios.isNotEmpty()) {
             sb.append("\"--- MODELED SCENARIOS ---\"\n")
             sb.append("\"Scenario Name\",\"Expected Lift\",\"Target MRR\"\n")
             for (scenario in scenarios) {
-                sb.append("\"").append(scenario.name.replace("\"", "\"\"")).append("\",\"+12.4%\",\"$47,200\"\n")
+                sb.append("\"")
+                    .append(scenario.name.replace("\"", "\"\""))
+                    .append("\",\"+12.4%\",\"$47,200\"\n")
             }
             sb.append("\n")
         }
@@ -130,14 +158,22 @@ object ReportBuilder {
             for (m in 1..12) {
                 currentMrr *= 1.05
                 customers += 25
-                sb.append("\"Month ").append(m).append("\",").append(formatCurrency(currentMrr)).append(",").append(customers).append("\n")
+                sb.append("\"Month ")
+                    .append(m)
+                    .append("\",")
+                    .append(formatCurrency(currentMrr))
+                    .append(",")
+                    .append(customers)
+                    .append("\n")
             }
             sb.append("\n")
         }
 
         if (sections.contains(ReportSection.NOTES) && notes.isNotBlank()) {
             sb.append("\"--- STRATEGIC NOTES ---\"\n")
-            sb.append("\"").append(notes.replace("\"", "\"\"")).append("\"\n")
+            sb.append("\"")
+                .append(notes.replace("\"", "\"\""))
+                .append("\"\n")
         }
 
         return sb.toString()

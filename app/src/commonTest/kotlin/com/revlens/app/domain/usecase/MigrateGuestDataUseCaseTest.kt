@@ -76,7 +76,8 @@ class MigrateGuestDataUseCaseTest {
 
     @Test
     fun testMigrateGuestDataMigratesProfileAndScenarios() = runTest {
-        val wsRepo = DefaultWorkspaceRepository(listOf(Workspace("ws_existing", "Existing Workspace")))
+        val wsRepo =
+            DefaultWorkspaceRepository(listOf(Workspace("ws_existing", "Existing Workspace")))
         val wsContext = DefaultWorkspaceContext("ws_existing")
         val profileRepo = FakeProfileRepository()
         val scenarioRepo = FakeScenarioRepository()

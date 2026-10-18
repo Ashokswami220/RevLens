@@ -14,8 +14,12 @@ class GrowthEngineTest {
     fun testStandard12MonthSimulation() {
         val assumptions = GrowthAssumptions(
             channels = listOf(
-                ChannelPlan("c1", "Google Ads", monthlySpendMinor = 100000L, targetCacMinor = 10000L), // 10 customers/mo, $1000 spend
-                ChannelPlan("c2", "Meta Ads", monthlySpendMinor = 50000L, targetCacMinor = 5000L)       // 10 customers/mo, $500 spend
+                ChannelPlan(
+                    "c1", "Google Ads", monthlySpendMinor = 100000L, targetCacMinor = 10000L
+                ), // 10 customers/mo, $1000 spend
+                ChannelPlan(
+                    "c2", "Meta Ads", monthlySpendMinor = 50000L, targetCacMinor = 5000L
+                )       // 10 customers/mo, $500 spend
             ),
             referralRatePercent = 2.0,
             organicGrowthPercent = 1.0,
@@ -75,7 +79,9 @@ class GrowthEngineTest {
     fun testCashRunwayExhaustion() {
         val assumptions = GrowthAssumptions(
             channels = listOf(
-                ChannelPlan("c1", "Heavy Ads", monthlySpendMinor = 10000000L, targetCacMinor = 50000L) // $100k spend/mo
+                ChannelPlan(
+                    "c1", "Heavy Ads", monthlySpendMinor = 10000000L, targetCacMinor = 50000L
+                ) // $100k spend/mo
             ),
             referralRatePercent = 0.0,
             organicGrowthPercent = 0.0,

@@ -80,9 +80,13 @@ class FakeBillingRepository : BillingRepository {
 
         // If tier changed to a paid tier, pretend an invoice was generated
         if (newTier != PlanTier.FREE) {
-            val price = if (period == BillingPeriod.ANNUAL) newTier.annualPriceUsd else newTier.monthlyPriceUsd
+            val price =
+                if (period == BillingPeriod.ANNUAL) newTier.annualPriceUsd else newTier.monthlyPriceUsd
             val newInvoice = Invoice(
-                id = "INV-2026-${(getInvoicesFlow(workspaceId).value.size + 1).toString().padStart(3, '0')}",
+                id = "INV-2026-${
+                    (getInvoicesFlow(workspaceId).value.size + 1).toString()
+                        .padStart(3, '0')
+                }",
                 date = "Today",
                 amountFormatted = "$$price.00",
                 status = "Paid"

@@ -21,7 +21,8 @@ object ImportValidator {
         rows: List<List<String>>,
         mapping: Map<CanonicalField, String?>
     ): ValidationReport {
-        val headerIndices = headers.mapIndexed { idx, h -> h to idx }.toMap()
+        val headerIndices = headers.mapIndexed { idx, h -> h to idx }
+            .toMap()
 
         val custIdx = mapping[CanonicalField.CUSTOMER_ID]?.let { headerIndices[it] }
         val planIdx = mapping[CanonicalField.PLAN]?.let { headerIndices[it] }
@@ -39,13 +40,35 @@ object ImportValidator {
         for ((rowIndex, row) in rows.withIndex()) {
             val displayRow = rowIndex + 2 // 1-indexed header + 1
 
-            val custId = custIdx?.let { row.getOrNull(it)?.trim() } ?: ""
-            val plan = planIdx?.let { row.getOrNull(it)?.trim() } ?: ""
-            val startDate = startIdx?.let { row.getOrNull(it)?.trim() } ?: ""
-            val endDate = endIdx?.let { row.getOrNull(it)?.trim().takeIf { d -> !d.isNullOrBlank() } }
-            val mrrRaw = mrrIdx?.let { row.getOrNull(it)?.trim() } ?: ""
-            val channel = channelIdx?.let { row.getOrNull(it)?.trim() }
-            val country = countryIdx?.let { row.getOrNull(it)?.trim() }
+            val custId = custIdx?.let {
+                row.getOrNull(it)
+                    ?.trim()
+            } ?: ""
+            val plan = planIdx?.let {
+                row.getOrNull(it)
+                    ?.trim()
+            } ?: ""
+            val startDate = startIdx?.let {
+                row.getOrNull(it)
+                    ?.trim()
+            } ?: ""
+            val endDate = endIdx?.let {
+                row.getOrNull(it)
+                    ?.trim()
+                    .takeIf { d -> !d.isNullOrBlank() }
+            }
+            val mrrRaw = mrrIdx?.let {
+                row.getOrNull(it)
+                    ?.trim()
+            } ?: ""
+            val channel = channelIdx?.let {
+                row.getOrNull(it)
+                    ?.trim()
+            }
+            val country = countryIdx?.let {
+                row.getOrNull(it)
+                    ?.trim()
+            }
 
             if (custId.isBlank()) {
                 errorMessages.add("Row $displayRow: Missing Customer ID")
@@ -66,7 +89,9 @@ object ImportValidator {
             // Check duplicate key
             val dedupeKey = "$custId|$startDate"
             if (seenKeys.contains(dedupeKey)) {
-                warningMessages.add("Row $displayRow: Duplicate subscription record for customer '$custId'")
+                warningMessages.add(
+                    "Row $displayRow: Duplicate subscription record for customer '$custId'"
+                )
             } else {
                 seenKeys.add(dedupeKey)
             }
@@ -101,7 +126,8 @@ object ImportValidator {
         rows: List<List<String>>,
         mapping: Map<CanonicalField, String?>
     ): ValidationReport {
-        val headerIndices = headers.mapIndexed { idx, h -> h to idx }.toMap()
+        val headerIndices = headers.mapIndexed { idx, h -> h to idx }
+            .toMap()
 
         val monthIdx = mapping[CanonicalField.MONTH]?.let { headerIndices[it] }
         val spendIdx = mapping[CanonicalField.SPEND]?.let { headerIndices[it] }
@@ -115,10 +141,22 @@ object ImportValidator {
         for ((rowIndex, row) in rows.withIndex()) {
             val displayRow = rowIndex + 2
 
-            val month = monthIdx?.let { row.getOrNull(it)?.trim() } ?: ""
-            val spendRaw = spendIdx?.let { row.getOrNull(it)?.trim() } ?: ""
-            val channel = channelIdx?.let { row.getOrNull(it)?.trim() } ?: "All"
-            val custRaw = customersIdx?.let { row.getOrNull(it)?.trim() }
+            val month = monthIdx?.let {
+                row.getOrNull(it)
+                    ?.trim()
+            } ?: ""
+            val spendRaw = spendIdx?.let {
+                row.getOrNull(it)
+                    ?.trim()
+            } ?: ""
+            val channel = channelIdx?.let {
+                row.getOrNull(it)
+                    ?.trim()
+            } ?: "All"
+            val custRaw = customersIdx?.let {
+                row.getOrNull(it)
+                    ?.trim()
+            }
 
             if (month.isBlank()) {
                 errorMessages.add("Row $displayRow: Missing Month")
@@ -167,6 +205,7 @@ object ImportValidator {
     }
 
     private fun normalizeDate(date: String): String {
-        return date.replace("/", "-").trim()
+        return date.replace("/", "-")
+            .trim()
     }
 }

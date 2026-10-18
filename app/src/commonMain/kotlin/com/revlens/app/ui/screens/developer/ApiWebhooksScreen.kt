@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,9 +20,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -131,7 +127,9 @@ fun ApiWebhooksScreen(
                 contentColor = RevLensTheme.colors.brandPrimary,
                 indicator = { tabPositions ->
                     TabRowDefaults.SecondaryIndicator(
-                        modifier = Modifier.tabIndicatorOffset(tabPositions[state.activeTab.ordinal]),
+                        modifier = Modifier.tabIndicatorOffset(
+                            tabPositions[state.activeTab.ordinal]
+                        ),
                         color = RevLensTheme.colors.brandPrimary
                     )
                 }
@@ -203,7 +201,11 @@ fun ApiWebhooksScreen(
                         state.apiKeys.forEach { key ->
                             ApiKeyRow(
                                 apiKey = key,
-                                onDelete = { viewModel.onEvent(ApiWebhooksEvent.PromptDeleteKey(key)) }
+                                onDelete = {
+                                    viewModel.onEvent(
+                                        ApiWebhooksEvent.PromptDeleteKey(key)
+                                    )
+                                }
                             )
                         }
                     }
@@ -257,9 +259,21 @@ fun ApiWebhooksScreen(
                         state.webhooks.forEach { endpoint ->
                             WebhookRow(
                                 endpoint = endpoint,
-                                onRotateSecret = { viewModel.onEvent(ApiWebhooksEvent.RotateWebhookSecret(endpoint.id)) },
-                                onDelete = { viewModel.onEvent(ApiWebhooksEvent.PromptDeleteWebhook(endpoint)) },
-                                onCopySecret = { viewModel.onEvent(ApiWebhooksEvent.CopyText(endpoint.secret, "Signing Secret")) }
+                                onRotateSecret = {
+                                    viewModel.onEvent(
+                                        ApiWebhooksEvent.RotateWebhookSecret(endpoint.id)
+                                    )
+                                },
+                                onDelete = {
+                                    viewModel.onEvent(
+                                        ApiWebhooksEvent.PromptDeleteWebhook(endpoint)
+                                    )
+                                },
+                                onCopySecret = {
+                                    viewModel.onEvent(
+                                        ApiWebhooksEvent.CopyText(endpoint.secret, "Signing Secret")
+                                    )
+                                }
                             )
                         }
                     }
@@ -307,13 +321,18 @@ fun ApiWebhooksScreen(
                                         )
                                     },
                                 shape = RoundedCornerShape(12.dp),
-                                colors = CardDefaults.cardColors(containerColor = RevLensTheme.colors.surface),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = RevLensTheme.colors.surface
+                                ),
                                 border = BorderStroke(
                                     1.dp,
                                     if (isSelected) RevLensTheme.colors.brandPrimary else RevLensTheme.colors.borderDefault
                                 )
                             ) {
-                                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Column(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -327,8 +346,12 @@ fun ApiWebhooksScreen(
                                                 modifier = Modifier
                                                     .clip(CircleShape)
                                                     .background(
-                                                        if (isSuccess) RevLensTheme.colors.success.copy(alpha = 0.15f)
-                                                        else RevLensTheme.colors.error.copy(alpha = 0.15f)
+                                                        if (isSuccess) RevLensTheme.colors.success.copy(
+                                                            alpha = 0.15f
+                                                        )
+                                                        else RevLensTheme.colors.error.copy(
+                                                            alpha = 0.15f
+                                                        )
                                                     )
                                                     .padding(horizontal = 8.dp, vertical = 2.dp)
                                             ) {
@@ -359,7 +382,11 @@ fun ApiWebhooksScreen(
                                                 color = RevLensTheme.colors.textSecondary
                                             )
                                             IconButton(
-                                                onClick = { viewModel.onEvent(ApiWebhooksEvent.RetryDelivery(delivery.id)) },
+                                                onClick = {
+                                                    viewModel.onEvent(
+                                                        ApiWebhooksEvent.RetryDelivery(delivery.id)
+                                                    )
+                                                },
                                                 modifier = Modifier.size(28.dp)
                                             ) {
                                                 Icon(
@@ -393,7 +420,13 @@ fun ApiWebhooksScreen(
                                             )
                                             CodeBlock(
                                                 code = delivery.payloadJson,
-                                                onCopied = { viewModel.onEvent(ApiWebhooksEvent.CopyText(delivery.payloadJson, "Payload")) }
+                                                onCopied = {
+                                                    viewModel.onEvent(
+                                                        ApiWebhooksEvent.CopyText(
+                                                            delivery.payloadJson, "Payload"
+                                                        )
+                                                    )
+                                                }
                                             )
 
                                             Spacer(modifier = Modifier.height(4.dp))
@@ -405,7 +438,13 @@ fun ApiWebhooksScreen(
                                             )
                                             CodeBlock(
                                                 code = delivery.responseBody,
-                                                onCopied = { viewModel.onEvent(ApiWebhooksEvent.CopyText(delivery.responseBody, "Response")) }
+                                                onCopied = {
+                                                    viewModel.onEvent(
+                                                        ApiWebhooksEvent.CopyText(
+                                                            delivery.responseBody, "Response"
+                                                        )
+                                                    )
+                                                }
                                             )
                                         }
                                     }
@@ -474,8 +513,14 @@ fun ApiWebhooksScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(if (isSelected) RevLensTheme.colors.primaryAction else Color.Transparent)
-                                .clickable { viewModel.onEvent(ApiWebhooksEvent.NewKeyScopeChanged(scope)) }
+                                .background(
+                                    if (isSelected) RevLensTheme.colors.primaryAction else Color.Transparent
+                                )
+                                .clickable {
+                                    viewModel.onEvent(
+                                        ApiWebhooksEvent.NewKeyScopeChanged(scope)
+                                    )
+                                }
                                 .padding(vertical = 10.dp),
                             contentAlignment = Alignment.Center
                         ) {
@@ -531,7 +576,11 @@ fun ApiWebhooksScreen(
 
                     CodeBlock(
                         code = state.createdKeyToken!!,
-                        onCopied = { viewModel.onEvent(ApiWebhooksEvent.CopyText(state.createdKeyToken!!, "API Key")) }
+                        onCopied = {
+                            viewModel.onEvent(
+                                ApiWebhooksEvent.CopyText(state.createdKeyToken!!, "API Key")
+                            )
+                        }
                     )
                 }
             },
@@ -569,7 +618,11 @@ fun ApiWebhooksScreen(
 
                 OutlinedTextField(
                     value = state.newWebhookUrl,
-                    onValueChange = { viewModel.onEvent(ApiWebhooksEvent.NewWebhookUrlChanged(it)) },
+                    onValueChange = {
+                        viewModel.onEvent(
+                            ApiWebhooksEvent.NewWebhookUrlChanged(it)
+                        )
+                    },
                     label = { Text("Endpoint URL (must begin with https://)") },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -583,7 +636,11 @@ fun ApiWebhooksScreen(
 
                 OutlinedTextField(
                     value = state.newWebhookDesc,
-                    onValueChange = { viewModel.onEvent(ApiWebhooksEvent.NewWebhookDescChanged(it)) },
+                    onValueChange = {
+                        viewModel.onEvent(
+                            ApiWebhooksEvent.NewWebhookDescChanged(it)
+                        )
+                    },
                     label = { Text("Description (e.g. Slack bot, Data warehouse)") },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -608,14 +665,24 @@ fun ApiWebhooksScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { viewModel.onEvent(ApiWebhooksEvent.ToggleWebhookEvent(event)) }
+                                .clickable {
+                                    viewModel.onEvent(
+                                        ApiWebhooksEvent.ToggleWebhookEvent(event)
+                                    )
+                                }
                                 .padding(vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Checkbox(
                                 checked = isChecked,
-                                onCheckedChange = { viewModel.onEvent(ApiWebhooksEvent.ToggleWebhookEvent(event)) },
-                                colors = CheckboxDefaults.colors(checkedColor = RevLensTheme.colors.brandPrimary)
+                                onCheckedChange = {
+                                    viewModel.onEvent(
+                                        ApiWebhooksEvent.ToggleWebhookEvent(event)
+                                    )
+                                },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = RevLensTheme.colors.brandPrimary
+                                )
                             )
                             Text(
                                 text = event,

@@ -76,7 +76,9 @@ class CustomerSegmentationCalculatorTest {
             SubscriptionRecord("c3", "Starter", "2026-01-10", null, 3000L, "Google", "UK"),
             SubscriptionRecord("c4", "Starter", "2026-01-12", null, 3000L, "Referral", "CA"),
             SubscriptionRecord("c5", "Enterprise", "2026-01-15", null, 50000L, "Direct", "US"),
-            SubscriptionRecord("c6", "Starter", "2025-11-01", "2026-02-01", 3000L, "Google", "US") // churned
+            SubscriptionRecord(
+                "c6", "Starter", "2025-11-01", "2026-02-01", 3000L, "Google", "US"
+            ) // churned
         )
 
         val dataset = Dataset(

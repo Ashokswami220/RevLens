@@ -4,7 +4,6 @@ import androidx.lifecycle.viewModelScope
 import com.revlens.app.core.platform.BiometricAuthenticator
 import com.revlens.app.core.platform.BiometricStatus
 import com.revlens.app.core.ui.MviViewModel
-import com.revlens.app.domain.model.LockTimeout
 import com.revlens.app.domain.model.SessionState
 import com.revlens.app.domain.model.UserSession
 import com.revlens.app.domain.repository.AppLockRepository
@@ -105,7 +104,9 @@ class SecuritySettingsViewModel(
                             appLockRepository.setBiometricEnabled(true)
                             emit(SecuritySettingsEffect.ShowToast("App Lock enabled"))
                         } else {
-                            emit(SecuritySettingsEffect.ShowToast("Biometric verification cancelled"))
+                            emit(
+                                SecuritySettingsEffect.ShowToast("Biometric verification cancelled")
+                            )
                         }
                     } else {
                         appLockRepository.setBiometricEnabled(false)
@@ -113,22 +114,26 @@ class SecuritySettingsViewModel(
                     }
                 }
             }
+
             is SecuritySettingsEvent.ChangeTimeout -> {
                 viewModelScope.launch {
                     appLockRepository.setTimeout(event.timeout)
                     emit(SecuritySettingsEffect.ShowToast("Lock timeout updated"))
                 }
             }
+
             SecuritySettingsEvent.LockNow -> {
                 viewModelScope.launch {
                     appLockRepository.setLocked(true)
                 }
             }
+
             is SecuritySettingsEvent.RevokeSession -> {
                 val updated = state.value.sessions.filterNot { it.id == event.sessionId }
                 update { copy(sessions = updated) }
                 emit(SecuritySettingsEffect.ShowToast("Session revoked"))
             }
+
             SecuritySettingsEvent.RevokeAllOtherSessions -> {
                 if (state.value.isGuest) {
                     update { copy(showUpgradePrompt = true) }
@@ -138,9 +143,11 @@ class SecuritySettingsViewModel(
                     emit(SecuritySettingsEffect.ShowToast("Signed out of all other sessions"))
                 }
             }
+
             SecuritySettingsEvent.ClickUpgradeCloudSecurity -> {
                 update { copy(showUpgradePrompt = true) }
             }
+
             SecuritySettingsEvent.DismissUpgradePrompt -> {
                 update { copy(showUpgradePrompt = false) }
             }

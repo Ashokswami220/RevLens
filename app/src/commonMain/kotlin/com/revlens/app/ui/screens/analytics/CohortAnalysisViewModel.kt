@@ -46,10 +46,12 @@ class CohortAnalysisViewModel(
                 update { copy(metric = event.metric) }
                 recompute()
             }
+
             is CohortAnalysisEvent.SelectGranularity -> {
                 update { copy(granularity = event.granularity) }
                 recompute()
             }
+
             is CohortAnalysisEvent.ToggleCohortSelection -> {
                 val current = state.value.selectedCohortNames
                 val updated = if (current.contains(event.cohortName)) {
@@ -59,15 +61,19 @@ class CohortAnalysisViewModel(
                 }
                 update { copy(selectedCohortNames = updated) }
             }
+
             is CohortAnalysisEvent.SelectCell -> {
                 update { copy(selectedCellDetail = event.row to event.cell) }
             }
+
             CohortAnalysisEvent.DismissCellDetail -> {
                 update { copy(selectedCellDetail = null) }
             }
+
             CohortAnalysisEvent.ImportDataClicked -> {
                 emit(CohortAnalysisEffect.NavigateToDataImport)
             }
+
             CohortAnalysisEvent.Refresh -> recompute()
         }
     }
@@ -82,11 +88,14 @@ class CohortAnalysisViewModel(
             maxOffsets = 12
         )
         // Auto-select first up to 3 cohorts if none selected
-        val defaultSelected = if (currentState.selectedCohortNames.isEmpty() && result.rows.isNotEmpty()) {
-            result.rows.take(3).map { it.cohortLabel }.toSet()
-        } else {
-            currentState.selectedCohortNames
-        }
+        val defaultSelected =
+            if (currentState.selectedCohortNames.isEmpty() && result.rows.isNotEmpty()) {
+                result.rows.take(3)
+                    .map { it.cohortLabel }
+                    .toSet()
+            } else {
+                currentState.selectedCohortNames
+            }
         update {
             copy(
                 result = result,

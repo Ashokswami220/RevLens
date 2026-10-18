@@ -39,6 +39,7 @@ class ProfileViewModel(
                 val u = session.user
                 Quad(u.name, u.email, u.avatarUrl, u.jobTitle ?: "")
             }
+
             else -> Quad("Guest User", "local-guest@revlens.internal", null, "")
         }
 
@@ -67,7 +68,9 @@ class ProfileViewModel(
                         copy(
                             timezone = ws.timeZoneId,
                             currency = ws.currency,
-                            hasChanges = calculateHasChanges(name, jobTitle, ws.timeZoneId, ws.currency)
+                            hasChanges = calculateHasChanges(
+                                name, jobTitle, ws.timeZoneId, ws.currency
+                            )
                         )
                     }
                 }
@@ -82,9 +85,9 @@ class ProfileViewModel(
         currency: String
     ): Boolean {
         return name.trim() != initialName.trim() ||
-            jobTitle.trim() != initialJobTitle.trim() ||
-            timezone != initialTimezone ||
-            currency != initialCurrency
+                jobTitle.trim() != initialJobTitle.trim() ||
+                timezone != initialTimezone ||
+                currency != initialCurrency
     }
 
     override fun onEvent(event: ProfileEvent) {
@@ -97,6 +100,7 @@ class ProfileViewModel(
                     )
                 }
             }
+
             is ProfileEvent.JobTitleChanged -> {
                 update {
                     copy(
@@ -105,6 +109,7 @@ class ProfileViewModel(
                     )
                 }
             }
+
             is ProfileEvent.TimezoneChanged -> {
                 update {
                     copy(
@@ -113,6 +118,7 @@ class ProfileViewModel(
                     )
                 }
             }
+
             is ProfileEvent.CurrencyChanged -> {
                 update {
                     copy(
@@ -121,10 +127,21 @@ class ProfileViewModel(
                     )
                 }
             }
+
             ProfileEvent.SaveChanges -> saveChanges()
             ProfileEvent.LogoutClicked -> performLogout()
-            ProfileEvent.OpenDeleteDialog -> update { copy(showDeleteDialog = true, deleteError = null) }
-            ProfileEvent.DismissDeleteDialog -> update { copy(showDeleteDialog = false, deleteError = null) }
+            ProfileEvent.OpenDeleteDialog -> update {
+                copy(
+                    showDeleteDialog = true, deleteError = null
+                )
+            }
+
+            ProfileEvent.DismissDeleteDialog -> update {
+                copy(
+                    showDeleteDialog = false, deleteError = null
+                )
+            }
+
             is ProfileEvent.ConfirmDeleteAccount -> confirmDelete(event.confirmationWord)
         }
     }
@@ -148,7 +165,9 @@ class ProfileViewModel(
             update { copy(isSaving = true) }
 
             if (!s.isGuest) {
-                val authRes = authRepository.updateProfile(s.name.trim(), s.jobTitle.trim().ifEmpty { null })
+                val authRes = authRepository.updateProfile(
+                    s.name.trim(), s.jobTitle.trim()
+                        .ifEmpty { null })
                 authRes.onSuccess { updatedUser ->
                     sessionManager.onLoggedIn(updatedUser)
                 }
@@ -177,7 +196,9 @@ class ProfileViewModel(
     }
 
     private fun confirmDelete(confirmationWord: String) {
-        if (confirmationWord.trim().uppercase() != "DELETE") {
+        if (confirmationWord.trim()
+                .uppercase() != "DELETE"
+        ) {
             update { copy(deleteError = "Please type DELETE to confirm.") }
             return
         }

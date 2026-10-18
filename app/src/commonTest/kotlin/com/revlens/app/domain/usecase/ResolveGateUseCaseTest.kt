@@ -9,7 +9,6 @@ import com.revlens.app.ui.navigation.Gate
 import com.revlens.app.ui.navigation.PublicStart
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class ResolveGateUseCaseTest {
 

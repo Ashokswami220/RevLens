@@ -100,7 +100,8 @@ object CohortCalculator {
                         )
                     )
                 } else if (offset == 0) {
-                    val initialVal = if (metric == CohortMetric.LOGO_RETENTION) initialSize.toDouble() else (initialMrr / 100.0)
+                    val initialVal =
+                        if (metric == CohortMetric.LOGO_RETENTION) initialSize.toDouble() else (initialMrr / 100.0)
                     cells.add(
                         CohortCell(
                             offsetIndex = 0,
@@ -112,15 +113,18 @@ object CohortCalculator {
                     )
                 } else {
                     // Subscriptions retained at this month offset
-                    val retainedSubs: List<SubscriptionRecord> = cohortSubs.filter { sub: SubscriptionRecord ->
-                        if (sub.endDate == null) {
-                            true
-                        } else {
-                            val endMonth = if (sub.endDate.length >= 7) sub.endDate.substring(0, 7) else "9999-12"
-                            val diffMonths = monthsBetween(cohortMonth, endMonth)
-                            diffMonths >= offset
+                    val retainedSubs: List<SubscriptionRecord> =
+                        cohortSubs.filter { sub: SubscriptionRecord ->
+                            if (sub.endDate == null) {
+                                true
+                            } else {
+                                val endMonth = if (sub.endDate.length >= 7) sub.endDate.substring(
+                                    0, 7
+                                ) else "9999-12"
+                                val diffMonths = monthsBetween(cohortMonth, endMonth)
+                                diffMonths >= offset
+                            }
                         }
-                    }
 
                     val retainedCount = retainedSubs.size
                     val retainedMrr: Long = retainedSubs.sumOf { it.mrrMinor }
@@ -131,7 +135,8 @@ object CohortCalculator {
                         if (initialMrr > 0) (retainedMrr.toDouble() / initialMrr * 100.0) else 0.0
                     }
 
-                    val value = if (metric == CohortMetric.LOGO_RETENTION) retainedCount.toDouble() else (retainedMrr / 100.0)
+                    val value =
+                        if (metric == CohortMetric.LOGO_RETENTION) retainedCount.toDouble() else (retainedMrr / 100.0)
                     cells.add(
                         CohortCell(
                             offsetIndex = offset,
@@ -200,7 +205,8 @@ object CohortCalculator {
         }
 
         val m3Retention = curve.getOrElse(3) { 91.0 }
-        val insight = "Modeled Month-3 retention is $m3Retention% based on your ${((churnRate * 100 * 10).roundToInt() / 10.0)}% monthly churn rate."
+        val insight =
+            "Modeled Month-3 retention is $m3Retention% based on your ${((churnRate * 100 * 10).roundToInt() / 10.0)}% monthly churn rate."
 
         return CohortMatrixResult(
             sourceMode = DataSourceMode.MODELED,
