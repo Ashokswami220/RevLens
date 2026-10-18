@@ -51,7 +51,7 @@ class LoginViewModelTest {
         val session = DefaultSessionManager()
         val vm = LoginViewModel(LoginUseCase(repo, session), session)
 
-        vm.onEvent(LoginEvent.GoogleSignInClicked)
+        vm.onEvent(LoginEvent.GoogleSignInClicked())
         advanceUntilIdle()
 
         assertFalse(vm.state.value.isLoading)

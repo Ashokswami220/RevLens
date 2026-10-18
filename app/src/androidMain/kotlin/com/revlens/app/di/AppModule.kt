@@ -41,7 +41,7 @@ val appModule = module {
     single<com.revlens.app.domain.repository.ReportRepository> { com.revlens.app.data.DefaultReportRepository() }
     single<com.revlens.app.domain.repository.AppLockRepository> { com.revlens.app.data.DefaultAppLockRepository() }
     single<com.revlens.app.domain.repository.NotificationPreferencesRepository> { com.revlens.app.data.DefaultNotificationPreferencesRepository() }
-    single<com.revlens.app.domain.repository.AuthRepository> { com.revlens.app.data.fake.FakeAuthRepository(get()) }
+    single<com.revlens.app.domain.repository.AuthRepository> { com.revlens.app.data.AndroidFirebaseAuthRepository(get(), get()) }
     single<com.revlens.app.domain.repository.TeamRepository> { com.revlens.app.data.fake.FakeTeamRepository() }
     single<com.revlens.app.domain.repository.BillingRepository> { com.revlens.app.data.fake.FakeBillingRepository() }
     single<com.revlens.app.domain.repository.IntegrationRepository> { com.revlens.app.data.fake.FakeIntegrationRepository() }
@@ -53,7 +53,7 @@ val appModule = module {
     single { com.revlens.app.domain.usecase.ValidateResetTokenUseCase(get()) }
     single { com.revlens.app.domain.usecase.ResetPasswordUseCase(get()) }
     single { com.revlens.app.domain.usecase.CreateWorkspaceUseCase(get(), get(), get()) }
-    viewModel { MainViewModel(get(), get(), get(), get(), get(), get()) }
+    viewModel { MainViewModel(get(), get(), get(), get(), get(), get(), get()) }
     viewModel { BusinessSetupViewModel() }
     viewModel { com.revlens.app.ui.screens.workspace.WorkspaceManagementViewModel(get(), get(), get(), get()) }
     viewModel { com.revlens.app.ui.screens.workspace.CreateWorkspaceViewModel(get()) }

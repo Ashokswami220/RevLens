@@ -9,7 +9,11 @@ data class LoginUiState(
 )
 
 sealed interface LoginEvent {
-    data object GoogleSignInClicked : LoginEvent
+    data class GoogleSignInClicked(
+        val idToken: String? = null,
+        val email: String? = null,
+        val displayName: String? = null
+    ) : LoginEvent
     data object ContinueAsGuestClicked : LoginEvent
 }
 

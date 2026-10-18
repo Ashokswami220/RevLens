@@ -130,23 +130,36 @@
     }
 
     window.revlensFirebase = {
-        signInWithGoogle: function() {
+        authStatus: 'idle',
+        lastAuthResultJson: null,
+        lastAuthError: null,
+        triggerGoogleSignIn: function() {
+            window.revlensFirebase.authStatus = 'pending';
+            window.revlensFirebase.lastAuthError = null;
+            window.revlensFirebase.lastAuthResultJson = null;
             const provider = new firebase.auth.GoogleAuthProvider();
             provider.addScope('profile');
             provider.addScope('email');
-            return firebase.auth().signInWithPopup(provider).then(result => {
+            firebase.auth().signInWithPopup(provider).then(result => {
                 const user = result.user;
-                return JSON.stringify({
+                window.revlensFirebase.lastAuthResultJson = JSON.stringify({
                     id: user.uid,
                     name: user.displayName || user.email || 'User',
                     email: user.email || '',
                     emailVerified: user.emailVerified || false,
                     avatarUrl: user.photoURL || null
                 });
+                window.revlensFirebase.authStatus = 'success';
+            }).catch(err => {
+                window.revlensFirebase.lastAuthError = err ? (err.message || String(err)) : 'Google sign-in cancelled or failed';
+                window.revlensFirebase.authStatus = 'error';
             });
         },
-        signOut: function() {
-            return firebase.auth().signOut();
+        triggerSignOut: function() {
+            return firebase.auth().signOut().then(() => {
+                window.revlensFirebase.authStatus = 'idle';
+                window.revlensFirebase.lastAuthResultJson = null;
+            });
         },
         getCurrentUserJson: function() {
             const user = firebase.auth().currentUser;
@@ -159,20 +172,15 @@
                 avatarUrl: user.photoURL || null
             });
         },
-        onAuthStateChanged: function(callback) {
-            return firebase.auth().onAuthStateChanged(user => {
-                if (user) {
-                    callback(JSON.stringify({
-                        id: user.uid,
-                        name: user.displayName || user.email || 'User',
-                        email: user.email || '',
-                        emailVerified: user.emailVerified || false,
-                        avatarUrl: user.photoURL || null
-                    }));
-                } else {
-                    callback(null);
-                }
-            });
+        updateProfile: function(name) {
+            const user = firebase.auth().currentUser;
+            if (!user) return Promise.resolve();
+            return user.updateProfile({ displayName: name });
+        },
+        deleteAccount: function() {
+            const user = firebase.auth().currentUser;
+            if (!user) return Promise.resolve();
+            return user.delete();
         },
         saveDoc: function(collection, docId, jsonStr) {
             const db = firebase.firestore();

@@ -64,6 +64,10 @@ fun LoginScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val isDark = isSystemInDarkTheme()
 
+    val googleSignInLauncher = rememberGoogleSignInLauncher { idToken, email, displayName ->
+        viewModel.onEvent(LoginEvent.GoogleSignInClicked(idToken, email, displayName))
+    }
+
     LaunchedEffect(Unit) {
         viewModel.effects.collect { effect ->
             when (effect) {
@@ -192,7 +196,7 @@ fun LoginScreen(
                 val googleBtnBorder = if (isDark) BorderStroke(1.dp, Color(0xFF333B4A)) else BorderStroke(1.dp, RevLensTheme.colors.borderDefault)
 
                 Button(
-                    onClick = { viewModel.onEvent(LoginEvent.GoogleSignInClicked) },
+                    onClick = { googleSignInLauncher() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp),

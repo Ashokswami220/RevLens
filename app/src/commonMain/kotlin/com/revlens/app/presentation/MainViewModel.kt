@@ -30,8 +30,18 @@ class MainViewModel(
     private val workspaceRepository: WorkspaceRepository = DefaultWorkspaceRepository(),
     private val workspaceContext: WorkspaceContext = DefaultWorkspaceContext(),
     private val sessionManager: SessionManager = DefaultSessionManager(),
-    private val resolveGateUseCase: ResolveGateUseCase = ResolveGateUseCase()
+    private val resolveGateUseCase: ResolveGateUseCase = ResolveGateUseCase(),
+    private val authRepository: com.revlens.app.domain.repository.AuthRepository? = null
 ) : ViewModel() {
+
+    init {
+        viewModelScope.launch {
+            val user = authRepository?.getCurrentUser()
+            if (user != null) {
+                sessionManager.onLoggedIn(user)
+            }
+        }
+    }
 
     val profile: StateFlow<BusinessProfile?> = repository.profileFlow
         .stateIn(
