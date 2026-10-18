@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.compose.multiplatform)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.google.services)
 }
 
 @OptIn(ExperimentalWasmDsl::class)
@@ -44,6 +45,9 @@ kotlin {
             implementation(libs.koin.androidx.compose)
             implementation(libs.datastore.preferences)
             implementation(libs.core.splashscreen)
+            implementation(libs.firebase.auth)
+            implementation(libs.firebase.firestore)
+            implementation(libs.play.services.auth)
         }
 
         commonTest.dependencies {

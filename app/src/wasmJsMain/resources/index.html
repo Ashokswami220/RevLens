@@ -109,7 +109,89 @@
     <div>Loading RevLens WebAssembly...</div>
 </div>
 <div id="root"></div>
+
+<!-- Firebase Web SDK (compat for reliable cross-browser wasmJs interop) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDTNJ_gJpSNgwrARgt7XwpxiMMmwL-ppTI",
+        authDomain: "revlens-f80b1.firebaseapp.com",
+        projectId: "revlens-f80b1",
+        storageBucket: "revlens-f80b1.firebasestorage.app",
+        messagingSenderId: "512497569694",
+        appId: "1:512497569694:web:9f672111897a20cbb7d08f",
+        measurementId: "G-3KDW1TRRCP"
+    };
+
+    if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+
+    window.revlensFirebase = {
+        signInWithGoogle: function() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.addScope('profile');
+            provider.addScope('email');
+            return firebase.auth().signInWithPopup(provider).then(result => {
+                const user = result.user;
+                return JSON.stringify({
+                    id: user.uid,
+                    name: user.displayName || user.email || 'User',
+                    email: user.email || '',
+                    emailVerified: user.emailVerified || false,
+                    avatarUrl: user.photoURL || null
+                });
+            });
+        },
+        signOut: function() {
+            return firebase.auth().signOut();
+        },
+        getCurrentUserJson: function() {
+            const user = firebase.auth().currentUser;
+            if (!user) return null;
+            return JSON.stringify({
+                id: user.uid,
+                name: user.displayName || user.email || 'User',
+                email: user.email || '',
+                emailVerified: user.emailVerified || false,
+                avatarUrl: user.photoURL || null
+            });
+        },
+        onAuthStateChanged: function(callback) {
+            return firebase.auth().onAuthStateChanged(user => {
+                if (user) {
+                    callback(JSON.stringify({
+                        id: user.uid,
+                        name: user.displayName || user.email || 'User',
+                        email: user.email || '',
+                        emailVerified: user.emailVerified || false,
+                        avatarUrl: user.photoURL || null
+                    }));
+                } else {
+                    callback(null);
+                }
+            });
+        },
+        saveDoc: function(collection, docId, jsonStr) {
+            const db = firebase.firestore();
+            const data = JSON.parse(jsonStr);
+            return db.collection(collection).doc(docId).set(data, { merge: true });
+        },
+        getDoc: function(collection, docId) {
+            const db = firebase.firestore();
+            return db.collection(collection).doc(docId).get().then(doc => {
+                if (!doc.exists) return null;
+                return JSON.stringify(doc.data());
+            });
+        },
+        deleteDoc: function(collection, docId) {
+            const db = firebase.firestore();
+            return db.collection(collection).doc(docId).delete();
+        }
+    };
+
     window.addEventListener('error', function(e) {
         console.error('RevLens Runtime Error:', e.error || e.message);
     });
