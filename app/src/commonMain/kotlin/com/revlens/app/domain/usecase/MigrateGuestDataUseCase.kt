@@ -26,5 +26,16 @@ class MigrateGuestDataUseCase(
             workspaceRepository.createWorkspace(defaultWs)
             workspaceContext.switchTo(defaultWs.id)
         }
+
+        // Migrate any profile or scenarios created during guest session
+        val guestProfile = profileRepository.profileFlow.first()
+        if (guestProfile != null) {
+            profileRepository.saveProfile(guestProfile)
+        }
+
+        val guestScenarios = scenarioRepository.scenariosFlow.first()
+        for (scenario in guestScenarios) {
+            scenarioRepository.saveScenario(scenario)
+        }
     }
 }

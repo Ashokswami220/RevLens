@@ -119,9 +119,9 @@ class WasmScenarioRepository : ScenarioRepository {
 }
 
 val wasmModule = module {
-    single<ProfileRepository> { WasmProfileRepository() }
-    single<ScenarioRepository> { WasmScenarioRepository() }
-    single<WorkspaceRepository> { com.revlens.app.data.DefaultWorkspaceRepository() }
+    single<ProfileRepository> { com.revlens.app.data.WebFirestoreProfileRepository(WasmProfileRepository()) }
+    single<ScenarioRepository> { com.revlens.app.data.WebFirestoreScenarioRepository(WasmScenarioRepository()) }
+    single<WorkspaceRepository> { com.revlens.app.data.WebFirestoreWorkspaceRepository(com.revlens.app.data.DefaultWorkspaceRepository()) }
     single<com.revlens.app.domain.context.WorkspaceContext> { com.revlens.app.domain.context.DefaultWorkspaceContext() }
     single<com.revlens.app.domain.session.SessionManager> { com.revlens.app.domain.session.DefaultSessionManager() }
     single { com.revlens.app.domain.usecase.ResolveGateUseCase() }

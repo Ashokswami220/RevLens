@@ -182,6 +182,8 @@
             if (!user) return Promise.resolve();
             return user.delete();
         },
+        lastFirestoreResult: null,
+        lastFirestoreStatus: 'idle',
         saveDoc: function(collection, docId, jsonStr) {
             const db = firebase.firestore();
             const data = JSON.parse(jsonStr);
@@ -197,6 +199,55 @@
         deleteDoc: function(collection, docId) {
             const db = firebase.firestore();
             return db.collection(collection).doc(docId).delete();
+        },
+        getCollectionDocs: function(collectionPath) {
+            const db = firebase.firestore();
+            return db.collection(collectionPath).get().then(snapshot => {
+                const docs = [];
+                snapshot.forEach(doc => docs.push(doc.data()));
+                return JSON.stringify(docs);
+            });
+        },
+        triggerSaveDoc: function(collection, docId, jsonStr) {
+            window.revlensFirebase.lastFirestoreStatus = 'pending';
+            try {
+                const db = firebase.firestore();
+                const data = JSON.parse(jsonStr);
+                db.collection(collection).doc(docId).set(data, { merge: true })
+                    .then(() => { window.revlensFirebase.lastFirestoreStatus = 'success'; })
+                    .catch(err => { console.error(err); window.revlensFirebase.lastFirestoreStatus = 'error'; });
+            } catch(e) { window.revlensFirebase.lastFirestoreStatus = 'error'; }
+        },
+        triggerGetDoc: function(collection, docId) {
+            window.revlensFirebase.lastFirestoreStatus = 'pending';
+            window.revlensFirebase.lastFirestoreResult = null;
+            const db = firebase.firestore();
+            db.collection(collection).doc(docId).get()
+                .then(doc => {
+                    window.revlensFirebase.lastFirestoreResult = doc.exists ? JSON.stringify(doc.data()) : '';
+                    window.revlensFirebase.lastFirestoreStatus = 'success';
+                })
+                .catch(err => { console.error(err); window.revlensFirebase.lastFirestoreStatus = 'error'; });
+        },
+        triggerGetCollection: function(collectionPath) {
+            window.revlensFirebase.lastFirestoreStatus = 'pending';
+            window.revlensFirebase.lastFirestoreResult = null;
+            const db = firebase.firestore();
+            db.collection(collectionPath).get()
+                .then(snapshot => {
+                    const docs = [];
+                    snapshot.forEach(doc => docs.push(doc.data()));
+                    window.revlensFirebase.lastFirestoreResult = JSON.stringify(docs);
+                    window.revlensFirebase.lastFirestoreStatus = 'success';
+                })
+                .catch(err => { console.error(err); window.revlensFirebase.lastFirestoreStatus = 'error'; });
+        },
+        triggerDeleteDoc: function(collection, docId) {
+            window.revlensFirebase.lastFirestoreStatus = 'pending';
+            const db = firebase.firestore();
+            db.collection(collection).doc(docId).delete()
+                .then(() => { window.revlensFirebase.lastFirestoreStatus = 'success'; })
+                .catch(err => { console.error(err); window.revlensFirebase.lastFirestoreStatus = 'error'; });
         }
     };
 

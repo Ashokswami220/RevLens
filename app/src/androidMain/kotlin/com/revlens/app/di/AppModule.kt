@@ -25,9 +25,9 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "re
 
 val appModule = module {
     single<DataStore<Preferences>> { androidContext().dataStore }
-    single<ProfileRepository> { DataStoreProfileRepository(get()) }
-    single<ScenarioRepository> { DataStoreScenarioRepository(get()) }
-    single<WorkspaceRepository> { DefaultWorkspaceRepository() }
+    single<ProfileRepository> { com.revlens.app.data.AndroidFirestoreProfileRepository(DataStoreProfileRepository(get())) }
+    single<ScenarioRepository> { com.revlens.app.data.AndroidFirestoreScenarioRepository(DataStoreScenarioRepository(get())) }
+    single<WorkspaceRepository> { com.revlens.app.data.AndroidFirestoreWorkspaceRepository(DefaultWorkspaceRepository()) }
     single<WorkspaceContext> { DefaultWorkspaceContext() }
     single<SessionManager> { DefaultSessionManager() }
     single { ResolveGateUseCase() }
