@@ -1,18 +1,46 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-/.idea/markdown.xml
-.DS_Store
+# Built application files & caches
+**/build/
 /build
 /captures
+.gradle/
+.kotlin/
+kotlin-js-store/
 .externalNativeBuild
 .cxx
+
+# IDE & Editor files
+*.iml
+.idea/
+.vscode/
+
+# Local Environment & SDK paths
 local.properties
-kotlin-js-store/
-.kotlin/
+/local.properties
+.env
+.env.*
+!.env.example
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Android Keystores & Signing Keys (Never commit private keys!)
+*.keystore
+*.jks
+*.p12
+*.p8
+*.key
+signing.properties
+keystore.properties
+secrets.properties
+
+# Firebase & Cloud Credentials (Sensitive project tokens & service accounts)
+google-services.json
+*/google-services.json
+*service-account*.json
+firebase-adminsdk*.json
