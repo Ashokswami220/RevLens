@@ -61,13 +61,13 @@ kotlin {
 }
 
 extensions.configure<com.android.build.api.dsl.ApplicationExtension> {
-    namespace = "com.example.revlens"
+    namespace = "com.revlens.app"
     compileSdk {
         version = release(37)
     }
 
     defaultConfig {
-        applicationId = "com.example.revlens"
+        applicationId = "com.revlens.app"
         minSdk = 24
         targetSdk = 37
         versionCode = 1

@@ -1,0 +1,292 @@
+package com.revlens.app.ui.screens.detailscreens
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.revlens.app.domain.calc.BreakEvenCalculator
+import com.revlens.app.domain.calc.LtvCalculator
+import com.revlens.app.presentation.MainViewModel
+import com.revlens.app.ui.components.RevLensTopAppBar
+import com.revlens.app.ui.components.SectionCard
+import com.revlens.app.ui.components.Sparkline
+import com.revlens.app.ui.theme.RevLensTheme
+import com.revlens.app.ui.theme.RevLensTypography
+import com.revlens.app.utils.CurrencyUtils
+import org.koin.compose.viewmodel.koinViewModel
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SaaSMetricsScreen(
+    viewModel: MainViewModel = koinViewModel(),
+    onNavigateBack: () -> Unit = {},
+    onNavigateToRevenueBreakdown: () -> Unit = {},
+    onNavigateToLtvAnalysis: () -> Unit = {},
+    onNavigateToCacAnalytics: () -> Unit = {},
+    onNavigateToCustomerAnalytics: () -> Unit = {},
+    onNavigateToCohortAnalysis: () -> Unit = {}
+) {
+    val profile by viewModel.profile.collectAsState()
+
+    val currencyFormatter = remember(profile?.currencyCode) {
+        CurrencyUtils.getFormatter(profile?.currencyCode)
+    }
+
+    val percentFormatter = remember {
+        CurrencyUtils.getPercentFormatter(1)
+    }
+
+    Scaffold(
+        topBar = {
+            RevLensTopAppBar(
+                title = "SaaS Metrics Glossary",
+                onBackClick = onNavigateBack
+            )
+        },
+        containerColor = RevLensTheme.colors.background
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                com.revlens.app.ui.components.ActionCardButton(
+                    text = "Bridge",
+                    icon = Icons.AutoMirrored.Filled.TrendingUp,
+                    onClick = onNavigateToRevenueBreakdown,
+                    modifier = Modifier.weight(1f)
+                )
+
+                com.revlens.app.ui.components.ActionCardButton(
+                    text = "LTV",
+                    icon = Icons.AutoMirrored.Filled.TrendingUp,
+                    onClick = onNavigateToLtvAnalysis,
+                    modifier = Modifier.weight(1f)
+                )
+
+                com.revlens.app.ui.components.ActionCardButton(
+                    text = "CAC",
+                    icon = Icons.AutoMirrored.Filled.TrendingUp,
+                    onClick = onNavigateToCacAnalytics,
+                    modifier = Modifier.weight(1f)
+                )
+
+                com.revlens.app.ui.components.ActionCardButton(
+                    text = "Customers",
+                    icon = Icons.AutoMirrored.Filled.TrendingUp,
+                    onClick = onNavigateToCustomerAnalytics,
+                    modifier = Modifier.weight(1f)
+                )
+
+                com.revlens.app.ui.components.ActionCardButton(
+                    text = "Cohorts",
+                    icon = Icons.AutoMirrored.Filled.TrendingUp,
+                    onClick = onNavigateToCohortAnalysis,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            profile?.let { p ->
+                val ltv = LtvCalculator.calculateLtv(
+                    p.arpu, p.monthlyChurnRate, p.variableCostPerCustomer
+                )
+                val payback = BreakEvenCalculator.calculateCacPaybackPeriod(p)
+                val ltvToCac = if (p.cac.toDouble() > 0) ltv.toDouble() / p.cac.toDouble() else 0.0
+
+                MetricTileRow(
+                    title1 = "Monthly Recurring Revenue (MRR)",
+                    val1 = currencyFormatter.format(p.currentMrr),
+                    sparklineData1 = listOf(
+                        p.currentMrr.toFloat() * 0.8f, p.currentMrr.toFloat() * 0.9f,
+                        p.currentMrr.toFloat()
+                    ),
+                    desc1 = "The predictable total revenue generated by your business from all active subscriptions in a given month.",
+                    title2 = "Average Revenue Per User (ARPU)",
+                    val2 = currencyFormatter.format(p.arpu),
+                    sparklineData2 = listOf(
+                        p.arpu.toFloat() * 0.95f, p.arpu.toFloat() * 0.98f, p.arpu.toFloat()
+                    ),
+                    desc2 = "The average monthly revenue you receive from each active customer."
+                )
+
+                MetricTileRow(
+                    title1 = "Customer Lifetime Value (LTV)",
+                    val1 = currencyFormatter.format(ltv),
+                    sparklineData1 = listOf(
+                        ltv.toFloat() * 0.9f, ltv.toFloat() * 0.95f, ltv.toFloat()
+                    ),
+                    desc1 = "The total revenue you can expect to earn from a single customer before they churn.",
+                    title2 = "Customer Acquisition Cost (CAC)",
+                    val2 = currencyFormatter.format(p.cac),
+                    sparklineData2 = listOf(
+                        p.cac.toFloat() * 0.95f, p.cac.toFloat() * 0.98f, p.cac.toFloat()
+                    ),
+                    desc2 = "The total average cost (sales & marketing) required to acquire a new customer."
+                )
+
+                MetricTileRow(
+                    title1 = "LTV : CAC Ratio",
+                    val1 = "${CurrencyUtils.formatDecimal(ltvToCac, 1)}x",
+                    sparklineData1 = listOf(
+                        ltvToCac.toFloat() * 0.8f, ltvToCac.toFloat() * 0.9f, ltvToCac.toFloat()
+                    ),
+                    desc1 = "The ratio of lifetime value to acquisition cost. Aim for 3.0x or higher for a healthy SaaS business.",
+                    title2 = "CAC Payback Period",
+                    val2 = if (payback != null) "${
+                        CurrencyUtils.formatDecimal(
+                            payback, 1
+                        )
+                    } mo" else "Never",
+                    sparklineData2 = listOf(
+                        (payback?.toFloat() ?: 0f) * 1.2f, (payback?.toFloat() ?: 0f) * 1.1f,
+                        (payback?.toFloat() ?: 0f)
+                    ),
+                    desc2 = "The number of months it takes to earn back the CAC. Ideally under 12 months."
+                )
+
+                SectionCard(title = "Churn & Growth") {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                "Monthly Churn Rate", style = RevLensTypography.bodyLarge,
+                                color = RevLensTheme.colors.textPrimary
+                            )
+                            Text(
+                                percentFormatter.format(p.monthlyChurnRate),
+                                style = RevLensTypography.headlineMedium,
+                                fontWeight = FontWeight.Bold, color = RevLensTheme.colors.error
+                            )
+                        }
+                        Sparkline(
+                            data = listOf(
+                                p.monthlyChurnRate.toFloat() * 0.8f,
+                                p.monthlyChurnRate.toFloat() * 0.9f, p.monthlyChurnRate.toFloat()
+                            ),
+                            color = RevLensTheme.colors.error
+                        )
+                        Text(
+                            "The percentage of your customers that cancel their subscription every month.",
+                            style = RevLensTypography.bodySmall,
+                            color = RevLensTheme.colors.textSecondary
+                        )
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                "Monthly Growth Rate", style = RevLensTypography.bodyLarge,
+                                color = RevLensTheme.colors.textPrimary
+                            )
+                            Text(
+                                percentFormatter.format(p.monthlyGrowthRate),
+                                style = RevLensTypography.headlineMedium,
+                                fontWeight = FontWeight.Bold, color = RevLensTheme.colors.success
+                            )
+                        }
+                        Sparkline(
+                            data = listOf(
+                                p.monthlyGrowthRate.toFloat() * 1.1f,
+                                p.monthlyGrowthRate.toFloat() * 0.9f, p.monthlyGrowthRate.toFloat()
+                            ),
+                            color = RevLensTheme.colors.success
+                        )
+                        Text(
+                            "The percentage at which your customer base is growing every month.",
+                            style = RevLensTypography.bodySmall,
+                            color = RevLensTheme.colors.textSecondary
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MetricTileRow(
+    title1: String, val1: String, desc1: String, sparklineData1: List<Float> = emptyList(),
+    title2: String, val2: String, desc2: String, sparklineData2: List<Float> = emptyList()
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            SectionCard(title = "") {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        title1, style = RevLensTypography.labelMedium,
+                        color = RevLensTheme.colors.textSecondary
+                    )
+                    Text(
+                        val1, style = RevLensTypography.headlineMedium,
+                        fontWeight = FontWeight.Bold, color = RevLensTheme.colors.textPrimary
+                    )
+                    if (sparklineData1.isNotEmpty()) {
+                        Sparkline(
+                            data = sparklineData1,
+                            color = RevLensTheme.colors.brandPrimary
+                        )
+                    }
+                    Text(
+                        desc1, style = RevLensTypography.bodySmall,
+                        color = RevLensTheme.colors.textTertiary
+                    )
+                }
+            }
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            SectionCard(title = "") {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        title2, style = RevLensTypography.labelMedium,
+                        color = RevLensTheme.colors.textSecondary
+                    )
+                    Text(
+                        val2, style = RevLensTypography.headlineMedium,
+                        fontWeight = FontWeight.Bold, color = RevLensTheme.colors.textPrimary
+                    )
+                    if (sparklineData2.isNotEmpty()) {
+                        Sparkline(
+                            data = sparklineData2,
+                            color = RevLensTheme.colors.brandSecondary
+                        )
+                    }
+                    Text(
+                        desc2, style = RevLensTypography.bodySmall,
+                        color = RevLensTheme.colors.textTertiary
+                    )
+                }
+            }
+        }
+    }
+}
