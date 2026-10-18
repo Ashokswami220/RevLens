@@ -21,6 +21,9 @@ class LoginViewModel(
         viewModelScope.launch {
             update { copy(isLoading = true, error = null) }
             val result = loginUseCase.loginWithGoogle(idToken, email, displayName)
+            result.onSuccess {
+                emit(LoginEffect.NavigateToDashboard)
+            }
             result.onFailure {
                 emit(LoginEffect.ShowMessage(it.toUiText()))
                 update { copy(error = it.toUiText()) }
@@ -32,6 +35,7 @@ class LoginViewModel(
     private fun continueAsGuest() {
         viewModelScope.launch {
             sessionManager.continueAsGuest()
+            emit(LoginEffect.NavigateToDashboard)
         }
     }
 }

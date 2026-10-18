@@ -19,4 +19,5 @@ sealed interface LoginEvent {
 
 sealed interface LoginEffect {
     data class ShowMessage(val text: UiText) : LoginEffect
+    data object NavigateToDashboard : LoginEffect
 }

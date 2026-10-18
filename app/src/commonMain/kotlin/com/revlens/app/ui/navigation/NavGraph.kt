@@ -668,7 +668,13 @@ fun RevLensNavGraph(
                     val loginViewModel: com.revlens.app.ui.screens.auth.LoginViewModel = org.koin.compose.viewmodel.koinViewModel()
                     com.revlens.app.ui.screens.auth.LoginScreen(
                         viewModel = loginViewModel,
-                        onNavigateBack = { navController.popBackStack() }
+                        onNavigateBack = {
+                            if (!navController.popBackStack()) {
+                                navController.navigate(DashboardRoute) {
+                                    popUpTo(0) { inclusive = true }
+                                }
+                            }
+                        }
                     )
                 }
 

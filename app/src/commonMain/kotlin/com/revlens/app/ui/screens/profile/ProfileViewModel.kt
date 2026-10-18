@@ -23,6 +23,11 @@ class ProfileViewModel(
 
     init {
         loadProfile()
+        viewModelScope.launch {
+            sessionManager.state.collect {
+                loadProfile()
+            }
+        }
     }
 
     private fun loadProfile() {
@@ -117,9 +122,18 @@ class ProfileViewModel(
                 }
             }
             ProfileEvent.SaveChanges -> saveChanges()
+            ProfileEvent.LogoutClicked -> performLogout()
             ProfileEvent.OpenDeleteDialog -> update { copy(showDeleteDialog = true, deleteError = null) }
             ProfileEvent.DismissDeleteDialog -> update { copy(showDeleteDialog = false, deleteError = null) }
             is ProfileEvent.ConfirmDeleteAccount -> confirmDelete(event.confirmationWord)
+        }
+    }
+
+    private fun performLogout() {
+        viewModelScope.launch {
+            authRepository.logout()
+            sessionManager.signOut(wipeLocalSyncedData = false)
+            emit(ProfileEffect.LoggedOut)
         }
     }
 

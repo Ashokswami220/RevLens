@@ -53,6 +53,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.revlens.app.ui.components.DestructiveButton
 import com.revlens.app.ui.components.PrimaryButton
+import com.revlens.app.ui.components.SecondaryButton
 import com.revlens.app.ui.components.RevLensTextField
 import com.revlens.app.ui.components.display.RoleChip
 import com.revlens.app.ui.components.feedback.TypedConfirmDialog
@@ -96,6 +97,7 @@ fun ProfileScreen(
             when (effect) {
                 is ProfileEffect.ShowToast -> snackbarHostState.showSnackbar(effect.message)
                 ProfileEffect.NavigateBack -> onNavigateBack()
+                ProfileEffect.LoggedOut -> onNavigateToLogin()
                 ProfileEffect.AccountDeleted -> onNavigateToLogin()
             }
         }
@@ -437,6 +439,37 @@ fun ProfileScreen(
                 enabled = state.hasChanges && !state.isSaving,
                 modifier = Modifier.fillMaxWidth()
             )
+
+            // SESSION & LOGOUT SECTION
+            if (!state.isGuest) {
+                ProfileSection(title = "Account Session") {
+                    Text(
+                        text = "Signed in as ${state.email}. You can sign out from this device at any time.",
+                        style = RevLensTypography.bodySmall,
+                        color = RevLensTheme.colors.textSecondary
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                    SecondaryButton(
+                        text = "Sign Out from RevLens",
+                        onClick = { viewModel.onEvent(ProfileEvent.LogoutClicked) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            } else {
+                ProfileSection(title = "Guest Mode") {
+                    Text(
+                        text = "You are currently exploring RevLens in Guest mode. Sign in with your Google account to sync your forecasts and workspaces to the cloud.",
+                        style = RevLensTypography.bodySmall,
+                        color = RevLensTheme.colors.textSecondary
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                    PrimaryButton(
+                        text = "Sign In with Google Account",
+                        onClick = onNavigateToLogin,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
 
             // DANGER ZONE
             if (!state.isGuest) {

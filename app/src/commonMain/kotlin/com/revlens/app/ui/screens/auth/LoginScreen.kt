@@ -74,6 +74,9 @@ fun LoginScreen(
                 is LoginEffect.ShowMessage -> {
                     snackbarHostState.showSnackbar(effect.text.asString())
                 }
+                LoginEffect.NavigateToDashboard -> {
+                    onNavigateBack?.invoke()
+                }
             }
         }
     }

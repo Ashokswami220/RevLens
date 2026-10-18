@@ -24,6 +24,7 @@ sealed interface ProfileEvent {
     data class TimezoneChanged(val timezone: String) : ProfileEvent
     data class CurrencyChanged(val currency: String) : ProfileEvent
     data object SaveChanges : ProfileEvent
+    data object LogoutClicked : ProfileEvent
     data object OpenDeleteDialog : ProfileEvent
     data object DismissDeleteDialog : ProfileEvent
     data class ConfirmDeleteAccount(val confirmationWord: String) : ProfileEvent
@@ -32,5 +33,6 @@ sealed interface ProfileEvent {
 sealed interface ProfileEffect {
     data class ShowToast(val message: String) : ProfileEffect
     data object NavigateBack : ProfileEffect
+    data object LoggedOut : ProfileEffect
     data object AccountDeleted : ProfileEffect
 }

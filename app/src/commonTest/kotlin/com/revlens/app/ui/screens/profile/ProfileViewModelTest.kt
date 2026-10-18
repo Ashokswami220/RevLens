@@ -132,4 +132,25 @@ class ProfileViewModelTest {
 
         assertEquals(SessionState.SignedOut, session.state.value)
     }
+
+    @Test
+    fun testLogoutSignsOut() = runTest(testDispatcher) {
+        val user = UserAccount(
+            id = "usr_1",
+            name = "Alex Vance",
+            email = "alex.vance@gmail.com"
+        )
+        val authRepo = FakeAuthRepository(InMemorySecureStorage(), initialUser = user)
+        val session = DefaultSessionManager(SessionState.Authenticated(user))
+        val wsRepo = DefaultWorkspaceRepository()
+        val wsContext = DefaultWorkspaceContext("ws_1")
+
+        val vm = ProfileViewModel(authRepo, session, wsRepo, wsContext)
+        advanceUntilIdle()
+
+        vm.onEvent(ProfileEvent.LogoutClicked)
+        advanceUntilIdle()
+
+        assertEquals(SessionState.SignedOut, session.state.value)
+    }
 }
