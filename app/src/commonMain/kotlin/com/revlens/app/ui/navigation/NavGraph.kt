@@ -73,6 +73,7 @@ fun RevLensNavGraph(
     viewModel: MainViewModel = koinViewModel()
 ) {
     val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsState()
+    val hasSeenIntro by viewModel.hasSeenIntro.collectAsState()
 
     if (isOnboardingCompleted == null) {
         Box(
@@ -236,6 +237,16 @@ fun RevLensNavGraph(
         }
     }
 
+    LaunchedEffect(isOnboardingCompleted, hasSeenIntro) {
+        if (isOnboardingCompleted == false) {
+            val destination: Any = if (hasSeenIntro) LoginRoute else IntroRoute
+            navController.navigate(destination) {
+                popUpTo(0) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
+
     LaunchedEffect(Unit) {
         val initial = BrowserRouter.getInitialRoute()
         if (initial != null && isOnboardingCompleted == true) {
@@ -380,7 +391,11 @@ fun RevLensNavGraph(
                 }
                 NavHost(
                     navController = navController,
-                    startDestination = if (isOnboardingCompleted == true) DashboardRoute else IntroRoute,
+                    startDestination = when {
+                        isOnboardingCompleted == true -> DashboardRoute
+                        hasSeenIntro -> LoginRoute
+                        else -> IntroRoute
+                    },
                     modifier = modifier.padding(innerPadding),
                     enterTransition = {
                         val isTargetMainTab = isMainTab(targetState.destination.route)
@@ -434,11 +449,35 @@ fun RevLensNavGraph(
                     composable<IntroRoute> {
                         IntroScreen(
                             onGetStarted = {
-                                navController.navigate(CreateWorkspaceRoute)
-                            },
-                            onLoginClick = {
-                                navController.navigate(LoginRoute)
+                                viewModel.setIntroSeen()
+                                navController.navigate(LoginRoute) {
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                                BrowserRouter.updateUrl("login")
                             }
+                        )
+                    }
+
+                    composable<LoginRoute> {
+                        val loginViewModel: com.revlens.app.ui.screens.auth.LoginViewModel =
+                            org.koin.compose.viewmodel.koinViewModel()
+                        com.revlens.app.ui.screens.auth.LoginScreen(
+                            viewModel = loginViewModel,
+                            onNavigateToDashboard = {
+                                navController.navigate(DashboardRoute) {
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                                BrowserRouter.updateUrl("home")
+                            },
+                            onNavigateToCreateWorkspace = {
+                                navController.navigate(CreateWorkspaceRoute) {
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            },
+                            onNavigateBack = null
                         )
                     }
 
@@ -447,9 +486,7 @@ fun RevLensNavGraph(
                             onNavigateToOnboarding = {
                                 navController.navigate(OnboardingRoute)
                             },
-                            onBackClick = {
-                                navController.popBackStack()
-                            }
+                            onBackClick = null
                         )
                     }
 
@@ -461,7 +498,8 @@ fun RevLensNavGraph(
                             onFinishOnboarding = { newProfile ->
                                 viewModel.completeOnboarding(newProfile)
                                 navController.navigate(DashboardRoute) {
-                                    popUpTo(IntroRoute) { inclusive = true }
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
                                 }
                                 BrowserRouter.updateUrl("home")
                             }
@@ -604,7 +642,14 @@ fun RevLensNavGraph(
                                     IntegrationsRoute
                                 )
                             },
-                            onNavigateToApiWebhooks = { navController.navigate(ApiWebhooksRoute) }
+                            onNavigateToApiWebhooks = { navController.navigate(ApiWebhooksRoute) },
+                            onLogout = {
+                                navController.navigate(LoginRoute) {
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                                BrowserRouter.updateUrl("login")
+                            }
                         )
                     }
 
@@ -749,28 +794,20 @@ fun RevLensNavGraph(
                         )
                     }
 
-                    composable<LoginRoute> {
-                        val loginViewModel: com.revlens.app.ui.screens.auth.LoginViewModel =
-                            org.koin.compose.viewmodel.koinViewModel()
-                        com.revlens.app.ui.screens.auth.LoginScreen(
-                            viewModel = loginViewModel,
-                            onNavigateBack = {
-                                if (!navController.popBackStack()) {
-                                    navController.navigate(DashboardRoute) {
-                                        popUpTo(0) { inclusive = true }
-                                    }
-                                }
-                            }
-                        )
-                    }
-
                     composable<ProfileRoute> {
                         val profileViewModel: com.revlens.app.ui.screens.profile.ProfileViewModel =
                             org.koin.compose.viewmodel.koinViewModel()
                         com.revlens.app.ui.screens.profile.ProfileScreen(
                             viewModel = profileViewModel,
                             onNavigateBack = { navController.popBackStack() },
-                            onNavigateToLogin = { navController.navigate(LoginRoute) }
+                            onNavigateToLogin = {
+                                viewModel.logout()
+                                navController.navigate(LoginRoute) {
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                                BrowserRouter.updateUrl("login")
+                            }
                         )
                     }
 

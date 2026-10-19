@@ -72,6 +72,7 @@ fun SettingsScreen(
     onNavigateToSecurity: () -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToSignUp: () -> Unit = {},
+    onLogout: () -> Unit = {},
     viewModel: MainViewModel = koinViewModel()
 ) {
     val activeWorkspace by viewModel.activeWorkspace.collectAsState()
@@ -399,12 +400,11 @@ fun SettingsScreen(
             title = if (isGuest) "Clear Local Session?" else "Log Out?",
             body = if (isGuest) "Your local session will be reset. Unsaved scenarios may be lost."
             else "Synced workspaces will remain safely stored on the cloud.",
-            confirmText = if (isGuest) "Clear" else "Log Out",
+            confirmText = if (isGuest) "Clear & Reset" else "Log Out",
             onConfirm = {
                 showLogoutDialog = false
-                scope.launch {
-                    snackbarHostState.showSnackbar("Logged out")
-                }
+                viewModel.logout()
+                onLogout()
             },
             onDismiss = { showLogoutDialog = false },
             isDestructive = true

@@ -64,6 +64,19 @@ class MainViewModel(
             initialValue = null
         )
 
+    val hasSeenIntro: StateFlow<Boolean> = repository.hasSeenIntroFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = false
+        )
+
+    fun setIntroSeen() {
+        viewModelScope.launch {
+            repository.setHasSeenIntro(true)
+        }
+    }
+
     val activeWorkspace: StateFlow<Workspace?> = combine(
         workspaceContext.activeWorkspaceId,
         workspaceRepository.workspacesFlow
@@ -98,13 +111,38 @@ class MainViewModel(
     fun updateProfile(updatedProfile: BusinessProfile) {
         viewModelScope.launch {
             repository.saveProfile(updatedProfile)
+            val currentWs = activeWorkspace.value
+            if (currentWs != null && currentWs.currency != updatedProfile.currencyCode) {
+                workspaceRepository.updateWorkspace(currentWs.copy(currency = updatedProfile.currencyCode))
+            }
         }
     }
 
     fun completeOnboarding(profile: BusinessProfile) {
         viewModelScope.launch {
             repository.saveProfile(profile)
+            val currentWs = activeWorkspace.value
+            if (currentWs != null) {
+                val updatedWs = currentWs.copy(currency = profile.currencyCode)
+                workspaceRepository.updateWorkspace(updatedWs)
+            }
             repository.setOnboardingCompleted(true)
+        }
+    }
+
+    fun resetOnboarding() {
+        viewModelScope.launch {
+            repository.setOnboardingCompleted(false)
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            try {
+                authRepository?.logout()
+            } catch (_: Exception) {}
+            sessionManager.signOut(wipeLocalSyncedData = false)
+            repository.setOnboardingCompleted(false)
         }
     }
 

@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -35,8 +36,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.revlens.app.domain.model.BusinessModel
+import com.revlens.app.ui.components.ActionCardButton
 import com.revlens.app.ui.components.ChoiceChip
-import com.revlens.app.ui.components.PrimaryButton
 import com.revlens.app.ui.components.RevLensTextField
 import com.revlens.app.ui.components.RevLensTopAppBar
 import com.revlens.app.ui.components.SectionCard
@@ -66,13 +67,11 @@ fun CreateWorkspaceScreen(
         }
     }
 
-    val currencies = listOf("USD", "EUR", "GBP", "INR", "CAD", "AUD")
-
     Scaffold(
         topBar = {
             RevLensTopAppBar(
                 title = "Create Workspace",
-                onBackClick = onBackClick
+                onBackClick = null
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -80,15 +79,16 @@ fun CreateWorkspaceScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(RevLensTheme.colors.surface)
+                    .background(RevLensTheme.colors.background)
                     .navigationBarsPadding()
                     .imePadding()
                     .padding(horizontal = 20.dp, vertical = 14.dp)
             ) {
-                PrimaryButton(
+                ActionCardButton(
                     text = "Continue to Business Setup",
+                    icon = Icons.AutoMirrored.Filled.ArrowForward,
                     onClick = { viewModel.onEvent(CreateWorkspaceEvent.Submit) },
-                    enabled = state.canSubmit,
+                    enabled = state.canSubmit && !state.isLoading,
                     isLoading = state.isLoading,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -189,51 +189,6 @@ fun CreateWorkspaceScreen(
                                 )
                             }
                         )
-                    }
-                }
-            }
-
-            // Currency Selection
-            SectionCard(title = "Default Currency") {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        text = "All pricing plans, CAC, and MRR metrics will be formatted in this currency.",
-                        style = RevLensTypography.bodySmall,
-                        color = RevLensTheme.colors.textSecondary
-                    )
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        currencies.take(3)
-                            .forEach { curr ->
-                                ChoiceChip(
-                                    text = curr,
-                                    selected = state.currency == curr,
-                                    onClick = {
-                                        viewModel.onEvent(
-                                            CreateWorkspaceEvent.CurrencyChanged(curr)
-                                        )
-                                    }
-                                )
-                            }
-                    }
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        currencies.drop(3)
-                            .forEach { curr ->
-                                ChoiceChip(
-                                    text = curr,
-                                    selected = state.currency == curr,
-                                    onClick = {
-                                        viewModel.onEvent(
-                                            CreateWorkspaceEvent.CurrencyChanged(curr)
-                                        )
-                                    }
-                                )
-                            }
                     }
                 }
             }

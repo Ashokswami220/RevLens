@@ -40,8 +40,7 @@ import com.revlens.app.ui.theme.RevLensTypography
 
 @Composable
 fun IntroScreen(
-    onGetStarted: () -> Unit,
-    onLoginClick: () -> Unit = {}
+    onGetStarted: () -> Unit
 ) {
     val isDark = isSystemInDarkTheme()
     val cardBorder = if (isDark) {
@@ -169,27 +168,6 @@ fun IntroScreen(
                 onClick = onGetStarted,
                 modifier = Modifier.fillMaxWidth()
             )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = "Already have an account? ",
-                    color = RevLensTheme.colors.textSecondary,
-                    style = RevLensTypography.bodyMedium
-                )
-                androidx.compose.material3.TextButton(onClick = onLoginClick) {
-                    Text(
-                        text = "Sign in",
-                        color = RevLensTheme.colors.brandPrimary,
-                        style = RevLensTypography.bodyMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
         }
     }
 }

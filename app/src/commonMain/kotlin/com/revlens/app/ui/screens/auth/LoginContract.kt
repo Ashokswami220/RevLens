@@ -14,11 +14,10 @@ sealed interface LoginEvent {
         val email: String? = null,
         val displayName: String? = null
     ) : LoginEvent
-
-    data object ContinueAsGuestClicked : LoginEvent
 }
 
 sealed interface LoginEffect {
     data class ShowMessage(val text: UiText) : LoginEffect
     data object NavigateToDashboard : LoginEffect
+    data object NavigateToCreateWorkspace : LoginEffect
 }

@@ -9,6 +9,9 @@ interface ProfileRepository {
     suspend fun saveProfile(profile: BusinessProfile)
     val isOnboardingCompletedFlow: Flow<Boolean>
     suspend fun setOnboardingCompleted(completed: Boolean)
+    val hasSeenIntroFlow: Flow<Boolean> get() = kotlinx.coroutines.flow.flowOf(false)
+    suspend fun setHasSeenIntro(seen: Boolean) {}
+    suspend fun syncRemoteProfile(): BusinessProfile? = null
 }
 
 interface ScenarioRepository {

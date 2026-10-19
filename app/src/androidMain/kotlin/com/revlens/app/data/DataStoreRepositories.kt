@@ -17,6 +17,7 @@ class DataStoreProfileRepository(
     companion object {
         val PROFILE_KEY = stringPreferencesKey("business_profile")
         val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_completed")
+        val INTRO_SEEN_KEY = booleanPreferencesKey("intro_seen")
     }
 
     private val json = Json { ignoreUnknownKeys = true }
@@ -48,7 +49,22 @@ class DataStoreProfileRepository(
 
     override suspend fun setOnboardingCompleted(completed: Boolean) {
         dataStore.edit { preferences ->
-            preferences[ONBOARDING_COMPLETED_KEY] = completed
+            if (completed) {
+                preferences[ONBOARDING_COMPLETED_KEY] = true
+            } else {
+                preferences.remove(ONBOARDING_COMPLETED_KEY)
+                preferences.remove(PROFILE_KEY)
+            }
+        }
+    }
+
+    override val hasSeenIntroFlow: Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[INTRO_SEEN_KEY] == true
+    }
+
+    override suspend fun setHasSeenIntro(seen: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[INTRO_SEEN_KEY] = seen
         }
     }
 }

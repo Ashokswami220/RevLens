@@ -17,16 +17,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -42,13 +42,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.revlens.app.ui.components.ActionCardButton
-import com.revlens.app.ui.components.RevLensTopAppBar
 import com.revlens.app.ui.theme.RevLensTheme
 import com.revlens.app.ui.theme.RevLensTypography
 import org.koin.compose.viewmodel.koinViewModel
@@ -56,6 +58,8 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel = koinViewModel(),
+    onNavigateToDashboard: () -> Unit,
+    onNavigateToCreateWorkspace: () -> Unit = onNavigateToDashboard,
     onNavigateBack: (() -> Unit)? = null
 ) {
     val state by viewModel.state.collectAsState()
@@ -74,217 +78,246 @@ fun LoginScreen(
                 }
 
                 LoginEffect.NavigateToDashboard -> {
-                    onNavigateBack?.invoke()
+                    onNavigateToDashboard()
+                }
+
+                LoginEffect.NavigateToCreateWorkspace -> {
+                    onNavigateToCreateWorkspace()
                 }
             }
         }
     }
 
+    // Palette tokens tailored for modern dark/light SaaS
+    val pageBg = if (isDark) Color(0xFF090D16) else Color(0xFFF8FAFC)
+    val cardBg = if (isDark) Color(0xFF131826) else Color.White
+    val cardBorder = if (isDark) BorderStroke(1.dp, Color(0xFF222B3D)) else BorderStroke(1.dp, Color(0xFFE2E8F0))
+    val textPrimary = if (isDark) Color(0xFFF1F5F9) else Color(0xFF0F172A)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+    val googleBtnBg = if (isDark) Color(0xFF1B2232) else Color.White
+    val googleBtnBorder = if (isDark) BorderStroke(1.dp, Color(0xFF2F3B52)) else BorderStroke(1.dp, Color(0xFFCBD5E1))
+
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = {
-            if (onNavigateBack != null) {
-                RevLensTopAppBar(
-                    title = "Sign In",
-                    onBackClick = onNavigateBack
-                )
-            }
-        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = RevLensTheme.colors.background
+        containerColor = pageBg
     ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(innerPadding)
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = if (isDark) {
+                            listOf(
+                                Color(0xFF1A2238),
+                                Color(0xFF0F1422),
+                                pageBg
+                            )
+                        } else {
+                            listOf(
+                                Color(0xFFEEF2FF),
+                                Color(0xFFF1F5F9),
+                                pageBg
+                            )
+                        },
+                        center = Offset(200f, 150f),
+                        radius = 900f
+                    )
+                ),
             contentAlignment = Alignment.Center
         ) {
+            // Central Auth Card (Minimal & Simple - No back button, no marketing clutter)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 28.dp)
+                    .padding(horizontal = 24.dp, vertical = 24.dp)
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // App Icon badge
-                val cardBorder =
-                    if (isDark) BorderStroke(1.dp, Color(0xFF262C38)) else BorderStroke(
-                        1.dp, RevLensTheme.colors.borderDefault
-                    )
                 Box(
                     modifier = Modifier
-                        .size(80.dp)
-                        .clip(RoundedCornerShape(22.dp))
-                        .background(RevLensTheme.colors.surfaceElevated)
-                        .border(cardBorder, RoundedCornerShape(22.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "RL",
-                        style = RevLensTypography.displaySmall,
-                        color = RevLensTheme.colors.brandPrimary,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Brand Pill
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = RevLensTheme.colors.brandPrimary.copy(alpha = 0.12f),
-                    modifier = Modifier.padding(bottom = 12.dp)
-                ) {
-                    Text(
-                        text = "RevLens Intelligence",
-                        color = RevLensTheme.colors.brandPrimary,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
-                    )
-                }
-
-                Text(
-                    text = "Welcome to RevLens",
-                    style = RevLensTypography.headlineLarge,
-                    color = RevLensTheme.colors.textPrimary,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Text(
-                    text = "Sign in to access your workspaces, scenario forecasts, and team sync.",
-                    style = RevLensTypography.bodyMedium,
-                    color = RevLensTheme.colors.textSecondary,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 22.sp
-                )
-
-                Spacer(modifier = Modifier.height(36.dp))
-
-                // Session Expired Banner if applicable
-                if (state.isSessionExpiredNotice) {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 20.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        color = RevLensTheme.colors.warning.copy(alpha = 0.10f)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Info,
-                                contentDescription = null,
-                                tint = RevLensTheme.colors.warning,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text(
-                                text = "Your session expired. Please sign in again.",
-                                style = RevLensTypography.bodyMedium,
-                                color = RevLensTheme.colors.textPrimary
-                            )
-                        }
-                    }
-                }
-
-                // Google Sign-In Primary Button
-                val googleBtnBg = if (isDark) Color(0xFF1E232E) else Color.White
-                val googleBtnBorder =
-                    if (isDark) BorderStroke(1.dp, Color(0xFF333B4A)) else BorderStroke(
-                        1.dp, RevLensTheme.colors.borderDefault
-                    )
-
-                Button(
-                    onClick = { googleSignInLauncher() },
-                    modifier = Modifier
+                        .widthIn(max = 400.dp)
                         .fillMaxWidth()
-                        .height(54.dp),
-                    enabled = !state.isLoading,
-                    shape = RoundedCornerShape(14.dp),
-                    border = googleBtnBorder,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = googleBtnBg,
-                        contentColor = RevLensTheme.colors.textPrimary
-                    ),
-                    elevation = ButtonDefaults.buttonElevation(
-                        defaultElevation = 1.dp, pressedElevation = 0.dp
-                    )
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(cardBg)
+                        .border(cardBorder, RoundedCornerShape(24.dp))
+                        .padding(horizontal = 28.dp, vertical = 36.dp)
                 ) {
-                    if (state.isLoading) {
-                        CircularProgressIndicator(
-                            color = RevLensTheme.colors.brandPrimary,
-                            modifier = Modifier.size(22.dp),
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        // Monogram Badge
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(
+                                            RevLensTheme.colors.brandPrimary,
+                                            RevLensTheme.colors.brandSecondary
+                                        )
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
                         ) {
-                            GoogleIcon(modifier = Modifier.size(22.dp))
-                            Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "Continue with Google",
-                                style = RevLensTypography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = RevLensTheme.colors.textPrimary
+                                text = "RL",
+                                color = Color.White,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 22.sp,
+                                letterSpacing = (-0.5).sp
                             )
                         }
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        Text(
+                            text = "Sign in to RevLens",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textPrimary,
+                            textAlign = TextAlign.Center,
+                            letterSpacing = (-0.4).sp
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Sign in with Google to access your workspaces and models.",
+                            style = RevLensTypography.bodyMedium,
+                            color = textSecondary,
+                            textAlign = TextAlign.Center,
+                            lineHeight = 20.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(28.dp))
+
+                        // Session Expired Banner
+                        if (state.isSessionExpiredNotice) {
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 16.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color(0xFFF59E0B).copy(alpha = 0.12f),
+                                border = BorderStroke(1.dp, Color(0xFFF59E0B).copy(alpha = 0.35f))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Info,
+                                        contentDescription = null,
+                                        tint = Color(0xFFF59E0B),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Text(
+                                        text = "Your previous session ended. Please sign in to resume.",
+                                        fontSize = 13.sp,
+                                        color = textPrimary
+                                    )
+                                }
+                            }
+                        }
+
+                        // Error Banner if present
+                        if (state.error != null) {
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 16.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color(0xFFEF4444).copy(alpha = 0.12f),
+                                border = BorderStroke(1.dp, Color(0xFFEF4444).copy(alpha = 0.35f))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Warning,
+                                        contentDescription = null,
+                                        tint = Color(0xFFEF4444),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Text(
+                                        text = state.error?.asString() ?: "Sign-in encountered an issue.",
+                                        fontSize = 13.sp,
+                                        color = textPrimary,
+                                        lineHeight = 18.sp
+                                    )
+                                }
+                            }
+                        }
+
+                        // Primary Action: Google Sign-In Button
+                        Button(
+                            onClick = { googleSignInLauncher() },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp),
+                            enabled = !state.isLoading,
+                            shape = RoundedCornerShape(14.dp),
+                            border = googleBtnBorder,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = googleBtnBg,
+                                contentColor = textPrimary
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(
+                                defaultElevation = 1.dp,
+                                pressedElevation = 0.dp
+                            )
+                        ) {
+                            if (state.isLoading) {
+                                CircularProgressIndicator(
+                                    color = RevLensTheme.colors.brandPrimary,
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = "Connecting with Google...",
+                                    style = RevLensTypography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = textPrimary,
+                                    fontSize = 14.sp
+                                )
+                            } else {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    GoogleIcon(modifier = Modifier.size(20.dp))
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(
+                                        text = "Continue with Google",
+                                        style = RevLensTypography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = textPrimary,
+                                        fontSize = 15.sp
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        Text(
+                            text = "By signing in, you agree to our Terms of Service & Privacy Policy.",
+                            color = textSecondary.copy(alpha = 0.8f),
+                            fontSize = 11.sp,
+                            lineHeight = 16.sp,
+                            textAlign = TextAlign.Center
+                        )
                     }
                 }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // OR Divider
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    HorizontalDivider(
-                        modifier = Modifier.weight(1f),
-                        color = RevLensTheme.colors.divider
-                    )
-                    Text(
-                        text = "OR",
-                        color = RevLensTheme.colors.textTertiary,
-                        style = RevLensTypography.labelSmall,
-                        modifier = Modifier.padding(horizontal = 14.dp)
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.weight(1f),
-                        color = RevLensTheme.colors.divider
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Continue as Guest Option
-                ActionCardButton(
-                    text = "Continue without account (Guest)",
-                    onClick = { viewModel.onEvent(LoginEvent.ContinueAsGuestClicked) }
-                )
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Disclaimer
-                Text(
-                    text = "By signing in, you agree to RevLens Terms of Service and Privacy Policy.",
-                    color = RevLensTheme.colors.textTertiary,
-                    fontSize = 11.sp,
-                    lineHeight = 16.sp,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
             }
         }
     }
@@ -292,22 +325,57 @@ fun LoginScreen(
 
 @Composable
 private fun GoogleIcon(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .clip(CircleShape)
-            .background(Color.White),
-        contentAlignment = Alignment.Center
-    ) {
-        Canvas(modifier = Modifier.size(16.dp)) {
-            val center = Offset(size.width / 2, size.height / 2)
-            val radius = size.minDimension / 2
-            drawCircle(color = Color(0xFF4285F4), radius = radius, center = center)
-        }
-        Text(
-            text = "G",
-            color = Color.White,
-            fontWeight = FontWeight.Bold,
-            fontSize = 11.sp
+    Canvas(modifier = modifier) {
+        val w = size.width
+        val h = size.height
+        val cx = w / 2f
+        val cy = h / 2f
+        val stroke = w * 0.18f
+
+        // Google 4-color arcs
+        drawArc(
+            color = Color(0xFF4285F4),
+            startAngle = 315f,
+            sweepAngle = 90f,
+            useCenter = false,
+            style = Stroke(width = stroke, cap = StrokeCap.Butt),
+            size = Size(w - stroke, h - stroke),
+            topLeft = Offset(stroke / 2f, stroke / 2f)
+        )
+        drawArc(
+            color = Color(0xFF34A853),
+            startAngle = 45f,
+            sweepAngle = 90f,
+            useCenter = false,
+            style = Stroke(width = stroke, cap = StrokeCap.Butt),
+            size = Size(w - stroke, h - stroke),
+            topLeft = Offset(stroke / 2f, stroke / 2f)
+        )
+        drawArc(
+            color = Color(0xFFFBBC05),
+            startAngle = 135f,
+            sweepAngle = 90f,
+            useCenter = false,
+            style = Stroke(width = stroke, cap = StrokeCap.Butt),
+            size = Size(w - stroke, h - stroke),
+            topLeft = Offset(stroke / 2f, stroke / 2f)
+        )
+        drawArc(
+            color = Color(0xFFEA4335),
+            startAngle = 225f,
+            sweepAngle = 90f,
+            useCenter = false,
+            style = Stroke(width = stroke, cap = StrokeCap.Butt),
+            size = Size(w - stroke, h - stroke),
+            topLeft = Offset(stroke / 2f, stroke / 2f)
+        )
+        // Blue horizontal crossbar
+        drawLine(
+            color = Color(0xFF4285F4),
+            start = Offset(cx, cy),
+            end = Offset(w - stroke / 2f, cy),
+            strokeWidth = stroke,
+            cap = StrokeCap.Square
         )
     }
 }

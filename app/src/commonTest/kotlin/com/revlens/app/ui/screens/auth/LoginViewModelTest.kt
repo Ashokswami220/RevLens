@@ -7,6 +7,7 @@ import com.revlens.app.domain.session.DefaultSessionManager
 import com.revlens.app.domain.usecase.LoginUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -61,14 +62,20 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun testContinueAsGuest() = runTest(testDispatcher) {
+    fun testGoogleSignInNewUserNavigatesToCreateWorkspace() = runTest(testDispatcher) {
         val repo = FakeAuthRepository(InMemorySecureStorage())
         val session = DefaultSessionManager(SessionState.SignedOut)
         val vm = LoginViewModel(LoginUseCase(repo, session), session)
 
-        vm.onEvent(LoginEvent.ContinueAsGuestClicked)
+        var emittedEffect: LoginEffect? = null
+        val job = launch {
+            vm.effects.collect { emittedEffect = it }
+        }
+
+        vm.onEvent(LoginEvent.GoogleSignInClicked())
         advanceUntilIdle()
 
-        assertEquals(SessionState.Guest, session.state.value)
+        assertEquals(LoginEffect.NavigateToCreateWorkspace, emittedEffect)
+        job.cancel()
     }
 }

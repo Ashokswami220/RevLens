@@ -29,8 +29,7 @@ class WasmProfileRepository : ProfileRepository {
     private fun loadOnboardingCompleted(): Boolean {
         return try {
             val item = window.localStorage.getItem("revlens_onboarding_completed")
-            val hasProfile = window.localStorage.getItem("revlens_profile") != null
-            item == "true" && hasProfile
+            item == "true"
         } catch (_: Exception) {
             false
         }
@@ -39,7 +38,13 @@ class WasmProfileRepository : ProfileRepository {
     override suspend fun setOnboardingCompleted(completed: Boolean) {
         _onboardingFlow.value = completed
         try {
-            window.localStorage.setItem("revlens_onboarding_completed", completed.toString())
+            if (completed) {
+                window.localStorage.setItem("revlens_onboarding_completed", "true")
+            } else {
+                window.localStorage.removeItem("revlens_onboarding_completed")
+                window.localStorage.removeItem("revlens_profile")
+                _flow.value = null
+            }
         } catch (_: Exception) {
         }
     }
@@ -68,6 +73,10 @@ class WasmProfileRepository : ProfileRepository {
                 } else {
                     profile
                 }
+            } else if (loadOnboardingCompleted()) {
+                val defaultProf = com.revlens.app.model.createDefaultGuestProfile()
+                window.localStorage.setItem("revlens_profile", json.encodeToString(defaultProf))
+                defaultProf
             } else null
         } catch (_: Exception) {
             null
@@ -137,6 +146,7 @@ val wasmModule = module {
     single<com.revlens.app.domain.context.WorkspaceContext> { com.revlens.app.domain.context.DefaultWorkspaceContext() }
     single<com.revlens.app.domain.session.SessionManager> { com.revlens.app.domain.session.DefaultSessionManager() }
     single { com.revlens.app.domain.usecase.ResolveGateUseCase() }
+    single<com.revlens.app.core.util.IdGenerator> { com.revlens.app.core.util.DefaultIdGenerator() }
     single<com.revlens.app.core.platform.FilePicker> { com.revlens.app.core.platform.DefaultFilePicker() }
     single<com.revlens.app.core.platform.FileSharer> { com.revlens.app.core.platform.DefaultFileSharer() }
     single<com.revlens.app.core.platform.SecureStorage> { com.revlens.app.core.platform.InMemorySecureStorage() }
@@ -199,7 +209,7 @@ val wasmModule = module {
             get(), get()
         )
     }
-    viewModel { com.revlens.app.ui.screens.auth.LoginViewModel(get(), get()) }
+    viewModel { com.revlens.app.ui.screens.auth.LoginViewModel(get(), get(), getOrNull()) }
     viewModel { com.revlens.app.ui.screens.profile.ProfileViewModel(get(), get(), get(), get()) }
     viewModel { com.revlens.app.ui.screens.team.TeamViewModel(get(), get()) }
     viewModel { com.revlens.app.ui.screens.billing.BillingViewModel(get(), get()) }

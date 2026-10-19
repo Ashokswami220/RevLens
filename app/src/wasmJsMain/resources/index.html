@@ -129,6 +129,25 @@
         firebase.initializeApp(firebaseConfig);
     }
 
+    // Check if user is returning from a redirect Google sign-in
+    if (typeof firebase !== 'undefined' && firebase.apps.length) {
+        firebase.auth().getRedirectResult().then(result => {
+            if (result && result.user) {
+                const user = result.user;
+                window.revlensFirebase.lastAuthResultJson = JSON.stringify({
+                    id: user.uid,
+                    name: user.displayName || user.email || 'User',
+                    email: user.email || '',
+                    emailVerified: user.emailVerified || false,
+                    avatarUrl: user.photoURL || null
+                });
+                window.revlensFirebase.authStatus = 'success';
+            }
+        }).catch(err => {
+            console.warn('Redirect auth result check:', err);
+        });
+    }
+
     window.revlensFirebase = {
         authStatus: 'idle',
         lastAuthResultJson: null,
@@ -140,6 +159,7 @@
             const provider = new firebase.auth.GoogleAuthProvider();
             provider.addScope('profile');
             provider.addScope('email');
+            provider.setCustomParameters({ prompt: 'select_account' });
             firebase.auth().signInWithPopup(provider).then(result => {
                 const user = result.user;
                 window.revlensFirebase.lastAuthResultJson = JSON.stringify({
@@ -151,7 +171,24 @@
                 });
                 window.revlensFirebase.authStatus = 'success';
             }).catch(err => {
-                window.revlensFirebase.lastAuthError = err ? (err.message || String(err)) : 'Google sign-in cancelled or failed';
+                const code = err ? (err.code || '') : '';
+                const msg = err ? (err.message || String(err)) : 'Google sign-in cancelled or failed';
+                console.error('Firebase Auth Error:', code, msg);
+                if (code === 'auth/popup-blocked') {
+                    console.warn('Popup blocked, attempting signInWithRedirect fallback...');
+                    firebase.auth().signInWithRedirect(provider).catch(redirErr => {
+                        window.revlensFirebase.lastAuthError = redirErr ? redirErr.message : 'Redirect failed';
+                        window.revlensFirebase.authStatus = 'error';
+                    });
+                    return;
+                }
+                if (code === 'auth/operation-not-allowed') {
+                    window.revlensFirebase.lastAuthError = 'Google provider is not enabled in Firebase Console. Please enable Google under Authentication > Sign-in method.';
+                } else if (code === 'auth/unauthorized-domain') {
+                    window.revlensFirebase.lastAuthError = 'Domain not authorized in Firebase Console > Authentication > Settings > Authorized Domains.';
+                } else {
+                    window.revlensFirebase.lastAuthError = msg;
+                }
                 window.revlensFirebase.authStatus = 'error';
             });
         },

@@ -44,10 +44,33 @@ class AndroidFirebaseAuthRepository(
                     email = fbUser.email ?: email ?: "",
                     emailVerified = fbUser.isEmailVerified,
                     avatarUrl = fbUser.photoUrl?.toString() ?: avatarUrl,
-                    jobTitle = null
+                    jobTitle = "Founder"
                 )
                 cachedUser = user
                 saveTokens(user.id)
+
+                val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                val anotherId = fbUser.providerData.firstOrNull { it.providerId == "google.com" }?.uid
+                    ?: fbUser.providerData.firstOrNull()?.uid
+                    ?: fbUser.uid
+                val userDoc = mapOf(
+                    "id" to fbUser.uid,
+                    "email" to (fbUser.email ?: email ?: ""),
+                    "name" to (fbUser.displayName ?: name ?: "User"),
+                    "jobTitle" to "Founder",
+                    "anotherId" to anotherId,
+                    "createdAt" to (fbUser.metadata?.creationTimestamp ?: System.currentTimeMillis()),
+                    "updatedAt" to System.currentTimeMillis()
+                )
+                try {
+                    db.collection("users").document(fbUser.uid)
+                        .set(userDoc, com.google.firebase.firestore.SetOptions.merge())
+                        .await()
+                    android.util.Log.d("RevLensFirestore", "Saved user profile to users/${fbUser.uid}")
+                } catch (e: Exception) {
+                    android.util.Log.e("RevLensFirestore", "Failed to save user profile in Firestore", e)
+                }
+
                 return Result.success(user)
             }
 
@@ -148,6 +171,23 @@ class AndroidFirebaseAuthRepository(
                 jobTitle = jobTitle
             )
             cachedUser = updated
+
+            val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+            try {
+                val updateMap = mutableMapOf<String, Any>(
+                    "name" to name.trim(),
+                    "updatedAt" to System.currentTimeMillis()
+                )
+                if (jobTitle != null) {
+                    updateMap["jobTitle"] = jobTitle
+                }
+                db.collection("users").document(fbUser.uid)
+                    .set(updateMap, com.google.firebase.firestore.SetOptions.merge())
+                    .await()
+            } catch (e: Exception) {
+                android.util.Log.e("RevLensFirestore", "Failed to update user profile in Firestore", e)
+            }
+
             return Result.success(updated)
         } catch (e: Exception) {
             return Result.failure(e)

@@ -109,14 +109,11 @@ class WebFirestoreProfileRepository(
 ) : ProfileRepository {
 
     private val json = Json { ignoreUnknownKeys = true }
-    private val _profile = MutableStateFlow<BusinessProfile?>(null)
-    override val profileFlow: Flow<BusinessProfile?> = _profile.asStateFlow()
 
-    private val _onboardingCompleted = MutableStateFlow(false)
-    override val isOnboardingCompletedFlow: Flow<Boolean> = _onboardingCompleted.asStateFlow()
+    override val profileFlow: Flow<BusinessProfile?> = localFallback.profileFlow
+    override val isOnboardingCompletedFlow: Flow<Boolean> = localFallback.isOnboardingCompletedFlow
 
     override suspend fun saveProfile(profile: BusinessProfile) {
-        _profile.value = profile
         localFallback.saveProfile(profile)
         try {
             val serialized = json.encodeToString(BusinessProfile.serializer(), profile)
@@ -126,7 +123,6 @@ class WebFirestoreProfileRepository(
     }
 
     override suspend fun setOnboardingCompleted(completed: Boolean) {
-        _onboardingCompleted.value = completed
         localFallback.setOnboardingCompleted(completed)
     }
 }

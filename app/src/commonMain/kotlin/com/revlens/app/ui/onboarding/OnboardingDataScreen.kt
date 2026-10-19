@@ -303,9 +303,9 @@ fun OnboardingDataScreen(
                     text = when (pagerState.currentPage) {
                         0 -> "Continue to Step 2"
                         1 -> "Continue to Step 3"
-                        else -> "Complete Setup & Launch 🚀"
+                        else -> "Complete Setup"
                     },
-                    icon = if (pagerState.currentPage == 2) null else Icons.AutoMirrored.Filled.ArrowForward,
+                    icon = Icons.AutoMirrored.Filled.ArrowForward,
                     enabled = isCurrentStepValid,
                     onClick = {
                         if (!isCurrentStepValid) return@ActionCardButton

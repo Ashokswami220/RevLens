@@ -43,6 +43,7 @@ val appModule = module {
     single<WorkspaceContext> { DefaultWorkspaceContext() }
     single<SessionManager> { DefaultSessionManager() }
     single { ResolveGateUseCase() }
+    single<com.revlens.app.core.util.IdGenerator> { com.revlens.app.core.util.DefaultIdGenerator() }
     single<com.revlens.app.core.platform.FilePicker> { com.revlens.app.core.platform.DefaultFilePicker() }
     single<com.revlens.app.core.platform.FileSharer> { com.revlens.app.core.platform.DefaultFileSharer() }
     single<com.revlens.app.core.platform.SecureStorage> { com.revlens.app.core.platform.InMemorySecureStorage() }
@@ -105,7 +106,7 @@ val appModule = module {
             get(), get()
         )
     }
-    viewModel { com.revlens.app.ui.screens.auth.LoginViewModel(get(), get()) }
+    viewModel { com.revlens.app.ui.screens.auth.LoginViewModel(get(), get(), getOrNull()) }
     viewModel { com.revlens.app.ui.screens.profile.ProfileViewModel(get(), get(), get(), get()) }
     viewModel { com.revlens.app.ui.screens.team.TeamViewModel(get(), get()) }
     viewModel { com.revlens.app.ui.screens.billing.BillingViewModel(get(), get()) }
