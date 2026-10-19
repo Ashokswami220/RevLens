@@ -6,6 +6,7 @@ import com.revlens.app.domain.context.WorkspaceContext
 import com.revlens.app.domain.model.Workspace
 import com.revlens.app.domain.repository.WorkspaceRepository
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 
 class MigrateGuestDataUseCase(
     private val workspaceRepository: WorkspaceRepository,
@@ -15,7 +16,9 @@ class MigrateGuestDataUseCase(
 ) {
     suspend operator fun invoke(userId: String) {
         val activeWsId = workspaceContext.activeWorkspaceId.value
-        val workspaces = workspaceRepository.workspacesFlow.first()
+        val workspaces = withTimeoutOrNull(2000L) {
+            workspaceRepository.workspacesFlow.first()
+        } ?: emptyList()
 
         // If no workspace exists yet for this user, create or ensure active workspace
         if (workspaces.isEmpty()) {
@@ -28,12 +31,16 @@ class MigrateGuestDataUseCase(
         }
 
         // Migrate any profile or scenarios created during guest session
-        val guestProfile = profileRepository.profileFlow.first()
+        val guestProfile = withTimeoutOrNull(1500L) {
+            profileRepository.profileFlow.first()
+        }
         if (guestProfile != null) {
             profileRepository.saveProfile(guestProfile)
         }
 
-        val guestScenarios = scenarioRepository.scenariosFlow.first()
+        val guestScenarios = withTimeoutOrNull(1500L) {
+            scenarioRepository.scenariosFlow.first()
+        } ?: emptyList()
         for (scenario in guestScenarios) {
             scenarioRepository.saveScenario(scenario)
         }

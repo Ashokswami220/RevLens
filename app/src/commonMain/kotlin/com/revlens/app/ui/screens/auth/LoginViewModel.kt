@@ -9,6 +9,7 @@ import com.revlens.app.domain.usecase.LoginUseCase
 import com.revlens.app.model.createDefaultGuestProfile
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 class LoginViewModel(
     private val loginUseCase: LoginUseCase,
@@ -27,22 +28,39 @@ class LoginViewModel(
     ) {
         viewModelScope.launch {
             update { copy(isLoading = true, error = null) }
-            val result = loginUseCase.loginWithGoogle(idToken, email, displayName)
-            result.onSuccess {
-                val remoteProf = profileRepository?.syncRemoteProfile()
-                val localProf = profileRepository?.profileFlow?.first()
-                if (remoteProf != null || localProf != null) {
-                    profileRepository?.setOnboardingCompleted(true)
-                    emit(LoginEffect.NavigateToDashboard)
-                } else {
-                    emit(LoginEffect.NavigateToCreateWorkspace)
+            try {
+                val result = loginUseCase.loginWithGoogle(idToken, email, displayName)
+                result.onSuccess {
+                    val remoteProf = runCatching {
+                        withTimeoutOrNull(2500L) {
+                            profileRepository?.syncRemoteProfile()
+                        }
+                    }.getOrNull()
+
+                    val localProf = runCatching {
+                        withTimeoutOrNull(1500L) {
+                            profileRepository?.profileFlow?.first()
+                        }
+                    }.getOrNull()
+
+                    if (remoteProf != null || localProf != null) {
+                        profileRepository?.setOnboardingCompleted(true)
+                        emit(LoginEffect.NavigateToDashboard)
+                    } else {
+                        emit(LoginEffect.NavigateToCreateWorkspace)
+                    }
                 }
+                result.onFailure {
+                    emit(LoginEffect.ShowMessage(it.toUiText()))
+                    update { copy(error = it.toUiText()) }
+                }
+            } catch (e: Exception) {
+                val err = e.toUiText()
+                emit(LoginEffect.ShowMessage(err))
+                update { copy(error = err) }
+            } finally {
+                update { copy(isLoading = false) }
             }
-            result.onFailure {
-                emit(LoginEffect.ShowMessage(it.toUiText()))
-                update { copy(error = it.toUiText()) }
-            }
-            update { copy(isLoading = false) }
         }
     }
 }

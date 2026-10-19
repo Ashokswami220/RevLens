@@ -18,7 +18,10 @@ class LoginUseCase(
         return authRepository.loginWithGoogle(idToken, email, name, avatarUrl)
             .onSuccess { user ->
                 sessionManager.onLoggedIn(user)
-                migrateGuestDataUseCase?.invoke(user.id)
+                try {
+                    migrateGuestDataUseCase?.invoke(user.id)
+                } catch (_: Exception) {
+                }
             }
     }
 
@@ -26,7 +29,10 @@ class LoginUseCase(
         return authRepository.login(email, password)
             .onSuccess { user ->
                 sessionManager.onLoggedIn(user)
-                migrateGuestDataUseCase?.invoke(user.id)
+                try {
+                    migrateGuestDataUseCase?.invoke(user.id)
+                } catch (_: Exception) {
+                }
             }
     }
 }

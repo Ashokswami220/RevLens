@@ -4,7 +4,10 @@ import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -28,9 +31,12 @@ actual fun rememberGoogleSignInLauncher(
         GoogleSignIn.getClient(context, gso)
     }
 
+    var isLaunching by remember { mutableStateOf(false) }
+
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
+        isLaunching = false
         if (result.resultCode == Activity.RESULT_OK) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
             try {
@@ -54,7 +60,19 @@ actual fun rememberGoogleSignInLauncher(
 
     return remember(launcher, googleSignInClient) {
         {
-            launcher.launch(googleSignInClient.signInIntent)
+            if (!isLaunching) {
+                isLaunching = true
+                // Explicitly sign out cached Play Services account so that the Google Account
+                // Picker bottom sheet / dialog is always displayed on every sign-in click.
+                googleSignInClient.signOut().addOnCompleteListener {
+                    try {
+                        launcher.launch(googleSignInClient.signInIntent)
+                    } catch (e: Exception) {
+                        isLaunching = false
+                        android.util.Log.e("RevLensAuth", "Failed to launch Google Sign-In intent", e)
+                    }
+                }
+            }
         }
     }
 }

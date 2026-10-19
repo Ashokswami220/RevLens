@@ -67,7 +67,9 @@ fun LoginScreen(
     val isDark = isSystemInDarkTheme()
 
     val googleSignInLauncher = rememberGoogleSignInLauncher { idToken, email, displayName ->
-        viewModel.onEvent(LoginEvent.GoogleSignInClicked(idToken, email, displayName))
+        if (idToken != null) {
+            viewModel.onEvent(LoginEvent.GoogleSignInClicked(idToken, email, displayName))
+        }
     }
 
     LaunchedEffect(Unit) {

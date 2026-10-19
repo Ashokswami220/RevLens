@@ -65,10 +65,17 @@ class AndroidFirebaseAuthRepository(
                 try {
                     db.collection("users").document(fbUser.uid)
                         .set(userDoc, com.google.firebase.firestore.SetOptions.merge())
-                        .await()
-                    android.util.Log.d("RevLensFirestore", "Saved user profile to users/${fbUser.uid}")
+                        .addOnSuccessListener {
+                            android.util.Log.d("RevLensFirestore", "Successfully saved user document to users/${fbUser.uid}")
+                        }
+                        .addOnFailureListener { e ->
+                            android.util.Log.e("RevLensFirestore", "Failed to save user document: ${e.message}", e)
+                            if (e.message?.contains("PERMISSION_DENIED", ignoreCase = true) == true) {
+                                android.util.Log.e("RevLensFirestore", "PERMISSION_DENIED: Firestore security rules in Firebase Console are blocking writes! Update rules in Firebase Console.")
+                            }
+                        }
                 } catch (e: Exception) {
-                    android.util.Log.e("RevLensFirestore", "Failed to save user profile in Firestore", e)
+                    android.util.Log.e("RevLensFirestore", "Failed to trigger save user profile in Firestore", e)
                 }
 
                 return Result.success(user)
@@ -114,6 +121,13 @@ class AndroidFirebaseAuthRepository(
             auth.signOut()
             cachedUser = null
             secureStorage?.remove("auth_tokens")
+            try {
+                val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(
+                    com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN
+                ).build()
+                com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(context, gso).signOut()
+            } catch (_: Exception) {
+            }
             return Result.success(Unit)
         } catch (e: Exception) {
             return Result.failure(e)
@@ -133,13 +147,23 @@ class AndroidFirebaseAuthRepository(
 
     override suspend fun getCurrentUser(): UserAccount? {
         val fbUser = auth.currentUser ?: return null
+        var jobTitle = cachedUser?.jobTitle
+        if (jobTitle == null) {
+            try {
+                val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                val doc = db.collection("users").document(fbUser.uid).get().await()
+                if (doc.exists()) {
+                    jobTitle = doc.getString("jobTitle")
+                }
+            } catch (_: Exception) {}
+        }
         val user = UserAccount(
             id = fbUser.uid,
             name = fbUser.displayName ?: "User",
             email = fbUser.email ?: "",
             emailVerified = fbUser.isEmailVerified,
             avatarUrl = fbUser.photoUrl?.toString(),
-            jobTitle = cachedUser?.jobTitle
+            jobTitle = jobTitle ?: "Founder"
         )
         cachedUser = user
         return user
