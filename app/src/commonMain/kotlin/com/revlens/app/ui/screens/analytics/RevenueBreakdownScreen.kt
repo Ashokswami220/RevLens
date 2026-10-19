@@ -144,7 +144,7 @@ fun RevenueBreakdownScreen(
             val result = state.result
             if (result != null) {
                 // Quick Ratio Hero Card
-                QuickRatioHeroCard(result = result)
+                QuickRatioHeroCard(result = result, currencySymbol = state.currencySymbol)
 
                 // Waterfall Chart Section
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -168,6 +168,7 @@ fun RevenueBreakdownScreen(
 
                     WaterfallChart(
                         steps = result.waterfallSteps,
+                        currencySymbol = state.currencySymbol,
                         onStepSelected = {
                             viewModel.onEvent(
                                 RevenueBreakdownEvent.SelectWaterfallStep(it)
@@ -178,7 +179,7 @@ fun RevenueBreakdownScreen(
                     // Step Detail Callout (if selected)
                     val selected = state.selectedStep
                     if (selected != null) {
-                        StepDetailCard(step = selected)
+                        StepDetailCard(step = selected, currencySymbol = state.currencySymbol)
                     }
                 }
 
@@ -212,12 +213,13 @@ fun RevenueBreakdownScreen(
                     RevLensDonutChart(
                         slices = donutSlices,
                         centerTitle = "Total MRR",
-                        centerValue = "$${result.endingMrrMinor / 100}"
+                        centerValue = "${state.currencySymbol}${result.endingMrrMinor / 100}",
+                        currencySymbol = state.currencySymbol
                     )
                 }
 
                 // Bridge Movement Summary Grid
-                BridgeMovementSummary(result = result)
+                BridgeMovementSummary(result = result, currencySymbol = state.currencySymbol)
             } else {
                 Box(
                     modifier = Modifier
@@ -334,7 +336,7 @@ private fun PeriodSelector(
 }
 
 @Composable
-private fun QuickRatioHeroCard(result: RevenueBreakdownResult) {
+private fun QuickRatioHeroCard(result: RevenueBreakdownResult, currencySymbol: String = "$") {
     val qr = result.quickRatio
     val (statusType, statusCustomText) = when {
         qr >= 4.0 -> StatusBadgeType.ACTIVE to "Top Tier (${(qr * 10).toInt() / 10.0}x)"
@@ -390,7 +392,7 @@ private fun QuickRatioHeroCard(result: RevenueBreakdownResult) {
                     type = if (result.netChangeMinor > 0) DeltaType.POSITIVE else if (result.netChangeMinor < 0) DeltaType.NEGATIVE else DeltaType.NEUTRAL
                 )
                 Text(
-                    text = "${if (isPositive) "+$" else "-$"}${
+                    text = "${if (isPositive) "+$currencySymbol" else "-$currencySymbol"}${
                         kotlin.math.abs(
                             result.netChangeMinor
                         ) / 100
@@ -408,7 +410,7 @@ private fun QuickRatioHeroCard(result: RevenueBreakdownResult) {
                     .padding(8.dp)
             ) {
                 Text(
-                    text = "Formula: (New $${result.newMrrMinor / 100} + Exp $${result.expansionMrrMinor / 100}) ÷ (Con $${result.contractionMrrMinor / 100} + Churn $${result.churnMrrMinor / 100})",
+                    text = "Formula: (New $currencySymbol${result.newMrrMinor / 100} + Exp $currencySymbol${result.expansionMrrMinor / 100}) ÷ (Con $currencySymbol${result.contractionMrrMinor / 100} + Churn $currencySymbol${result.churnMrrMinor / 100})",
                     style = RevLensTypography.labelSmall,
                     color = RevLensTheme.colors.textSecondary
                 )
@@ -418,7 +420,9 @@ private fun QuickRatioHeroCard(result: RevenueBreakdownResult) {
 }
 
 @Composable
-private fun StepDetailCard(step: com.revlens.app.domain.calc.WaterfallStep) {
+private fun StepDetailCard(
+    step: com.revlens.app.domain.calc.WaterfallStep, currencySymbol: String = "$"
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -458,7 +462,7 @@ private fun StepDetailCard(step: com.revlens.app.domain.calc.WaterfallStep) {
             }
 
             Text(
-                text = "${if (!step.isTotal) (if (step.isPositive) "+$" else "-$") else "$"}${step.amountMinor / 100}",
+                text = "${if (!step.isTotal) (if (step.isPositive) "+$currencySymbol" else "-$currencySymbol") else currencySymbol}${step.amountMinor / 100}",
                 style = RevLensTypography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = if (!step.isTotal) (if (step.isPositive) RevLensTheme.colors.success else RevLensTheme.colors.error) else RevLensTheme.colors.textPrimary
@@ -468,7 +472,7 @@ private fun StepDetailCard(step: com.revlens.app.domain.calc.WaterfallStep) {
 }
 
 @Composable
-private fun BridgeMovementSummary(result: RevenueBreakdownResult) {
+private fun BridgeMovementSummary(result: RevenueBreakdownResult, currencySymbol: String = "$") {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -486,17 +490,26 @@ private fun BridgeMovementSummary(result: RevenueBreakdownResult) {
         )
 
         MovementRow(
-            "Starting MRR", "$${result.startingMrrMinor / 100}", RevLensTheme.colors.textSecondary
+            "Starting MRR", "$currencySymbol${result.startingMrrMinor / 100}",
+            RevLensTheme.colors.textSecondary
         )
-        MovementRow("New MRR", "+$${result.newMrrMinor / 100}", RevLensTheme.colors.success)
         MovementRow(
-            "Expansion MRR", "+$${result.expansionMrrMinor / 100}", RevLensTheme.colors.success
+            "New MRR", "+$currencySymbol${result.newMrrMinor / 100}", RevLensTheme.colors.success
         )
-        MovementRow("Contraction MRR", "-$${result.contractionMrrMinor / 100}", Color(0xFFF59E0B))
-        MovementRow("Churn MRR", "-$${result.churnMrrMinor / 100}", RevLensTheme.colors.error)
+        MovementRow(
+            "Expansion MRR", "+$currencySymbol${result.expansionMrrMinor / 100}",
+            RevLensTheme.colors.success
+        )
+        MovementRow(
+            "Contraction MRR", "-$currencySymbol${result.contractionMrrMinor / 100}",
+            Color(0xFFF59E0B)
+        )
+        MovementRow(
+            "Churn MRR", "-$currencySymbol${result.churnMrrMinor / 100}", RevLensTheme.colors.error
+        )
         MovementRow(
             label = "Ending MRR",
-            amount = "$${result.endingMrrMinor / 100}",
+            amount = "$currencySymbol${result.endingMrrMinor / 100}",
             color = RevLensTheme.colors.brandPrimary,
             isBold = true
         )

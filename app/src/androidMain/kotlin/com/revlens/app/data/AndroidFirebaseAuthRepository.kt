@@ -50,32 +50,48 @@ class AndroidFirebaseAuthRepository(
                 saveTokens(user.id)
 
                 val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                val anotherId = fbUser.providerData.firstOrNull { it.providerId == "google.com" }?.uid
-                    ?: fbUser.providerData.firstOrNull()?.uid
-                    ?: fbUser.uid
+                val anotherId =
+                    fbUser.providerData.firstOrNull { it.providerId == "google.com" }?.uid
+                        ?: fbUser.providerData.firstOrNull()?.uid
+                        ?: fbUser.uid
                 val userDoc = mapOf(
                     "id" to fbUser.uid,
                     "email" to (fbUser.email ?: email ?: ""),
                     "name" to (fbUser.displayName ?: name ?: "User"),
                     "jobTitle" to "Founder",
                     "anotherId" to anotherId,
-                    "createdAt" to (fbUser.metadata?.creationTimestamp ?: System.currentTimeMillis()),
+                    "createdAt" to (fbUser.metadata?.creationTimestamp
+                        ?: System.currentTimeMillis()),
                     "updatedAt" to System.currentTimeMillis()
                 )
                 try {
-                    db.collection("users").document(fbUser.uid)
+                    db.collection("users")
+                        .document(fbUser.uid)
                         .set(userDoc, com.google.firebase.firestore.SetOptions.merge())
                         .addOnSuccessListener {
-                            android.util.Log.d("RevLensFirestore", "Successfully saved user document to users/${fbUser.uid}")
+                            android.util.Log.d(
+                                "RevLensFirestore",
+                                "Successfully saved user document to users/${fbUser.uid}"
+                            )
                         }
                         .addOnFailureListener { e ->
-                            android.util.Log.e("RevLensFirestore", "Failed to save user document: ${e.message}", e)
-                            if (e.message?.contains("PERMISSION_DENIED", ignoreCase = true) == true) {
-                                android.util.Log.e("RevLensFirestore", "PERMISSION_DENIED: Firestore security rules in Firebase Console are blocking writes! Update rules in Firebase Console.")
+                            android.util.Log.e(
+                                "RevLensFirestore", "Failed to save user document: ${e.message}", e
+                            )
+                            if (e.message?.contains(
+                                    "PERMISSION_DENIED", ignoreCase = true
+                                ) == true
+                            ) {
+                                android.util.Log.e(
+                                    "RevLensFirestore",
+                                    "PERMISSION_DENIED: Firestore security rules in Firebase Console are blocking writes! Update rules in Firebase Console."
+                                )
                             }
                         }
                 } catch (e: Exception) {
-                    android.util.Log.e("RevLensFirestore", "Failed to trigger save user profile in Firestore", e)
+                    android.util.Log.e(
+                        "RevLensFirestore", "Failed to trigger save user profile in Firestore", e
+                    )
                 }
 
                 return Result.success(user)
@@ -124,8 +140,10 @@ class AndroidFirebaseAuthRepository(
             try {
                 val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(
                     com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN
-                ).build()
-                com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(context, gso).signOut()
+                )
+                    .build()
+                com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(context, gso)
+                    .signOut()
             } catch (_: Exception) {
             }
             return Result.success(Unit)
@@ -151,11 +169,15 @@ class AndroidFirebaseAuthRepository(
         if (jobTitle == null) {
             try {
                 val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                val doc = db.collection("users").document(fbUser.uid).get().await()
+                val doc = db.collection("users")
+                    .document(fbUser.uid)
+                    .get()
+                    .await()
                 if (doc.exists()) {
                     jobTitle = doc.getString("jobTitle")
                 }
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
         }
         val user = UserAccount(
             id = fbUser.uid,
@@ -205,11 +227,14 @@ class AndroidFirebaseAuthRepository(
                 if (jobTitle != null) {
                     updateMap["jobTitle"] = jobTitle
                 }
-                db.collection("users").document(fbUser.uid)
+                db.collection("users")
+                    .document(fbUser.uid)
                     .set(updateMap, com.google.firebase.firestore.SetOptions.merge())
                     .await()
             } catch (e: Exception) {
-                android.util.Log.e("RevLensFirestore", "Failed to update user profile in Firestore", e)
+                android.util.Log.e(
+                    "RevLensFirestore", "Failed to update user profile in Firestore", e
+                )
             }
 
             return Result.success(updated)

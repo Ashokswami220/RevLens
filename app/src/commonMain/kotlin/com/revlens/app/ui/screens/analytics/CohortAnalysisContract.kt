@@ -12,6 +12,7 @@ data class CohortAnalysisUiState(
     val result: CohortMatrixResult? = null,
     val selectedCohortNames: Set<String> = emptySet(),
     val selectedCellDetail: Pair<CohortRow, CohortCell>? = null,
+    val currencySymbol: String = "$",
     val isLoading: Boolean = false,
     val hasActualData: Boolean = false,
     val errorMessage: String? = null

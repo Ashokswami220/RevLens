@@ -91,10 +91,12 @@ class CacAnalyticsViewModel(
             )
         }
 
+        val symbol = com.revlens.app.utils.CurrencyUtils.getCurrency(profile.currencyCode).symbol
         update {
             copy(
                 result = result,
-                dataSourceMode = mode
+                dataSourceMode = mode,
+                currencySymbol = symbol
             )
         }
     }

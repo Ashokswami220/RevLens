@@ -146,6 +146,8 @@ fun BreakEvenScreen(viewModel: MainViewModel) {
             }
         }
 
+        val currSymbol = CurrencyUtils.getCurrency(profile?.currencyCode).symbol
+
         SectionCard(title = "Simulate Costs") {
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 LabeledSlider(
@@ -153,7 +155,7 @@ fun BreakEvenScreen(viewModel: MainViewModel) {
                     value = cacSimulated,
                     onValueChange = { cacSimulated = it },
                     valueRange = 0f..2000f,
-                    valueString = "$${cacSimulated.toInt()}",
+                    valueString = "$currSymbol${cacSimulated.toInt()}",
                     caption = "Cost to acquire a single customer"
                 )
 
@@ -162,7 +164,7 @@ fun BreakEvenScreen(viewModel: MainViewModel) {
                     value = fixedCostsSimulated,
                     onValueChange = { fixedCostsSimulated = it },
                     valueRange = 0f..50000f,
-                    valueString = "$${fixedCostsSimulated.toInt()}",
+                    valueString = "$currSymbol${fixedCostsSimulated.toInt()}",
                     caption = "Monthly base expenses"
                 )
 
@@ -171,7 +173,7 @@ fun BreakEvenScreen(viewModel: MainViewModel) {
                     value = variableCostSimulated,
                     onValueChange = { variableCostSimulated = it },
                     valueRange = 0f..500f,
-                    valueString = "$${variableCostSimulated.toInt()}",
+                    valueString = "$currSymbol${variableCostSimulated.toInt()}",
                     caption = "Cost per customer"
                 )
             }

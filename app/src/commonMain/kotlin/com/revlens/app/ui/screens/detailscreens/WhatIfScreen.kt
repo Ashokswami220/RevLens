@@ -29,7 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.revlens.app.domain.calc.PricingSimulationEngine
@@ -178,10 +177,12 @@ fun WhatIfScreen(viewModel: MainViewModel) {
                     valueString = "${if (growthChangePercent > 0) "+" else ""}${growthChangePercent.toInt()}%"
                 )
 
+                val currSymbol = CurrencyUtils.getCurrency(profile?.currencyCode).symbol
                 val cacInt = cacChange.toInt()
-                val cacFormatted = "${if (cacInt > 0) "+$" else if (cacInt < 0) "-$" else "$"}${
-                    kotlin.math.abs(cacInt)
-                }"
+                val cacFormatted =
+                    "${if (cacInt > 0) "+$currSymbol" else if (cacInt < 0) "-$currSymbol" else currSymbol}${
+                        kotlin.math.abs(cacInt)
+                    }"
                 LabeledSlider(
                     label = "CAC",
                     value = cacChange,
@@ -201,7 +202,7 @@ fun WhatIfScreen(viewModel: MainViewModel) {
 
     if (showSaveDialog) {
         AlertDialog(
-            shape = RectangleShape,
+            shape = RoundedCornerShape(16.dp),
             onDismissRequest = { showSaveDialog = false },
             title = {
                 Text(

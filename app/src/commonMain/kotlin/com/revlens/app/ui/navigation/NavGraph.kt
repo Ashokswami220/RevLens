@@ -91,7 +91,7 @@ fun RevLensNavGraph(
     val currentTab = when {
         currentDestination?.hasRoute<DashboardRoute>() == true || currentRoute.contains(
             "Dashboard"
-        ) -> "Home"
+        ) -> "Dashboard"
 
         currentDestination?.hasRoute<PricingSimulatorRoute>() == true || currentRoute.contains(
             "PricingSimulator"
@@ -117,7 +117,7 @@ fun RevLensNavGraph(
     val showBottomBar = currentTab != null
 
     val bottomNavItems = listOf(
-        BottomNavItem("Home", Icons.Filled.Dashboard, "Home"),
+        BottomNavItem("Dashboard", Icons.Filled.Dashboard, "Dashboard"),
         BottomNavItem("Simulator", Icons.Filled.Tune, "Simulator"),
         BottomNavItem("Scenarios", Icons.Filled.Layers, "Scenarios"),
         BottomNavItem("Forecast", Icons.AutoMirrored.Filled.TrendingUp, "Forecast"),
@@ -125,9 +125,9 @@ fun RevLensNavGraph(
     )
 
     val navigateToTab: (String) -> Unit = { tabKey ->
-        if (tabKey == "Home" || tabKey == "Dashboard") {
+        if (tabKey == "Dashboard" || tabKey == "Home") {
             navController.popBackStack(DashboardRoute, inclusive = false)
-            BrowserRouter.updateUrl("home")
+            BrowserRouter.updateUrl("dashboard")
         } else {
             val target: Any = when (tabKey) {
                 "Simulator" -> PricingSimulatorRoute(0)
@@ -144,7 +144,7 @@ fun RevLensNavGraph(
                 "Scenarios" -> "scenarios"
                 "Forecast" -> "forecast"
                 "Profile", "Settings" -> "settings"
-                else -> "home"
+                else -> "dashboard"
             }
             BrowserRouter.updateUrl(slug)
         }
@@ -156,7 +156,7 @@ fun RevLensNavGraph(
             currentDestination?.hasRoute<OnboardingRoute>() == true -> "onboarding"
             currentDestination?.hasRoute<DashboardRoute>() == true || currentRoute.contains(
                 "Dashboard"
-            ) -> "home"
+            ) -> "dashboard"
 
             currentDestination?.hasRoute<PricingSimulatorRoute>() == true || currentRoute.contains(
                 "Simulator"
@@ -240,9 +240,16 @@ fun RevLensNavGraph(
     LaunchedEffect(isOnboardingCompleted, hasSeenIntro) {
         if (isOnboardingCompleted == false) {
             val destination: Any = if (hasSeenIntro) LoginRoute else IntroRoute
-            navController.navigate(destination) {
-                popUpTo(0) { inclusive = true }
-                launchSingleTop = true
+            val isAlreadyThere = when (destination) {
+                is LoginRoute -> navController.currentDestination?.hasRoute<LoginRoute>() == true
+                is IntroRoute -> navController.currentDestination?.hasRoute<IntroRoute>() == true
+                else -> false
+            }
+            if (!isAlreadyThere) {
+                navController.navigate(destination) {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
             }
         }
     }
@@ -364,7 +371,7 @@ fun RevLensNavGraph(
     ) {
         CompositionLocalProvider(
             LocalAppNavigator provides navigateToTab,
-            LocalCurrentTab provides (currentTab ?: "Home")
+            LocalCurrentTab provides (currentTab ?: "Dashboard")
         ) {
             Scaffold(
                 contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -379,7 +386,7 @@ fun RevLensNavGraph(
                 }
             ) { innerPadding ->
                 val isNonDashboardTab =
-                    currentTab != null && currentTab != "Home" && currentTab != "Dashboard"
+                    currentTab != null && currentTab != "Dashboard" && currentTab != "Home"
 
                 PlatformBackHandler(enabled = isNonDashboardTab) {
                     navController.navigate(DashboardRoute) {
@@ -469,7 +476,7 @@ fun RevLensNavGraph(
                                     popUpTo(0) { inclusive = true }
                                     launchSingleTop = true
                                 }
-                                BrowserRouter.updateUrl("home")
+                                BrowserRouter.updateUrl("dashboard")
                             },
                             onNavigateToCreateWorkspace = {
                                 navController.navigate(CreateWorkspaceRoute) {
@@ -501,7 +508,7 @@ fun RevLensNavGraph(
                                     popUpTo(0) { inclusive = true }
                                     launchSingleTop = true
                                 }
-                                BrowserRouter.updateUrl("home")
+                                BrowserRouter.updateUrl("dashboard")
                             }
                         )
                     }
@@ -636,6 +643,9 @@ fun RevLensNavGraph(
                                     NotificationsRoute
                                 )
                             },
+                            onNavigateToMore = {
+                                navController.navigate(AccountActionsRoute)
+                            },
                             onNavigateToBilling = { navController.navigate(BillingRoute) },
                             onNavigateToIntegrations = {
                                 navController.navigate(
@@ -643,6 +653,20 @@ fun RevLensNavGraph(
                                 )
                             },
                             onNavigateToApiWebhooks = { navController.navigate(ApiWebhooksRoute) },
+                            onLogout = {
+                                navController.navigate(LoginRoute) {
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                                BrowserRouter.updateUrl("login")
+                            }
+                        )
+                    }
+
+                    composable<AccountActionsRoute> {
+                        com.revlens.app.ui.screens.security.AccountActionsScreen(
+                            viewModel = viewModel,
+                            onNavigateBack = { navController.popBackStack() },
                             onLogout = {
                                 navController.navigate(LoginRoute) {
                                     popUpTo(0) { inclusive = true }

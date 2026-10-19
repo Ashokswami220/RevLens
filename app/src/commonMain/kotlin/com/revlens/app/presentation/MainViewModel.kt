@@ -113,7 +113,9 @@ class MainViewModel(
             repository.saveProfile(updatedProfile)
             val currentWs = activeWorkspace.value
             if (currentWs != null && currentWs.currency != updatedProfile.currencyCode) {
-                workspaceRepository.updateWorkspace(currentWs.copy(currency = updatedProfile.currencyCode))
+                workspaceRepository.updateWorkspace(
+                    currentWs.copy(currency = updatedProfile.currencyCode)
+                )
             }
         }
     }
@@ -140,8 +142,20 @@ class MainViewModel(
         viewModelScope.launch {
             try {
                 authRepository?.logout()
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
             sessionManager.signOut(wipeLocalSyncedData = false)
+            repository.setOnboardingCompleted(false)
+        }
+    }
+
+    fun deleteAccount() {
+        viewModelScope.launch {
+            try {
+                authRepository?.deleteAccount()
+            } catch (_: Exception) {
+            }
+            sessionManager.signOut(wipeLocalSyncedData = true)
             repository.setOnboardingCompleted(false)
         }
     }

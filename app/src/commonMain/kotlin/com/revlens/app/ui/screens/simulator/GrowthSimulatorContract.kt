@@ -1,11 +1,17 @@
 package com.revlens.app.ui.screens.simulator
 
+import com.revlens.app.domain.calc.GrowthEngine
 import com.revlens.app.domain.model.GrowthAssumptions
 import com.revlens.app.domain.model.GrowthResult
 
 data class GrowthSimulatorUiState(
     val assumptions: GrowthAssumptions = GrowthAssumptions(),
-    val result: GrowthResult? = null,
+    val result: GrowthResult? = GrowthEngine.simulate(
+        startingCustomers = 100,
+        startingMrrMinor = 1000000L,
+        monthlyChurnPercent = 3.0,
+        assumptions = GrowthAssumptions()
+    ),
     val isCalculating: Boolean = false,
     val baselineMrrMinor: Long = 1000000L, // $10,000.00
     val baselineCustomers: Int = 100,

@@ -13,7 +13,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
 import com.revlens.app.ui.components.DestructiveButton
 import com.revlens.app.ui.components.PrimaryButton
@@ -100,6 +99,6 @@ fun TypedConfirmDialog(
             )
         },
         containerColor = RevLensTheme.colors.surface,
-        shape = RectangleShape
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
     )
 }

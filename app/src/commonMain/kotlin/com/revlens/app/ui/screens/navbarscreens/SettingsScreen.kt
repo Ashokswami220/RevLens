@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,7 +18,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Info
@@ -45,7 +45,6 @@ import androidx.compose.ui.unit.dp
 import com.revlens.app.domain.model.Role
 import com.revlens.app.domain.model.SessionState
 import com.revlens.app.presentation.MainViewModel
-import com.revlens.app.ui.components.ConfirmDialog
 import com.revlens.app.ui.components.PrimaryButton
 import com.revlens.app.ui.components.RevLensTopAppBar
 import com.revlens.app.ui.components.SectionCard
@@ -54,7 +53,6 @@ import com.revlens.app.ui.components.display.RoleChip
 import com.revlens.app.ui.components.feedback.UpgradePromptSheet
 import com.revlens.app.ui.theme.RevLensTheme
 import com.revlens.app.ui.theme.RevLensTypography
-import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -71,6 +69,7 @@ fun SettingsScreen(
     onNavigateToProfile: () -> Unit = {},
     onNavigateToSecurity: () -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
+    onNavigateToMore: () -> Unit = {},
     onNavigateToSignUp: () -> Unit = {},
     onLogout: () -> Unit = {},
     viewModel: MainViewModel = koinViewModel()
@@ -80,12 +79,12 @@ fun SettingsScreen(
     val isGuest = session !is SessionState.Authenticated
 
     var darkModeEnabled by remember { mutableStateOf(true) }
-    var showLogoutDialog by remember { mutableStateOf(false) }
     var lockedFeaturePrompt by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             RevLensTopAppBar(
                 title = "Settings",
@@ -117,6 +116,27 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
+                    val currentUser = (session as? SessionState.Authenticated)?.user
+                    val displayName =
+                        if (isGuest) "Guest User" else (currentUser?.name?.ifBlank { null }
+                            ?: "User")
+                    val displayEmail =
+                        if (isGuest) "Local-only session" else (currentUser?.email ?: "")
+                    val initials = if (isGuest) {
+                        "GU"
+                    } else {
+                        displayName.split(" ")
+                            .filter { it.isNotBlank() }
+                            .mapNotNull {
+                                it.firstOrNull()
+                                    ?.toString()
+                            }
+                            .take(2)
+                            .joinToString("")
+                            .uppercase()
+                            .ifBlank { "U" }
+                    }
+
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
@@ -124,7 +144,6 @@ fun SettingsScreen(
                             .clip(CircleShape)
                             .background(RevLensTheme.colors.brandPrimary)
                     ) {
-                        val initials = if (isGuest) "GU" else "AS"
                         Text(
                             text = initials,
                             style = RevLensTypography.headlineMedium,
@@ -139,7 +158,7 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = if (isGuest) "Guest User" else "Aarav Sharma",
+                                text = displayName,
                                 style = RevLensTypography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = RevLensTheme.colors.textPrimary
@@ -147,7 +166,7 @@ fun SettingsScreen(
                             RoleChip(role = Role.Owner)
                         }
                         Text(
-                            text = if (isGuest) "Local-only session" else "founder@acme.com",
+                            text = displayEmail,
                             style = RevLensTypography.bodySmall,
                             color = RevLensTheme.colors.textSecondary
                         )
@@ -281,6 +300,11 @@ fun SettingsScreen(
                         subtitle = "Milestone alerts, churn spikes & quiet hours",
                         onClick = onNavigateToNotifications
                     )
+                    SettingsNavigationRow(
+                        title = "More",
+                        subtitle = "Log out, session actions & delete account",
+                        onClick = onNavigateToMore
+                    )
                 }
             }
 
@@ -356,59 +380,9 @@ fun SettingsScreen(
                             color = RevLensTheme.colors.textSecondary
                         )
                     }
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { showLogoutDialog = true }
-                            .padding(vertical = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Logout,
-                                contentDescription = null,
-                                tint = RevLensTheme.colors.error,
-                                modifier = Modifier.size(22.dp)
-                            )
-                            Text(
-                                text = if (isGuest) "Clear Guest Session" else "Log Out",
-                                style = RevLensTypography.bodyLarge,
-                                fontWeight = FontWeight.SemiBold,
-                                color = RevLensTheme.colors.error
-                            )
-                        }
-                        Icon(
-                            imageVector = Icons.Filled.ChevronRight,
-                            contentDescription = null,
-                            tint = RevLensTheme.colors.textTertiary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
                 }
             }
         }
-    }
-
-    // Log Out Dialog
-    if (showLogoutDialog) {
-        ConfirmDialog(
-            title = if (isGuest) "Clear Local Session?" else "Log Out?",
-            body = if (isGuest) "Your local session will be reset. Unsaved scenarios may be lost."
-            else "Synced workspaces will remain safely stored on the cloud.",
-            confirmText = if (isGuest) "Clear & Reset" else "Log Out",
-            onConfirm = {
-                showLogoutDialog = false
-                viewModel.logout()
-                onLogout()
-            },
-            onDismiss = { showLogoutDialog = false },
-            isDestructive = true
-        )
     }
 
     // Locked Feature Prompt Bottom Sheet

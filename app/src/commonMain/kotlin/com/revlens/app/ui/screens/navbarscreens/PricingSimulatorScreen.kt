@@ -32,7 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.revlens.app.domain.calc.PricingSimulationEngine
@@ -220,12 +219,13 @@ fun PricingSimulatorScreen(viewModel: MainViewModel) {
                                 fontWeight = FontWeight.SemiBold,
                                 color = RevLensTheme.colors.textPrimary
                             )
+                            val currSymbol = CurrencyUtils.getCurrency(profile?.currencyCode).symbol
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 Text(
-                                    text = "Current: $${currentPrice.toInt()}",
+                                    text = "Current: $currSymbol${currentPrice.toInt()}",
                                     style = RevLensTypography.bodySmall,
                                     color = RevLensTheme.colors.textTertiary
                                 )
@@ -235,7 +235,7 @@ fun PricingSimulatorScreen(viewModel: MainViewModel) {
                                     color = RevLensTheme.colors.textTertiary
                                 )
                                 Text(
-                                    text = "$${newPrice.toInt()}",
+                                    text = "$currSymbol${newPrice.toInt()}",
                                     style = RevLensTypography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = RevLensTheme.colors.textPrimary
@@ -312,7 +312,7 @@ fun PricingSimulatorScreen(viewModel: MainViewModel) {
 
     if (showSaveDialog) {
         AlertDialog(
-            shape = RectangleShape,
+            shape = RoundedCornerShape(16.dp),
             onDismissRequest = { showSaveDialog = false },
             title = {
                 Text(

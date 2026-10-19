@@ -43,6 +43,7 @@ fun RevLensDonutChart(
     centerTitle: String,
     centerValue: String,
     modifier: Modifier = Modifier,
+    currencySymbol: String = "$",
     chartSize: Dp = 160.dp,
     strokeWidth: Dp = 22.dp
 ) {
@@ -170,7 +171,7 @@ fun RevLensDonutChart(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "$${slice.value / 100}",
+                            text = "$currencySymbol${slice.value / 100}",
                             style = RevLensTypography.labelMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = RevLensTheme.colors.textPrimary

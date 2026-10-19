@@ -8,6 +8,7 @@ data class CacAnalyticsUiState(
     val simulatedBudgetMinor: Long? = null,
     val dataSourceMode: DataSourceMode = DataSourceMode.MODELED,
     val isAddSpendSheetOpen: Boolean = false,
+    val currencySymbol: String = "$",
     val isLoading: Boolean = false
 )
 

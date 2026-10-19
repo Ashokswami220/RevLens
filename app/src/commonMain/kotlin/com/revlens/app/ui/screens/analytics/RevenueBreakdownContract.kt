@@ -21,6 +21,7 @@ data class RevenueBreakdownUiState(
     val result: RevenueBreakdownResult? = null,
     val hasActualData: Boolean = false,
     val selectedStep: WaterfallStep? = null,
+    val currencySymbol: String = "$",
     val isLoading: Boolean = false
 ) {
     val activeDataSource: DataSourceMode

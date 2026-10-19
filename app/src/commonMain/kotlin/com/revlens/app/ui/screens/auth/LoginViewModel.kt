@@ -6,7 +6,6 @@ import com.revlens.app.core.ui.toUiText
 import com.revlens.app.data.ProfileRepository
 import com.revlens.app.domain.session.SessionManager
 import com.revlens.app.domain.usecase.LoginUseCase
-import com.revlens.app.model.createDefaultGuestProfile
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull

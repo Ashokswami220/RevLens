@@ -24,6 +24,7 @@ class GrowthSimulatorViewModel(
     private var cachedProfile: BusinessProfile? = null
 
     init {
+        recompute()
         observeProfile()
     }
 
@@ -40,7 +41,9 @@ class GrowthSimulatorViewModel(
                             baselineMrrMinor = mrrMinor,
                             baselineCustomers = customers,
                             baselineChurnRate = churn,
-                            currencySymbol = if (profile.currencyCode == "EUR") "€" else if (profile.currencyCode == "GBP") "£" else "$"
+                            currencySymbol = com.revlens.app.utils.CurrencyUtils.getCurrency(
+                                profile.currencyCode
+                            ).symbol
                         )
                     }
                 }

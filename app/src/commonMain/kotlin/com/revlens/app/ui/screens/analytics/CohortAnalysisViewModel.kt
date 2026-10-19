@@ -34,7 +34,9 @@ class CohortAnalysisViewModel(
                 cachedProfile = profile
                 cachedDataset = dataset
                 val hasActual = dataset != null && dataset.subscriptions.isNotEmpty()
-                update { copy(hasActualData = hasActual) }
+                val symbol =
+                    com.revlens.app.utils.CurrencyUtils.getCurrency(profile?.currencyCode).symbol
+                update { copy(hasActualData = hasActual, currencySymbol = symbol) }
                 recompute()
             }.collect {}
         }

@@ -43,9 +43,14 @@ actual fun rememberGoogleSignInLauncher(
                 val account = task.getResult(ApiException::class.java)
                 onTokenReceived(account.idToken, account.email, account.displayName)
             } catch (e: ApiException) {
-                android.util.Log.e("RevLensAuth", "Google sign-in failed with status code: ${e.statusCode}")
+                android.util.Log.e(
+                    "RevLensAuth", "Google sign-in failed with status code: ${e.statusCode}"
+                )
                 if (e.statusCode == 10) {
-                    android.util.Log.e("RevLensAuth", "DEVELOPER_ERROR (10): Register your SHA-1 fingerprint in Firebase Console under com.revlens.app")
+                    android.util.Log.e(
+                        "RevLensAuth",
+                        "DEVELOPER_ERROR (10): Register your SHA-1 fingerprint in Firebase Console under com.revlens.app"
+                    )
                 }
                 onTokenReceived(null, null, null)
             } catch (e: Exception) {
@@ -53,7 +58,10 @@ actual fun rememberGoogleSignInLauncher(
                 onTokenReceived(null, null, null)
             }
         } else {
-            android.util.Log.w("RevLensAuth", "Google sign-in activity result was not OK (resultCode=${result.resultCode})")
+            android.util.Log.w(
+                "RevLensAuth",
+                "Google sign-in activity result was not OK (resultCode=${result.resultCode})"
+            )
             onTokenReceived(null, null, null)
         }
     }
@@ -64,14 +72,17 @@ actual fun rememberGoogleSignInLauncher(
                 isLaunching = true
                 // Explicitly sign out cached Play Services account so that the Google Account
                 // Picker bottom sheet / dialog is always displayed on every sign-in click.
-                googleSignInClient.signOut().addOnCompleteListener {
-                    try {
-                        launcher.launch(googleSignInClient.signInIntent)
-                    } catch (e: Exception) {
-                        isLaunching = false
-                        android.util.Log.e("RevLensAuth", "Failed to launch Google Sign-In intent", e)
+                googleSignInClient.signOut()
+                    .addOnCompleteListener {
+                        try {
+                            launcher.launch(googleSignInClient.signInIntent)
+                        } catch (e: Exception) {
+                            isLaunching = false
+                            android.util.Log.e(
+                                "RevLensAuth", "Failed to launch Google Sign-In intent", e
+                            )
+                        }
                     }
-                }
             }
         }
     }

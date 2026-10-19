@@ -33,6 +33,7 @@ import com.revlens.app.ui.theme.RevLensTypography
 @Composable
 fun ChannelRow(
     channel: ChannelPlan,
+    currencySymbol: String = "$",
     onSpendChange: (Long) -> Unit,
     onCacChange: (Long) -> Unit,
     onToggleEnabled: (Boolean) -> Unit,
@@ -98,7 +99,7 @@ fun ChannelRow(
             value = spendDollars,
             onValueChange = { onSpendChange((it.toLong() * 100L)) },
             valueRange = 0f..25000f,
-            valueString = "$${spendDollars.toLong()}",
+            valueString = "$currencySymbol${spendDollars.toLong()}",
             enabled = channel.isEnabled
         )
 
@@ -118,7 +119,7 @@ fun ChannelRow(
                     onCacChange((raw * 100).toLong())
                 },
                 label = "Target CAC",
-                suffix = "$",
+                suffix = currencySymbol,
                 modifier = Modifier.weight(1f)
             )
 

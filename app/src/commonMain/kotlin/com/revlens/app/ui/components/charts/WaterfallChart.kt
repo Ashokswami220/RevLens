@@ -38,6 +38,7 @@ fun WaterfallChart(
     steps: List<WaterfallStep>,
     modifier: Modifier = Modifier,
     height: Dp = 230.dp,
+    currencySymbol: String = "$",
     onStepSelected: ((WaterfallStep) -> Unit)? = null
 ) {
     if (steps.isEmpty()) return
@@ -170,7 +171,7 @@ fun WaterfallChart(
                 // Label on top of bar
                 val prefix = if (!step.isTotal) (if (step.isPositive) "+" else "-") else ""
                 val amountDollars = step.amountMinor / 100.0
-                val formattedAmount = formatCompact(prefix, amountDollars)
+                val formattedAmount = formatCompact(prefix, currencySymbol, amountDollars)
 
                 val valLayout = textMeasurer.measure(
                     text = formattedAmount,
@@ -234,10 +235,10 @@ fun WaterfallChart(
 
 private data class FourTuple(val top: Float, val bottom: Float, val level: Long, val color: Color)
 
-private fun formatCompact(prefix: String, value: Double): String {
+private fun formatCompact(prefix: String, symbol: String, value: Double): String {
     return when {
-        value >= 1_000_000 -> "$prefix$${(value / 1_000_000).toInt()}M"
-        value >= 1_000 -> "$prefix$${(value / 1_000).toInt()}k"
-        else -> "$prefix$${value.toInt()}"
+        value >= 1_000_000 -> "$prefix$symbol${(value / 1_000_000).toInt()}M"
+        value >= 1_000 -> "$prefix$symbol${(value / 1_000).toInt()}k"
+        else -> "$prefix$symbol${value.toInt()}"
     }
 }

@@ -285,7 +285,7 @@ private fun LtvHeroCard(state: LtvAnalysisUiState) {
                         color = RevLensTheme.colors.textSecondary
                     )
                     Text(
-                        text = "$${state.simulatedLtv}",
+                        text = "${state.currencySymbol}${state.simulatedLtv}",
                         style = RevLensTypography.displayLarge,
                         fontWeight = FontWeight.Bold,
                         color = RevLensTheme.colors.textPrimary
@@ -308,9 +308,10 @@ private fun LtvHeroCard(state: LtvAnalysisUiState) {
                     .background(RevLensTheme.colors.surfaceElevated)
                     .padding(10.dp)
             ) {
+                val sym = state.currencySymbol
                 val formulaStr = when (state.method) {
-                    LtvMethod.MARGIN_ADJUSTED -> "($${state.baseArpu} ARPU × ${state.grossMarginPercent.toInt()}% Margin) ÷ ${state.simulatedChurnPercent}% Churn = $${state.simulatedLtv}"
-                    LtvMethod.SIMPLE -> "$${state.baseArpu} ARPU ÷ ${state.simulatedChurnPercent}% Churn = $${state.simulatedLtv}"
+                    LtvMethod.MARGIN_ADJUSTED -> "($sym${state.baseArpu} ARPU × ${state.grossMarginPercent.toInt()}% Margin) ÷ ${state.simulatedChurnPercent}% Churn = $sym${state.simulatedLtv}"
+                    LtvMethod.SIMPLE -> "$sym${state.baseArpu} ARPU ÷ ${state.simulatedChurnPercent}% Churn = $sym${state.simulatedLtv}"
                 }
                 Text(
                     text = "Formula: $formulaStr",

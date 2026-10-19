@@ -11,7 +11,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -37,7 +36,9 @@ class AndroidFirestoreWorkspaceRepository(
 
         fun attachListener(uid: String) {
             firestoreListener?.remove()
-            firestoreListener = db.collection("users").document(uid).collection("workspaces")
+            firestoreListener = db.collection("users")
+                .document(uid)
+                .collection("workspaces")
                 .addSnapshotListener { snapshot, error ->
                     if (error != null) {
                         android.util.Log.e("RevLensFirestore", "Workspace snapshot error", error)
@@ -49,14 +50,16 @@ class AndroidFirestoreWorkspaceRepository(
                             val name = doc.getString("name") ?: "My Workspace"
                             val currency = doc.getString("currency") ?: "USD"
                             val timeZoneId = doc.getString("timeZoneId") ?: "UTC"
-                            val fiscalYearStartMonth = doc.getLong("fiscalYearStartMonth")?.toInt() ?: 1
+                            val fiscalYearStartMonth = doc.getLong("fiscalYearStartMonth")
+                                ?.toInt() ?: 1
                             val bmStr = doc.getString("businessModel") ?: "B2bSaas"
                             val bm = try {
                                 com.revlens.app.domain.model.BusinessModel.valueOf(bmStr)
                             } catch (_: Exception) {
                                 com.revlens.app.domain.model.BusinessModel.B2bSaas
                             }
-                            val createdAtMillis = doc.getLong("createdAtMillis") ?: System.currentTimeMillis()
+                            val createdAtMillis =
+                                doc.getLong("createdAtMillis") ?: System.currentTimeMillis()
                             Workspace(
                                 id = id,
                                 name = name,
@@ -110,23 +113,36 @@ class AndroidFirestoreWorkspaceRepository(
         try {
             val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
             val snapshot = if (uid != null) {
-                val userWs = db.collection("users").document(uid).collection("workspaces").document(id).get().await()
-                if (userWs.exists()) userWs else db.collection("workspaces").document(id).get().await()
+                val userWs = db.collection("users")
+                    .document(uid)
+                    .collection("workspaces")
+                    .document(id)
+                    .get()
+                    .await()
+                if (userWs.exists()) userWs else db.collection("workspaces")
+                    .document(id)
+                    .get()
+                    .await()
             } else {
-                db.collection("workspaces").document(id).get().await()
+                db.collection("workspaces")
+                    .document(id)
+                    .get()
+                    .await()
             }
             if (snapshot.exists()) {
                 val name = snapshot.getString("name") ?: "My Workspace"
                 val currency = snapshot.getString("currency") ?: "USD"
                 val timeZoneId = snapshot.getString("timeZoneId") ?: "UTC"
-                val fiscalYearStartMonth = snapshot.getLong("fiscalYearStartMonth")?.toInt() ?: 1
+                val fiscalYearStartMonth = snapshot.getLong("fiscalYearStartMonth")
+                    ?.toInt() ?: 1
                 val bmStr = snapshot.getString("businessModel") ?: "B2bSaas"
                 val bm = try {
                     com.revlens.app.domain.model.BusinessModel.valueOf(bmStr)
                 } catch (_: Exception) {
                     com.revlens.app.domain.model.BusinessModel.B2bSaas
                 }
-                val createdAtMillis = snapshot.getLong("createdAtMillis") ?: System.currentTimeMillis()
+                val createdAtMillis =
+                    snapshot.getLong("createdAtMillis") ?: System.currentTimeMillis()
                 return Workspace(
                     id = id,
                     name = name,
@@ -155,7 +171,10 @@ class AndroidFirestoreWorkspaceRepository(
         localFallback.createWorkspace(workspace)
 
         val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
-        android.util.Log.d("RevLensFirestore", "createWorkspace id=${workspace.id}, name=${workspace.name}, uid=$uid")
+        android.util.Log.d(
+            "RevLensFirestore",
+            "createWorkspace id=${workspace.id}, name=${workspace.name}, uid=$uid"
+        )
         val map = mutableMapOf<String, Any>(
             "id" to workspace.id,
             "name" to workspace.name,
@@ -169,21 +188,39 @@ class AndroidFirestoreWorkspaceRepository(
         if (uid != null) {
             map["userId"] = uid
             try {
-                db.collection("users").document(uid).collection("workspaces").document(workspace.id)
-                    .set(map).await()
-                android.util.Log.d("RevLensFirestore", "Saved workspace to users/$uid/workspaces/${workspace.id}")
+                db.collection("users")
+                    .document(uid)
+                    .collection("workspaces")
+                    .document(workspace.id)
+                    .set(map)
+                    .await()
+                android.util.Log.d(
+                    "RevLensFirestore", "Saved workspace to users/$uid/workspaces/${workspace.id}"
+                )
             } catch (e: Exception) {
-                android.util.Log.e("RevLensFirestore", "Failed to save user-scoped workspace: ${e.message}", e)
+                android.util.Log.e(
+                    "RevLensFirestore", "Failed to save user-scoped workspace: ${e.message}", e
+                )
                 if (e.message?.contains("PERMISSION_DENIED", ignoreCase = true) == true) {
-                    android.util.Log.e("RevLensFirestore", "PERMISSION_DENIED: Firestore security rules in Firebase Console are blocking writes! Update rules in Firebase Console.")
+                    android.util.Log.e(
+                        "RevLensFirestore",
+                        "PERMISSION_DENIED: Firestore security rules in Firebase Console are blocking writes! Update rules in Firebase Console."
+                    )
                 }
             }
         }
         try {
-            db.collection("workspaces").document(workspace.id).set(map).await()
-            android.util.Log.d("RevLensFirestore", "Saved workspace to root workspaces/${workspace.id}")
+            db.collection("workspaces")
+                .document(workspace.id)
+                .set(map)
+                .await()
+            android.util.Log.d(
+                "RevLensFirestore", "Saved workspace to root workspaces/${workspace.id}"
+            )
         } catch (e: Exception) {
-            android.util.Log.w("RevLensFirestore", "Could not write to root workspaces: ${e.message}")
+            android.util.Log.w(
+                "RevLensFirestore", "Could not write to root workspaces: ${e.message}"
+            )
         }
     }
 
@@ -197,11 +234,20 @@ class AndroidFirestoreWorkspaceRepository(
         try {
             val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
             if (uid != null) {
-                db.collection("users").document(uid).collection("workspaces").document(id).delete().await()
+                db.collection("users")
+                    .document(uid)
+                    .collection("workspaces")
+                    .document(id)
+                    .delete()
+                    .await()
             }
             try {
-                db.collection("workspaces").document(id).delete().await()
-            } catch (_: Exception) {}
+                db.collection("workspaces")
+                    .document(id)
+                    .delete()
+                    .await()
+            } catch (_: Exception) {
+            }
         } catch (e: Exception) {
             android.util.Log.e("RevLensFirestore", "deleteWorkspace error", e)
         }
@@ -225,7 +271,10 @@ class AndroidFirestoreProfileRepository(
 
         fun attachListener(uid: String) {
             firestoreListener?.remove()
-            firestoreListener = db.collection("users").document(uid).collection("profile").document("current")
+            firestoreListener = db.collection("users")
+                .document(uid)
+                .collection("profile")
+                .document("current")
                 .addSnapshotListener { snapshot, error ->
                     if (error != null) {
                         android.util.Log.e("RevLensFirestore", "Profile snapshot error", error)
@@ -243,7 +292,10 @@ class AndroidFirestoreProfileRepository(
                                     }
                                     trySend(profile)
                                 } catch (e: Exception) {
-                                    android.util.Log.e("RevLensFirestore", "Decode profile error in realtime listener", e)
+                                    android.util.Log.e(
+                                        "RevLensFirestore",
+                                        "Decode profile error in realtime listener", e
+                                    )
                                 }
                             }
                         } else {
@@ -319,43 +371,70 @@ class AndroidFirestoreProfileRepository(
             map["userId"] = uid
             // 1. User-scoped profile document users/{uid}/profile/current
             try {
-                db.collection("users").document(uid).collection("profile").document("current")
-                    .set(map).await()
-                android.util.Log.d("RevLensFirestore", "Profile saved to users/$uid/profile/current")
+                db.collection("users")
+                    .document(uid)
+                    .collection("profile")
+                    .document("current")
+                    .set(map)
+                    .await()
+                android.util.Log.d(
+                    "RevLensFirestore", "Profile saved to users/$uid/profile/current"
+                )
             } catch (e: Exception) {
-                android.util.Log.e("RevLensFirestore", "Failed to save profile to users/$uid/profile/current: ${e.message}", e)
+                android.util.Log.e(
+                    "RevLensFirestore",
+                    "Failed to save profile to users/$uid/profile/current: ${e.message}", e
+                )
                 if (e.message?.contains("PERMISSION_DENIED", ignoreCase = true) == true) {
-                    android.util.Log.e("RevLensFirestore", "PERMISSION_DENIED: Firestore security rules in Firebase Console are blocking writes! Update rules in Firebase Console.")
+                    android.util.Log.e(
+                        "RevLensFirestore",
+                        "PERMISSION_DENIED: Firestore security rules in Firebase Console are blocking writes! Update rules in Firebase Console."
+                    )
                 }
             }
 
             // 2. Ensure root users/{uid} document exists and marks onboarding complete
             try {
-                db.collection("users").document(uid).set(
-                    mapOf(
-                        "id" to uid,
-                        "onboardingCompleted" to true,
-                        "updatedAt" to System.currentTimeMillis()
-                    ),
-                    com.google.firebase.firestore.SetOptions.merge()
-                ).await()
+                db.collection("users")
+                    .document(uid)
+                    .set(
+                        mapOf(
+                            "id" to uid,
+                            "onboardingCompleted" to true,
+                            "updatedAt" to System.currentTimeMillis()
+                        ),
+                        com.google.firebase.firestore.SetOptions.merge()
+                    )
+                    .await()
                 android.util.Log.d("RevLensFirestore", "Updated users/$uid document")
             } catch (e: Exception) {
-                android.util.Log.w("RevLensFirestore", "Could not update user document: ${e.message}")
+                android.util.Log.w(
+                    "RevLensFirestore", "Could not update user document: ${e.message}"
+                )
             }
 
             // 3. Root profiles/{uid} document
             try {
-                db.collection("profiles").document(uid).set(map).await()
+                db.collection("profiles")
+                    .document(uid)
+                    .set(map)
+                    .await()
                 android.util.Log.d("RevLensFirestore", "Profile saved to profiles/$uid")
             } catch (pe: Exception) {
-                android.util.Log.w("RevLensFirestore", "Could not write to profiles/$uid: ${pe.message}")
+                android.util.Log.w(
+                    "RevLensFirestore", "Could not write to profiles/$uid: ${pe.message}"
+                )
             }
         } else {
             try {
-                db.collection("profiles").document("current").set(map).await()
+                db.collection("profiles")
+                    .document("current")
+                    .set(map)
+                    .await()
             } catch (ce: Exception) {
-                android.util.Log.w("RevLensFirestore", "Could not write to profiles/current: ${ce.message}")
+                android.util.Log.w(
+                    "RevLensFirestore", "Could not write to profiles/current: ${ce.message}"
+                )
             }
         }
     }
@@ -366,18 +445,29 @@ class AndroidFirestoreProfileRepository(
             android.util.Log.d("RevLensFirestore", "syncRemoteProfile called, uid=$uid")
             val snapshot = if (uid != null) {
                 val userDoc = kotlinx.coroutines.withTimeoutOrNull(2500L) {
-                    db.collection("users").document(uid).collection("profile").document("current").get().await()
+                    db.collection("users")
+                        .document(uid)
+                        .collection("profile")
+                        .document("current")
+                        .get()
+                        .await()
                 }
                 if (userDoc != null && userDoc.exists()) {
                     userDoc
                 } else {
                     kotlinx.coroutines.withTimeoutOrNull(2500L) {
-                        db.collection("profiles").document(uid).get().await()
+                        db.collection("profiles")
+                            .document(uid)
+                            .get()
+                            .await()
                     }
                 }
             } else {
                 kotlinx.coroutines.withTimeoutOrNull(2500L) {
-                    db.collection("profiles").document("current").get().await()
+                    db.collection("profiles")
+                        .document("current")
+                        .get()
+                        .await()
                 }
             }
             if (snapshot != null && snapshot.exists()) {
@@ -402,10 +492,16 @@ class AndroidFirestoreProfileRepository(
         try {
             val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
             if (uid != null) {
-                db.collection("users").document(uid).set(
-                    mapOf("onboardingCompleted" to completed, "updatedAt" to System.currentTimeMillis()),
-                    com.google.firebase.firestore.SetOptions.merge()
-                ).await()
+                db.collection("users")
+                    .document(uid)
+                    .set(
+                        mapOf(
+                            "onboardingCompleted" to completed,
+                            "updatedAt" to System.currentTimeMillis()
+                        ),
+                        com.google.firebase.firestore.SetOptions.merge()
+                    )
+                    .await()
             }
         } catch (e: Exception) {
             android.util.Log.e("RevLensFirestore", "setOnboardingCompleted error", e)
@@ -429,7 +525,9 @@ class AndroidFirestoreScenarioRepository(
 
         fun attachListener(uid: String) {
             firestoreListener?.remove()
-            firestoreListener = db.collection("users").document(uid).collection("scenarios")
+            firestoreListener = db.collection("users")
+                .document(uid)
+                .collection("scenarios")
                 .addSnapshotListener { snapshot, error ->
                     if (error != null) {
                         android.util.Log.e("RevLensFirestore", "Scenarios snapshot error", error)
@@ -441,7 +539,9 @@ class AndroidFirestoreScenarioRepository(
                             if (payload != null) {
                                 try {
                                     json.decodeFromString<Scenario>(payload)
-                                } catch (_: Exception) { null }
+                                } catch (_: Exception) {
+                                    null
+                                }
                             } else null
                         }
                         _scenarios.value = list
@@ -494,20 +594,37 @@ class AndroidFirestoreScenarioRepository(
         if (uid != null) {
             map["userId"] = uid
             try {
-                db.collection("users").document(uid).collection("scenarios").document(scenario.id)
-                    .set(map).await()
-                android.util.Log.d("RevLensFirestore", "Saved scenario to users/$uid/scenarios/${scenario.id}")
+                db.collection("users")
+                    .document(uid)
+                    .collection("scenarios")
+                    .document(scenario.id)
+                    .set(map)
+                    .await()
+                android.util.Log.d(
+                    "RevLensFirestore", "Saved scenario to users/$uid/scenarios/${scenario.id}"
+                )
             } catch (e: Exception) {
-                android.util.Log.e("RevLensFirestore", "Failed to save user-scoped scenario: ${e.message}", e)
+                android.util.Log.e(
+                    "RevLensFirestore", "Failed to save user-scoped scenario: ${e.message}", e
+                )
                 if (e.message?.contains("PERMISSION_DENIED", ignoreCase = true) == true) {
-                    android.util.Log.e("RevLensFirestore", "PERMISSION_DENIED: Firestore security rules in Firebase Console are blocking writes! Update rules in Firebase Console.")
+                    android.util.Log.e(
+                        "RevLensFirestore",
+                        "PERMISSION_DENIED: Firestore security rules in Firebase Console are blocking writes! Update rules in Firebase Console."
+                    )
                 }
             }
         }
         try {
-            db.collection("scenarios").document(scenario.id).set(map).await()
-            android.util.Log.d("RevLensFirestore", "Saved scenario to root scenarios/${scenario.id}")
-        } catch (_: Exception) {}
+            db.collection("scenarios")
+                .document(scenario.id)
+                .set(map)
+                .await()
+            android.util.Log.d(
+                "RevLensFirestore", "Saved scenario to root scenarios/${scenario.id}"
+            )
+        } catch (_: Exception) {
+        }
     }
 
     override suspend fun deleteScenario(scenarioId: String) {
@@ -516,11 +633,20 @@ class AndroidFirestoreScenarioRepository(
         try {
             val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
             if (uid != null) {
-                db.collection("users").document(uid).collection("scenarios").document(scenarioId).delete().await()
+                db.collection("users")
+                    .document(uid)
+                    .collection("scenarios")
+                    .document(scenarioId)
+                    .delete()
+                    .await()
             }
             try {
-                db.collection("scenarios").document(scenarioId).delete().await()
-            } catch (_: Exception) {}
+                db.collection("scenarios")
+                    .document(scenarioId)
+                    .delete()
+                    .await()
+            } catch (_: Exception) {
+            }
         } catch (e: Exception) {
             android.util.Log.e("RevLensFirestore", "deleteScenario error", e)
         }

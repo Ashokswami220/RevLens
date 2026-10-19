@@ -105,3 +105,6 @@ object SecurityRoute
 
 @Serializable
 object NotificationsRoute
+
+@Serializable
+object AccountActionsRoute

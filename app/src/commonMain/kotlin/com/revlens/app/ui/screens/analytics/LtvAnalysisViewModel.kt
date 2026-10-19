@@ -39,6 +39,8 @@ class LtvAnalysisViewModel(
                         80.0
                     }
 
+                    val symbol =
+                        com.revlens.app.utils.CurrencyUtils.getCurrency(profile.currencyCode).symbol
                     update {
                         copy(
                             baseArpu = arpu,
@@ -46,6 +48,7 @@ class LtvAnalysisViewModel(
                             simulatedChurnPercent = churn,
                             grossMarginPercent = margin,
                             cac = profile.cac,
+                            currencySymbol = symbol,
                             dataSourceMode = if (dataset != null && dataset.subscriptions.isNotEmpty()) {
                                 com.revlens.app.ui.components.display.DataSourceMode.ACTUAL
                             } else {

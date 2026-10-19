@@ -9,6 +9,7 @@ import com.revlens.app.domain.context.WorkspaceContext
 import com.revlens.app.domain.model.Dataset
 import com.revlens.app.domain.repository.AnalyticsRepository
 import com.revlens.app.model.BusinessProfile
+import com.revlens.app.utils.CurrencyUtils
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
@@ -35,7 +36,8 @@ class RevenueBreakdownViewModel(
                 cachedProfile = profile
                 cachedDataset = dataset
                 val hasActual = dataset != null && dataset.subscriptions.isNotEmpty()
-                update { copy(hasActualData = hasActual) }
+                val symbol = CurrencyUtils.getCurrency(profile?.currencyCode).symbol
+                update { copy(hasActualData = hasActual, currencySymbol = symbol) }
                 recompute()
             }.collect {}
         }

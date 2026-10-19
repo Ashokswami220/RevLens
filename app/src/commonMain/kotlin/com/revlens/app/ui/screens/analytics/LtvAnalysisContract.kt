@@ -21,6 +21,7 @@ data class LtvAnalysisUiState(
     val ltvToCacRatio: Double = 0.0,
     val sensitivityCurve: List<Pair<Double, BigDecimal>> = emptyList(),
     val dataSourceMode: DataSourceMode = DataSourceMode.MODELED,
+    val currencySymbol: String = "$",
     val isLoading: Boolean = false
 ) {
     val deltaPercent: Double

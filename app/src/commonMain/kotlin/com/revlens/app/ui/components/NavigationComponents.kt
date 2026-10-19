@@ -38,7 +38,7 @@ import com.revlens.app.ui.theme.RevLensTheme
 import com.revlens.app.ui.theme.RevLensTypography
 
 val LocalAppNavigator = compositionLocalOf<(String) -> Unit> { {} }
-val LocalCurrentTab = compositionLocalOf { "Home" }
+val LocalCurrentTab = compositionLocalOf { "Dashboard" }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -131,7 +131,7 @@ fun CacAnalyticsScreen(
             val result = state.result
             if (result != null) {
                 // Hero KPI Card
-                CacHeroCard(result = result)
+                CacHeroCard(result = result, currencySymbol = state.currencySymbol)
 
                 // Funnel Chart
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -173,7 +173,7 @@ fun CacAnalyticsScreen(
 
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         result.channelBreakdown.forEach { channel ->
-                            ChannelRow(channel = channel)
+                            ChannelRow(channel = channel, currencySymbol = state.currencySymbol)
                         }
                     }
                 }
@@ -181,6 +181,7 @@ fun CacAnalyticsScreen(
                 // Budget Simulation Lever
                 BudgetSimulationCard(
                     simulatedBudget = state.simulatedBudgetMinor ?: result.totalSpendMinor,
+                    currencySymbol = state.currencySymbol,
                     onBudgetChanged = {
                         viewModel.onEvent(
                             CacAnalyticsEvent.UpdateSimulatedBudget(it)
@@ -226,6 +227,7 @@ fun CacAnalyticsScreen(
 
     if (state.isAddSpendSheetOpen) {
         AddSpendModalSheet(
+            currencySymbol = state.currencySymbol,
             onDismiss = { viewModel.onEvent(CacAnalyticsEvent.ToggleAddSpendSheet(false)) },
             onAdd = { channel, amountMinor, newCust ->
                 viewModel.onEvent(CacAnalyticsEvent.AddManualSpend(channel, amountMinor, newCust))
@@ -235,7 +237,7 @@ fun CacAnalyticsScreen(
 }
 
 @Composable
-private fun CacHeroCard(result: CacAnalysisResult) {
+private fun CacHeroCard(result: CacAnalysisResult, currencySymbol: String = "$") {
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = RevLensTheme.colors.surface,
@@ -258,7 +260,7 @@ private fun CacHeroCard(result: CacAnalysisResult) {
                         color = RevLensTheme.colors.textSecondary
                     )
                     Text(
-                        text = "$${result.blendedCacMinor / 100}",
+                        text = "$currencySymbol${result.blendedCacMinor / 100}",
                         style = RevLensTypography.displayLarge,
                         fontWeight = FontWeight.Bold,
                         color = RevLensTheme.colors.textPrimary
@@ -282,7 +284,7 @@ private fun CacHeroCard(result: CacAnalysisResult) {
                         color = RevLensTheme.colors.textSecondary
                     )
                     Text(
-                        text = "$${result.totalSpendMinor / 100}",
+                        text = "$currencySymbol${result.totalSpendMinor / 100}",
                         style = RevLensTypography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = RevLensTheme.colors.textPrimary
@@ -308,7 +310,7 @@ private fun CacHeroCard(result: CacAnalysisResult) {
 }
 
 @Composable
-private fun ChannelRow(channel: ChannelEfficiency) {
+private fun ChannelRow(channel: ChannelEfficiency, currencySymbol: String = "$") {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -330,7 +332,7 @@ private fun ChannelRow(channel: ChannelEfficiency) {
                     color = RevLensTheme.colors.textPrimary
                 )
                 Text(
-                    text = "$${channel.totalSpendMinor / 100} spend · ${channel.newCustomers} signups (${channel.sharePercent.toInt()}%)",
+                    text = "$currencySymbol${channel.totalSpendMinor / 100} spend · ${channel.newCustomers} signups (${channel.sharePercent.toInt()}%)",
                     style = RevLensTypography.labelSmall,
                     color = RevLensTheme.colors.textSecondary
                 )
@@ -341,7 +343,7 @@ private fun ChannelRow(channel: ChannelEfficiency) {
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Text(
-                    text = "$${channel.cacMinor / 100} CAC",
+                    text = "$currencySymbol${channel.cacMinor / 100} CAC",
                     style = RevLensTypography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = RevLensTheme.colors.textPrimary
@@ -362,6 +364,7 @@ private fun ChannelRow(channel: ChannelEfficiency) {
 @Composable
 private fun BudgetSimulationCard(
     simulatedBudget: Long,
+    currencySymbol: String = "$",
     onBudgetChanged: (Long) -> Unit
 ) {
     Column(
@@ -386,7 +389,7 @@ private fun BudgetSimulationCard(
             value = budgetDollars,
             onValueChange = { onBudgetChanged((it * 100).toLong()) },
             valueRange = 500f..15000f,
-            valueString = "$${budgetDollars.toInt()}/mo"
+            valueString = "$currencySymbol${budgetDollars.toInt()}/mo"
         )
     }
 }
@@ -394,6 +397,7 @@ private fun BudgetSimulationCard(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddSpendModalSheet(
+    currencySymbol: String = "$",
     onDismiss: () -> Unit,
     onAdd: (channel: String, amountMinor: Long, newCustomers: Int) -> Unit
 ) {
@@ -433,7 +437,7 @@ private fun AddSpendModalSheet(
             OutlinedTextField(
                 value = spendDollars,
                 onValueChange = { spendDollars = it },
-                label = { Text("Spend Amount ($)") },
+                label = { Text("Spend Amount ($currencySymbol)") },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = RevLensTheme.colors.brandPrimary,

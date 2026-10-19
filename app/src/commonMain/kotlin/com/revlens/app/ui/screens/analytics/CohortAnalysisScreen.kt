@@ -381,7 +381,7 @@ fun CohortAnalysisScreen(
                         )
                         DetailItem(
                             label = if (state.metric == CohortMetric.LOGO_RETENTION) "Retained Customers" else "Retained MRR",
-                            value = if (state.metric == CohortMetric.LOGO_RETENTION) "${cell.retainedValue.toInt()}" else "$${cell.retainedValue.toInt()}"
+                            value = if (state.metric == CohortMetric.LOGO_RETENTION) "${cell.retainedValue.toInt()}" else "${state.currencySymbol}${cell.retainedValue.toInt()}"
                         )
                         if (cell.isSmallSample) {
                             Text(

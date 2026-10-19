@@ -35,7 +35,7 @@ class CustomerAnalyticsViewModel(
                 cachedDataset = dataset
                 val hasActual = dataset != null && dataset.subscriptions.isNotEmpty()
                 val symbol =
-                    if (profile?.currencyCode == "EUR") "€" else if (profile?.currencyCode == "GBP") "£" else "$"
+                    com.revlens.app.utils.CurrencyUtils.getCurrency(profile?.currencyCode).symbol
                 update {
                     copy(
                         hasActualData = hasActual,

@@ -201,6 +201,7 @@ fun GrowthSimulatorScreen(
                 state.assumptions.channels.forEach { channel ->
                     ChannelRow(
                         channel = channel,
+                        currencySymbol = state.currencySymbol,
                         onSpendChange = { newSpend ->
                             viewModel.onEvent(
                                 GrowthSimulatorIntent.UpdateChannelSpend(channel.id, newSpend)
@@ -468,14 +469,14 @@ fun GrowthSimulatorScreen(
                     NumberField(
                         value = spendInput,
                         onValueChange = { spendInput = it },
-                        label = "Monthly Budget ($)",
-                        suffix = "$"
+                        label = "Monthly Budget (${state.currencySymbol})",
+                        suffix = state.currencySymbol
                     )
                     NumberField(
                         value = cacInput,
                         onValueChange = { cacInput = it },
-                        label = "Target CAC ($)",
-                        suffix = "$"
+                        label = "Target CAC (${state.currencySymbol})",
+                        suffix = state.currencySymbol
                     )
                 }
             },
@@ -532,8 +533,8 @@ fun GrowthSimulatorScreen(
                     NumberField(
                         value = cashInput,
                         onValueChange = { cashInput = it },
-                        label = "Cash Balance ($)",
-                        suffix = "$"
+                        label = "Cash Balance (${state.currencySymbol})",
+                        suffix = state.currencySymbol
                     )
                 }
             },

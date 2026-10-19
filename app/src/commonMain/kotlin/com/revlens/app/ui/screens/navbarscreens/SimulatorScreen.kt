@@ -70,7 +70,7 @@ fun SimulatorScreen(
                 )
                 SegmentedTabs(
                     options = listOf("Pricing", "What-If", "Break-Even", "Growth"),
-                    selectedIndex = pagerState.currentPage,
+                    selectedIndex = pagerState.targetPage,
                     onOptionSelected = { index ->
                         coroutineScope.launch {
                             pagerState.animateScrollToPage(index)
@@ -84,6 +84,8 @@ fun SimulatorScreen(
     ) { paddingValues ->
         HorizontalPager(
             state = pagerState,
+            beyondViewportPageCount = 3,
+            key = { page -> page },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)

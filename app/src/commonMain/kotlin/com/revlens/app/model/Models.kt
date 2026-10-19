@@ -126,7 +126,9 @@ fun createDefaultGuestProfile(): BusinessProfile = BusinessProfile(
     fixedCosts = BigDecimal("4500.00"),
     variableCostPerCustomer = BigDecimal("12.00"),
     plans = listOf(
-        Plan(id = "plan_starter", name = "Starter", price = BigDecimal("29.00"), customerCount = 120),
+        Plan(
+            id = "plan_starter", name = "Starter", price = BigDecimal("29.00"), customerCount = 120
+        ),
         Plan(id = "plan_pro", name = "Pro", price = BigDecimal("79.00"), customerCount = 65)
     ),
     mrrGoal = BigDecimal("15000.00"),

@@ -29,15 +29,17 @@ object ReportBuilder {
         val arpu = if (totalCustomers > 0) totalMrr / totalCustomers else 81.73
         val churnRate = profile?.monthlyChurnRate ?: 4.2
         val ltv = if (churnRate > 0) arpu / (churnRate / 100.0) else 1945.0
+        val currencySymbol =
+            com.revlens.app.utils.CurrencyUtils.getCurrency(profile?.currencyCode).symbol
 
         val metrics = mutableMapOf<String, String>()
         if (sections.contains(ReportSection.KPIS)) {
-            metrics["Monthly Recurring Revenue (MRR)"] = "$" + formatCurrency(totalMrr)
-            metrics["Annual Run Rate (ARR)"] = "$" + formatCurrency(totalMrr * 12.0)
+            metrics["Monthly Recurring Revenue (MRR)"] = currencySymbol + formatCurrency(totalMrr)
+            metrics["Annual Run Rate (ARR)"] = currencySymbol + formatCurrency(totalMrr * 12.0)
             metrics["Active Customers"] = totalCustomers.toString()
-            metrics["Average Revenue Per User (ARPU)"] = "$" + formatCurrency(arpu)
+            metrics["Average Revenue Per User (ARPU)"] = currencySymbol + formatCurrency(arpu)
             metrics["Monthly Logo Churn"] = "$churnRate%"
-            metrics["Estimated Customer LTV"] = "$" + formatCurrency(ltv)
+            metrics["Estimated Customer LTV"] = currencySymbol + formatCurrency(ltv)
         }
 
         val csvContent = buildCsv(
@@ -139,20 +141,25 @@ object ReportBuilder {
                 .append(",\"111.1%\"\n\n")
         }
 
+        val currencySymbol =
+            com.revlens.app.utils.CurrencyUtils.getCurrency(profile?.currencyCode).symbol
+        val baseMrr = profile?.currentMrr?.toDouble() ?: 42500.0
         if (sections.contains(ReportSection.SCENARIOS) && scenarios.isNotEmpty()) {
             sb.append("\"--- MODELED SCENARIOS ---\"\n")
             sb.append("\"Scenario Name\",\"Expected Lift\",\"Target MRR\"\n")
             for (scenario in scenarios) {
                 sb.append("\"")
                     .append(scenario.name.replace("\"", "\"\""))
-                    .append("\",\"+12.4%\",\"$47,200\"\n")
+                    .append(
+                        "\",\"+12.4%\",\"$currencySymbol${formatCurrency(baseMrr + 4700.0)}\"\n"
+                    )
             }
             sb.append("\n")
         }
 
         if (sections.contains(ReportSection.FORECAST)) {
             sb.append("\"--- 12-MONTH PROJECTIONS ---\"\n")
-            sb.append("\"Month\",\"Projected MRR ($)\",\"Active Subscriptions\"\n")
+            sb.append("\"Month\",\"Projected MRR ($currencySymbol)\",\"Active Subscriptions\"\n")
             var currentMrr = 42500.0
             var customers = 520
             for (m in 1..12) {

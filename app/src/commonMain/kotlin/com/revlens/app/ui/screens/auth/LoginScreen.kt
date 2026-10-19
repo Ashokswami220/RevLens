@@ -93,11 +93,13 @@ fun LoginScreen(
     // Palette tokens tailored for modern dark/light SaaS
     val pageBg = if (isDark) Color(0xFF090D16) else Color(0xFFF8FAFC)
     val cardBg = if (isDark) Color(0xFF131826) else Color.White
-    val cardBorder = if (isDark) BorderStroke(1.dp, Color(0xFF222B3D)) else BorderStroke(1.dp, Color(0xFFE2E8F0))
+    val cardBorder =
+        if (isDark) BorderStroke(1.dp, Color(0xFF222B3D)) else BorderStroke(1.dp, Color(0xFFE2E8F0))
     val textPrimary = if (isDark) Color(0xFFF1F5F9) else Color(0xFF0F172A)
     val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
     val googleBtnBg = if (isDark) Color(0xFF1B2232) else Color.White
-    val googleBtnBorder = if (isDark) BorderStroke(1.dp, Color(0xFF2F3B52)) else BorderStroke(1.dp, Color(0xFFCBD5E1))
+    val googleBtnBorder =
+        if (isDark) BorderStroke(1.dp, Color(0xFF2F3B52)) else BorderStroke(1.dp, Color(0xFFCBD5E1))
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -250,7 +252,8 @@ fun LoginScreen(
                                     )
                                     Spacer(modifier = Modifier.width(10.dp))
                                     Text(
-                                        text = state.error?.asString() ?: "Sign-in encountered an issue.",
+                                        text = state.error?.asString()
+                                            ?: "Sign-in encountered an issue.",
                                         fontSize = 13.sp,
                                         color = textPrimary,
                                         lineHeight = 18.sp

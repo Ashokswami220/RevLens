@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,7 +21,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.DropdownMenu
@@ -47,12 +47,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.revlens.app.ui.components.DestructiveButton
 import com.revlens.app.ui.components.PrimaryButton
 import com.revlens.app.ui.components.RevLensTextField
-import com.revlens.app.ui.components.SecondaryButton
 import com.revlens.app.ui.components.display.RoleChip
-import com.revlens.app.ui.components.feedback.TypedConfirmDialog
 import com.revlens.app.ui.theme.RevLensTheme
 import com.revlens.app.ui.theme.RevLensTypography
 
@@ -67,15 +64,6 @@ private val TIMEZONES = listOf(
     "Asia/Singapore (SGT)",
     "Asia/Tokyo (JST)",
     "Australia/Sydney (AEST)"
-)
-
-private val CURRENCIES = listOf(
-    "USD" to "$ (US Dollar)",
-    "EUR" to "€ (Euro)",
-    "GBP" to "£ (British Pound)",
-    "CAD" to "$ (Canadian Dollar)",
-    "AUD" to "$ (Australian Dollar)",
-    "INR" to "₹ (Indian Rupee)"
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -100,6 +88,7 @@ fun ProfileScreen(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
                 title = {
@@ -376,69 +365,6 @@ fun ProfileScreen(
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Currency picker
-                var currencyMenuOpen by remember { mutableStateOf(false) }
-                Column {
-                    Text(
-                        text = "Default Currency",
-                        style = RevLensTypography.labelMedium,
-                        color = RevLensTheme.colors.textSecondary
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Box {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(RevLensTheme.colors.surfaceElevated)
-                                .border(
-                                    1.dp, RevLensTheme.colors.borderDefault,
-                                    RoundedCornerShape(10.dp)
-                                )
-                                .clickable { currencyMenuOpen = true }
-                                .padding(horizontal = 14.dp, vertical = 14.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.MonetizationOn,
-                                    contentDescription = null,
-                                    tint = RevLensTheme.colors.brandPrimary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                val label = CURRENCIES.find { it.first == state.currency }?.second
-                                    ?: state.currency
-                                Text(
-                                    text = label,
-                                    style = RevLensTypography.bodyMedium,
-                                    color = RevLensTheme.colors.textPrimary
-                                )
-                            }
-                        }
-
-                        DropdownMenu(
-                            expanded = currencyMenuOpen,
-                            onDismissRequest = { currencyMenuOpen = false }
-                        ) {
-                            CURRENCIES.forEach { (code, label) ->
-                                DropdownMenuItem(
-                                    text = { Text(label) },
-                                    onClick = {
-                                        viewModel.onEvent(ProfileEvent.CurrencyChanged(code))
-                                        currencyMenuOpen = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
             }
 
             // SAVE CHANGES BUTTON
@@ -448,69 +374,7 @@ fun ProfileScreen(
                 enabled = state.hasChanges && !state.isSaving,
                 modifier = Modifier.fillMaxWidth()
             )
-
-            // SESSION & LOGOUT SECTION
-            if (!state.isGuest) {
-                ProfileSection(title = "Account Session") {
-                    Text(
-                        text = "Signed in as ${state.email}. You can sign out from this device at any time.",
-                        style = RevLensTypography.bodySmall,
-                        color = RevLensTheme.colors.textSecondary
-                    )
-                    Spacer(modifier = Modifier.height(14.dp))
-                    SecondaryButton(
-                        text = "Sign Out from RevLens",
-                        onClick = { viewModel.onEvent(ProfileEvent.LogoutClicked) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            } else {
-                ProfileSection(title = "Guest Mode") {
-                    Text(
-                        text = "You are currently exploring RevLens in Guest mode. Sign in with your Google account to sync your forecasts and workspaces to the cloud.",
-                        style = RevLensTypography.bodySmall,
-                        color = RevLensTheme.colors.textSecondary
-                    )
-                    Spacer(modifier = Modifier.height(14.dp))
-                    PrimaryButton(
-                        text = "Sign In with Google Account",
-                        onClick = onNavigateToLogin,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-
-            // DANGER ZONE
-            if (!state.isGuest) {
-                ProfileSection(title = "Danger Zone") {
-                    Text(
-                        text = "Permanently delete your RevLens account. All active workspace associations and personal modeling data will be removed.",
-                        style = RevLensTypography.bodySmall,
-                        color = RevLensTheme.colors.textSecondary
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    DestructiveButton(
-                        text = "Delete RevLens Account",
-                        onClick = { viewModel.onEvent(ProfileEvent.OpenDeleteDialog) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
         }
-    }
-
-    if (state.showDeleteDialog) {
-        TypedConfirmDialog(
-            title = "Delete Account?",
-            body = "This action is permanent and cannot be undone. All your saved models and preferences will be permanently wiped.",
-            requiredWord = "DELETE",
-            confirmText = "Delete Permanently",
-            onConfirm = { viewModel.onEvent(ProfileEvent.ConfirmDeleteAccount("DELETE")) },
-            onDismiss = { viewModel.onEvent(ProfileEvent.DismissDeleteDialog) },
-            isDestructive = true
-        )
     }
 }
 
