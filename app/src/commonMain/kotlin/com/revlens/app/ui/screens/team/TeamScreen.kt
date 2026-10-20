@@ -482,11 +482,13 @@ fun TeamScreen(
                 )
             },
             text = {
-                Text(
-                    text = "This member will lose access to this workspace and all private scenarios immediately.",
-                    style = RevLensTypography.bodyMedium,
-                    color = RevLensTheme.colors.textSecondary
-                )
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    Text(
+                        text = "This member will lose access to this workspace and all private scenarios immediately.",
+                        style = RevLensTypography.bodyMedium,
+                        color = RevLensTheme.colors.textSecondary
+                    )
+                }
             },
             confirmButton = {
                 DestructiveButton(

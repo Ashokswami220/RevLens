@@ -28,6 +28,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,14 +58,14 @@ import com.revlens.app.utils.CurrencyUtils
 fun PricingSimulatorScreen(viewModel: MainViewModel) {
     val profile by viewModel.profile.collectAsState()
 
-    var selectedPlanId by remember { mutableStateOf<String?>(null) }
+    var selectedPlanId by rememberSaveable { mutableStateOf<String?>(null) }
 
     // Sliders state
-    var priceChangePercent by remember { mutableStateOf(0f) }
-    var churnChangePercent by remember { mutableStateOf(0f) }
+    var priceChangePercent by rememberSaveable { mutableStateOf(0f) }
+    var churnChangePercent by rememberSaveable { mutableStateOf(0f) }
 
-    var showSaveDialog by remember { mutableStateOf(false) }
-    var scenarioName by remember { mutableStateOf("") }
+    var showSaveDialog by rememberSaveable { mutableStateOf(false) }
+    var scenarioName by rememberSaveable { mutableStateOf("") }
 
     val currencyFormatter = remember(profile?.currencyCode) {
         CurrencyUtils.getFormatter(profile?.currencyCode)
@@ -321,11 +322,13 @@ fun PricingSimulatorScreen(viewModel: MainViewModel) {
                 )
             },
             text = {
-                TextField(
-                    value = scenarioName,
-                    onValueChange = { scenarioName = it },
-                    label = { Text("Scenario Name") }
-                )
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    TextField(
+                        value = scenarioName,
+                        onValueChange = { scenarioName = it },
+                        label = { Text("Scenario Name") }
+                    )
+                }
             },
             confirmButton = {
                 TextButton(onClick = {

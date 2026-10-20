@@ -46,6 +46,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -83,13 +84,13 @@ fun OnboardingDataScreen(
     val isDark = isSystemInDarkTheme()
 
     // Form State - start blank so entry is mandatory
-    var currencyCode by remember { mutableStateOf("USD") }
-    var churnRateStr by remember { mutableStateOf("") }
-    var growthRateStr by remember { mutableStateOf("") }
+    var currencyCode by rememberSaveable { mutableStateOf("USD") }
+    var churnRateStr by rememberSaveable { mutableStateOf("") }
+    var growthRateStr by rememberSaveable { mutableStateOf("") }
 
-    var cacStr by remember { mutableStateOf("") }
-    var fixedCostsStr by remember { mutableStateOf("") }
-    var varCostsStr by remember { mutableStateOf("") }
+    var cacStr by rememberSaveable { mutableStateOf("") }
+    var fixedCostsStr by rememberSaveable { mutableStateOf("") }
+    var varCostsStr by rememberSaveable { mutableStateOf("") }
 
     val editablePlans = remember {
         mutableStateListOf(

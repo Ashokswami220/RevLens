@@ -229,11 +229,13 @@ fun IntegrationsScreen(
                 )
             },
             text = {
-                Text(
-                    text = "Are you sure you want to disconnect ${provider.displayName}? Automatic sync for recurring revenue and event notifications will stop immediately.",
-                    style = RevLensTypography.bodyMedium,
-                    color = RevLensTheme.colors.textSecondary
-                )
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    Text(
+                        text = "Are you sure you want to disconnect ${provider.displayName}? Automatic sync for recurring revenue and event notifications will stop immediately.",
+                        style = RevLensTypography.bodyMedium,
+                        color = RevLensTheme.colors.textSecondary
+                    )
+                }
             },
             confirmButton = {
                 DestructiveButton(

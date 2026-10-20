@@ -61,21 +61,9 @@ class WorkspaceManagementViewModel(
                 }
             }
 
-            is WorkspaceManagementEvent.UpdateCurrency -> {
-                val current = state.value.activeWorkspace ?: return
-                viewModelScope.launch {
-                    workspaceRepository.updateWorkspace(current.copy(currency = event.newCurrency))
-                    update { copy(isCurrencyDialogVisible = false) }
-                    emit(
-                        WorkspaceManagementEffect.ShowMessage(
-                            UiText.DynamicString("Currency updated to ${event.newCurrency}")
-                        )
-                    )
-                }
-            }
-
             is WorkspaceManagementEvent.UpdateBusinessModel -> {
                 val current = state.value.activeWorkspace ?: return
+                update { copy(activeWorkspace = current.copy(businessModel = event.model)) }
                 viewModelScope.launch {
                     workspaceRepository.updateWorkspace(current.copy(businessModel = event.model))
                 }
@@ -98,36 +86,6 @@ class WorkspaceManagementViewModel(
                 copy(
                     isEditNameDialogVisible = false
                 )
-            }
-
-            WorkspaceManagementEvent.ShowCurrencyDialog -> update {
-                copy(
-                    isCurrencyDialogVisible = true
-                )
-            }
-
-            WorkspaceManagementEvent.HideCurrencyDialog -> update {
-                copy(
-                    isCurrencyDialogVisible = false
-                )
-            }
-
-            WorkspaceManagementEvent.ShowResetDialog -> update { copy(isResetDialogVisible = true) }
-            WorkspaceManagementEvent.HideResetDialog -> update {
-                copy(
-                    isResetDialogVisible = false
-                )
-            }
-
-            WorkspaceManagementEvent.ConfirmResetData -> {
-                viewModelScope.launch {
-                    update { copy(isResetDialogVisible = false) }
-                    emit(
-                        WorkspaceManagementEffect.ShowMessage(
-                            UiText.DynamicString("Local data reset successfully")
-                        )
-                    )
-                }
             }
 
             WorkspaceManagementEvent.ShowDeleteDialog -> update {

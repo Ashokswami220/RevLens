@@ -559,11 +559,13 @@ fun BillingScreen(
                 )
             },
             text = {
-                Text(
-                    text = "Are you sure you want to cancel your subscription? You will retain access to your plan's benefits until the end of your current billing period (${state.subscription.renewsAt}).",
-                    style = RevLensTypography.bodyMedium,
-                    color = RevLensTheme.colors.textSecondary
-                )
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    Text(
+                        text = "Are you sure you want to cancel your subscription? You will retain access to your plan's benefits until the end of your current billing period (${state.subscription.renewsAt}).",
+                        style = RevLensTypography.bodyMedium,
+                        color = RevLensTheme.colors.textSecondary
+                    )
+                }
             },
             confirmButton = {
                 DestructiveButton(

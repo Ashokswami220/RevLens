@@ -35,6 +35,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -138,7 +139,7 @@ fun WorkspaceManagementScreen(
                             color = RevLensTheme.colors.textPrimary
                         )
                         Text(
-                            text = "Currency: ${workspace?.currency ?: "USD"}",
+                            text = if (workspace?.businessModel == BusinessModel.B2cSaas) "B2C SaaS" else "B2B SaaS",
                             style = RevLensTypography.bodySmall,
                             color = RevLensTheme.colors.textSecondary
                         )
@@ -182,12 +183,6 @@ fun WorkspaceManagementScreen(
                         title = "Workspace Name",
                         value = workspace?.name ?: "",
                         onClick = { viewModel.onEvent(WorkspaceManagementEvent.ShowEditNameDialog) }
-                    )
-
-                    WorkspaceSettingRow(
-                        title = "Default Currency",
-                        value = workspace?.currency ?: "USD",
-                        onClick = { viewModel.onEvent(WorkspaceManagementEvent.ShowCurrencyDialog) }
                     )
 
                     WorkspaceSettingRow(
@@ -238,13 +233,6 @@ fun WorkspaceManagementScreen(
                         title = "Business Baseline",
                         value = "Edit plans & baseline parameters",
                         onClick = onNavigateToBaseline
-                    )
-
-                    WorkspaceSettingRow(
-                        title = "Reset Local Scenarios",
-                        value = "Clear scenarios and simulation drafts",
-                        valueColor = RevLensTheme.colors.error,
-                        onClick = { viewModel.onEvent(WorkspaceManagementEvent.ShowResetDialog) }
                     )
                 }
             }
@@ -308,7 +296,7 @@ fun WorkspaceManagementScreen(
 
     // Edit Name Dialog
     if (state.isEditNameDialogVisible) {
-        var newName by remember { mutableStateOf(workspace?.name ?: "") }
+        var newName by rememberSaveable { mutableStateOf(workspace?.name ?: "") }
         AlertDialog(
             onDismissRequest = { viewModel.onEvent(WorkspaceManagementEvent.HideEditNameDialog) },
             title = {
@@ -319,12 +307,14 @@ fun WorkspaceManagementScreen(
                 )
             },
             text = {
-                RevLensTextField(
-                    value = newName,
-                    onValueChange = { newName = it },
-                    label = "Workspace Name",
-                    placeholder = "e.g. Acme Corp"
-                )
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    RevLensTextField(
+                        value = newName,
+                        onValueChange = { newName = it },
+                        label = "Workspace Name",
+                        placeholder = "e.g. Acme Corp"
+                    )
+                }
             },
             confirmButton = {
                 PrimaryButton(
@@ -340,79 +330,6 @@ fun WorkspaceManagementScreen(
                 )
             },
             containerColor = RevLensTheme.colors.surface
-        )
-    }
-
-    // Currency Dialog
-    if (state.isCurrencyDialogVisible) {
-        val currencies = listOf("USD", "EUR", "GBP", "INR", "CAD", "AUD")
-        AlertDialog(
-            onDismissRequest = { viewModel.onEvent(WorkspaceManagementEvent.HideCurrencyDialog) },
-            title = {
-                Text(
-                    "Select Currency",
-                    style = RevLensTypography.titleLarge,
-                    color = RevLensTheme.colors.textPrimary
-                )
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        "Note: Changing currency updates symbol displays only. Existing values will not be converted.",
-                        style = RevLensTypography.bodySmall,
-                        color = RevLensTheme.colors.textSecondary
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    currencies.forEach { curr ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(
-                                    if (workspace?.currency == curr) RevLensTheme.colors.surfaceElevated else RevLensTheme.colors.surface
-                                )
-                                .clickable {
-                                    viewModel.onEvent(WorkspaceManagementEvent.UpdateCurrency(curr))
-                                }
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                curr, style = RevLensTypography.bodyLarge,
-                                color = RevLensTheme.colors.textPrimary
-                            )
-                            if (workspace?.currency == curr) {
-                                Text(
-                                    "Active", style = RevLensTypography.labelSmall,
-                                    color = RevLensTheme.colors.brandPrimary
-                                )
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {},
-            dismissButton = {
-                TextLinkButton(
-                    text = "Close",
-                    onClick = { viewModel.onEvent(WorkspaceManagementEvent.HideCurrencyDialog) }
-                )
-            },
-            containerColor = RevLensTheme.colors.surface
-        )
-    }
-
-    // Reset Confirmation Dialog
-    if (state.isResetDialogVisible) {
-        TypedConfirmDialog(
-            title = "Reset Local Data",
-            body = "This will clear local simulation scenarios. Baseline settings are preserved.",
-            requiredWord = "RESET",
-            confirmText = "Reset",
-            onConfirm = { viewModel.onEvent(WorkspaceManagementEvent.ConfirmResetData) },
-            onDismiss = { viewModel.onEvent(WorkspaceManagementEvent.HideResetDialog) },
-            isDestructive = true
         )
     }
 
@@ -445,7 +362,10 @@ fun WorkspaceManagementScreen(
                 )
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
                     Text(
                         text = "Transferring ownership gives another team member full control over workspace deletion, team billing, and role assignments. You will step down to Admin.",
                         style = RevLensTypography.bodySmall,

@@ -18,6 +18,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,9 +40,9 @@ import com.revlens.app.utils.CurrencyUtils
 fun BreakEvenScreen(viewModel: MainViewModel) {
     val profile by viewModel.profile.collectAsState()
 
-    var cacSimulated by remember { mutableStateOf(profile?.cac?.toFloat() ?: 100f) }
-    var fixedCostsSimulated by remember { mutableStateOf(profile?.fixedCosts?.toFloat() ?: 5000f) }
-    var variableCostSimulated by remember {
+    var cacSimulated by rememberSaveable { mutableStateOf(profile?.cac?.toFloat() ?: 100f) }
+    var fixedCostsSimulated by rememberSaveable { mutableStateOf(profile?.fixedCosts?.toFloat() ?: 5000f) }
+    var variableCostSimulated by rememberSaveable {
         mutableStateOf(
             profile?.variableCostPerCustomer?.toFloat() ?: 10f
         )

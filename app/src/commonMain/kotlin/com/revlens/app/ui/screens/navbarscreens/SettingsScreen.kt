@@ -5,11 +5,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,10 +22,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -41,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.revlens.app.domain.model.Role
 import com.revlens.app.domain.model.SessionState
@@ -106,83 +111,95 @@ fun SettingsScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(RoundedCornerShape(16.dp))
                     .background(RevLensTheme.colors.surface)
-                    .padding(16.dp),
+                    .padding(horizontal = 16.dp, vertical = 20.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    val currentUser = (session as? SessionState.Authenticated)?.user
-                    val displayName =
-                        if (isGuest) "Guest User" else (currentUser?.name?.ifBlank { null }
-                            ?: "User")
-                    val displayEmail =
-                        if (isGuest) "Local-only session" else (currentUser?.email ?: "")
-                    val initials = if (isGuest) {
-                        "GU"
-                    } else {
-                        displayName.split(" ")
-                            .filter { it.isNotBlank() }
-                            .mapNotNull {
-                                it.firstOrNull()
-                                    ?.toString()
-                            }
-                            .take(2)
-                            .joinToString("")
-                            .uppercase()
-                            .ifBlank { "U" }
-                    }
-
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(54.dp)
-                            .clip(CircleShape)
-                            .background(RevLensTheme.colors.brandPrimary)
-                    ) {
-                        Text(
-                            text = initials,
-                            style = RevLensTypography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = RevLensTheme.colors.background
-                        )
-                    }
-
-                    Column {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text(
-                                text = displayName,
-                                style = RevLensTypography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = RevLensTheme.colors.textPrimary
-                            )
-                            RoleChip(role = Role.Owner)
+                val currentUser = (session as? SessionState.Authenticated)?.user
+                val displayName =
+                    if (isGuest) "Guest User" else (currentUser?.name?.ifBlank { null }
+                        ?: "User")
+                val displayEmail =
+                    if (isGuest) "Local-only session" else (currentUser?.email ?: "")
+                val initials = if (isGuest) {
+                    "GU"
+                } else {
+                    displayName.split(" ")
+                        .filter { it.isNotBlank() }
+                        .mapNotNull {
+                            it.firstOrNull()
+                                ?.toString()
                         }
-                        Text(
-                            text = displayEmail,
-                            style = RevLensTypography.bodySmall,
-                            color = RevLensTheme.colors.textSecondary
-                        )
+                        .take(2)
+                        .joinToString("")
+                        .uppercase()
+                        .ifBlank { "U" }
+                }
+
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(RevLensTheme.colors.brandPrimary)
+                ) {
+                    Text(
+                        text = initials,
+                        style = RevLensTypography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = RevLensTheme.colors.background
+                    )
+                }
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = displayName,
+                        style = RevLensTypography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = RevLensTheme.colors.textPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = displayEmail,
+                        style = RevLensTypography.bodySmall,
+                        color = RevLensTheme.colors.textSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (!isGuest) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        RoleChip(role = Role.Owner)
                     }
                 }
 
                 if (isGuest) {
-                    TextLinkButton(
-                        text = "Sign In",
-                        onClick = onNavigateToSignUp
-                    )
+                    OutlinedButton(
+                        onClick = onNavigateToSignUp,
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Text("Sign In", style = RevLensTypography.labelMedium)
+                    }
                 } else {
-                    TextLinkButton(
-                        text = "Edit",
-                        onClick = onNavigateToProfile
-                    )
+                    OutlinedButton(
+                        onClick = onNavigateToProfile,
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Edit,
+                            contentDescription = "Edit Profile",
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Edit", style = RevLensTypography.labelMedium)
+                    }
                 }
             }
 

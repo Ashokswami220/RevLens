@@ -32,6 +32,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,8 +68,8 @@ fun ForecastScreen(
 ) {
     val profile by viewModel.profile.collectAsState()
 
-    var selectedMonths by remember { mutableStateOf(12) }
-    var isBreakdownExpanded by remember { mutableStateOf(false) }
+    var selectedMonths by rememberSaveable { mutableStateOf(12) }
+    var isBreakdownExpanded by rememberSaveable { mutableStateOf(false) }
 
     val currencyFormatter = remember(profile?.currencyCode) {
         CurrencyUtils.getFormatter(profile?.currencyCode)

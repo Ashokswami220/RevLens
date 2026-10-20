@@ -32,6 +32,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -386,7 +387,7 @@ fun GrowthSimulatorScreen(
 
     // Save Scenario Dialog
     if (state.showSaveScenarioDialog) {
-        var scenarioName by remember { mutableStateOf(state.scenarioNameInput) }
+        var scenarioName by rememberSaveable { mutableStateOf(state.scenarioNameInput) }
         AlertDialog(
             onDismissRequest = {
                 viewModel.onEvent(
@@ -402,7 +403,10 @@ fun GrowthSimulatorScreen(
                 )
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Text(
                         text = "Name this growth projection scenario to compare and revisit anytime.",
                         style = RevLensTypography.bodyMedium,
@@ -444,9 +448,9 @@ fun GrowthSimulatorScreen(
 
     // Add Channel Dialog
     if (state.showAddChannelSheet) {
-        var channelName by remember { mutableStateOf("") }
-        var spendInput by remember { mutableStateOf("1000") }
-        var cacInput by remember { mutableStateOf("100") }
+        var channelName by rememberSaveable { mutableStateOf("") }
+        var spendInput by rememberSaveable { mutableStateOf("1000") }
+        var cacInput by rememberSaveable { mutableStateOf("100") }
 
         AlertDialog(
             onDismissRequest = { viewModel.onEvent(GrowthSimulatorIntent.DismissAddChannelSheet) },
@@ -459,7 +463,10 @@ fun GrowthSimulatorScreen(
                 )
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
                     RevLensTextField(
                         value = channelName,
                         onValueChange = { channelName = it },
@@ -511,7 +518,7 @@ fun GrowthSimulatorScreen(
 
     // Cash Assumptions Dialog
     if (state.showCashSheet) {
-        var cashInput by remember { mutableStateOf("${state.assumptions.startingCashMinor / 100}") }
+        var cashInput by rememberSaveable { mutableStateOf("${state.assumptions.startingCashMinor / 100}") }
 
         AlertDialog(
             onDismissRequest = { viewModel.onEvent(GrowthSimulatorIntent.DismissCashSheet) },
@@ -524,7 +531,10 @@ fun GrowthSimulatorScreen(
                 )
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Text(
                         text = "Enter current liquid cash to calculate expected runway under this acquisition plan.",
                         style = RevLensTypography.bodyMedium,

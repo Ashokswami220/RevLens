@@ -9,8 +9,6 @@ data class WorkspaceManagementUiState(
     val allWorkspaces: List<Workspace> = emptyList(),
     val isSwitchSheetVisible: Boolean = false,
     val isEditNameDialogVisible: Boolean = false,
-    val isCurrencyDialogVisible: Boolean = false,
-    val isResetDialogVisible: Boolean = false,
     val isDeleteDialogVisible: Boolean = false,
     val isTransferOwnershipDialogVisible: Boolean = false,
     val eligibleTransferMembers: List<String> = listOf(
@@ -25,17 +23,11 @@ data class WorkspaceManagementUiState(
 sealed interface WorkspaceManagementEvent {
     data class SwitchWorkspace(val id: String) : WorkspaceManagementEvent
     data class UpdateName(val newName: String) : WorkspaceManagementEvent
-    data class UpdateCurrency(val newCurrency: String) : WorkspaceManagementEvent
     data class UpdateBusinessModel(val model: BusinessModel) : WorkspaceManagementEvent
     data object ShowSwitchSheet : WorkspaceManagementEvent
     data object HideSwitchSheet : WorkspaceManagementEvent
     data object ShowEditNameDialog : WorkspaceManagementEvent
     data object HideEditNameDialog : WorkspaceManagementEvent
-    data object ShowCurrencyDialog : WorkspaceManagementEvent
-    data object HideCurrencyDialog : WorkspaceManagementEvent
-    data object ShowResetDialog : WorkspaceManagementEvent
-    data object HideResetDialog : WorkspaceManagementEvent
-    data object ConfirmResetData : WorkspaceManagementEvent
     data object ShowDeleteDialog : WorkspaceManagementEvent
     data object HideDeleteDialog : WorkspaceManagementEvent
     data object ConfirmDeleteWorkspace : WorkspaceManagementEvent

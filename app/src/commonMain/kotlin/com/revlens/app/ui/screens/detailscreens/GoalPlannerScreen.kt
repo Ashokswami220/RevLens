@@ -15,6 +15,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -41,8 +42,8 @@ fun GoalPlannerScreen(
     val profile by viewModel.profile.collectAsState()
 
     val currentMrr = profile?.currentMrr?.toFloat() ?: 1000f
-    var targetMrr by remember { mutableStateOf(currentMrr * 2) }
-    var targetMonths by remember { mutableStateOf(12f) }
+    var targetMrr by rememberSaveable { mutableStateOf(currentMrr * 2) }
+    var targetMonths by rememberSaveable { mutableStateOf(12f) }
 
     val goalPlan = remember(profile, targetMrr, targetMonths) {
         profile?.let {

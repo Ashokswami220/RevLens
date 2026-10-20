@@ -459,7 +459,10 @@ fun ExperimentDetailsScreen(
                 )
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
                     Text(
                         text = "Suggested Verdict: ${analysis.suggestedVerdict.displayName}",
                         style = RevLensTypography.bodyMedium,

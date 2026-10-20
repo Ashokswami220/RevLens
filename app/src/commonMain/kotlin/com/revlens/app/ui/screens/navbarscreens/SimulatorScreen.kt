@@ -15,7 +15,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
@@ -43,9 +47,14 @@ fun SimulatorScreen(
     val coroutineScope = rememberCoroutineScope()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
+    var hasAppliedInitialTab by rememberSaveable(initialTab) { mutableStateOf(false) }
     LaunchedEffect(initialTab) {
-        if (pagerState.currentPage != initialTab) {
-            pagerState.scrollToPage(initialTab.coerceIn(0, 3))
+        if (!hasAppliedInitialTab) {
+            hasAppliedInitialTab = true
+            val target = initialTab.coerceIn(0, 3)
+            if (pagerState.currentPage != target) {
+                pagerState.scrollToPage(target)
+            }
         }
     }
 

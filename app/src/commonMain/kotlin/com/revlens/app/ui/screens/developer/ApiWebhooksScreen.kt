@@ -567,7 +567,10 @@ fun ApiWebhooksScreen(
                 )
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
                     Text(
                         text = "Please copy your API key now. For security purposes, you will not be able to see it again.",
                         style = RevLensTypography.bodyMedium,
@@ -728,11 +731,13 @@ fun ApiWebhooksScreen(
                 )
             },
             text = {
-                Text(
-                    text = "Are you sure you want to revoke key '${key.name}'? Any scripts or tools utilizing this key will immediately lose access.",
-                    style = RevLensTypography.bodyMedium,
-                    color = RevLensTheme.colors.textSecondary
-                )
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    Text(
+                        text = "Are you sure you want to revoke key '${key.name}'? Any scripts or tools utilizing this key will immediately lose access.",
+                        style = RevLensTypography.bodyMedium,
+                        color = RevLensTheme.colors.textSecondary
+                    )
+                }
             },
             confirmButton = {
                 DestructiveButton(
@@ -768,11 +773,13 @@ fun ApiWebhooksScreen(
                 )
             },
             text = {
-                Text(
-                    text = "Are you sure you want to remove endpoint '${endpoint.description}' (${endpoint.url})? Event notifications will no longer be delivered.",
-                    style = RevLensTypography.bodyMedium,
-                    color = RevLensTheme.colors.textSecondary
-                )
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    Text(
+                        text = "Are you sure you want to remove endpoint '${endpoint.description}' (${endpoint.url})? Event notifications will no longer be delivered.",
+                        style = RevLensTypography.bodyMedium,
+                        color = RevLensTheme.colors.textSecondary
+                    )
+                }
             },
             confirmButton = {
                 DestructiveButton(

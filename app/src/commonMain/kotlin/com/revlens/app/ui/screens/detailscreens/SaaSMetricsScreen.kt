@@ -69,44 +69,55 @@ fun SaaSMetricsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Row(
+            // Navigation Action Buttons (2 Rows to prevent congestion/overlap)
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                com.revlens.app.ui.components.ActionCardButton(
-                    text = "Bridge",
-                    icon = Icons.AutoMirrored.Filled.TrendingUp,
-                    onClick = onNavigateToRevenueBreakdown,
-                    modifier = Modifier.weight(1f)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    com.revlens.app.ui.components.ActionCardButton(
+                        text = "Bridge",
+                        icon = Icons.AutoMirrored.Filled.TrendingUp,
+                        onClick = onNavigateToRevenueBreakdown,
+                        modifier = Modifier.weight(1f)
+                    )
 
-                com.revlens.app.ui.components.ActionCardButton(
-                    text = "LTV",
-                    icon = Icons.AutoMirrored.Filled.TrendingUp,
-                    onClick = onNavigateToLtvAnalysis,
-                    modifier = Modifier.weight(1f)
-                )
+                    com.revlens.app.ui.components.ActionCardButton(
+                        text = "LTV",
+                        icon = Icons.AutoMirrored.Filled.TrendingUp,
+                        onClick = onNavigateToLtvAnalysis,
+                        modifier = Modifier.weight(1f)
+                    )
 
-                com.revlens.app.ui.components.ActionCardButton(
-                    text = "CAC",
-                    icon = Icons.AutoMirrored.Filled.TrendingUp,
-                    onClick = onNavigateToCacAnalytics,
-                    modifier = Modifier.weight(1f)
-                )
+                    com.revlens.app.ui.components.ActionCardButton(
+                        text = "CAC",
+                        icon = Icons.AutoMirrored.Filled.TrendingUp,
+                        onClick = onNavigateToCacAnalytics,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
 
-                com.revlens.app.ui.components.ActionCardButton(
-                    text = "Customers",
-                    icon = Icons.AutoMirrored.Filled.TrendingUp,
-                    onClick = onNavigateToCustomerAnalytics,
-                    modifier = Modifier.weight(1f)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    com.revlens.app.ui.components.ActionCardButton(
+                        text = "Customers",
+                        icon = Icons.AutoMirrored.Filled.TrendingUp,
+                        onClick = onNavigateToCustomerAnalytics,
+                        modifier = Modifier.weight(1f)
+                    )
 
-                com.revlens.app.ui.components.ActionCardButton(
-                    text = "Cohorts",
-                    icon = Icons.AutoMirrored.Filled.TrendingUp,
-                    onClick = onNavigateToCohortAnalysis,
-                    modifier = Modifier.weight(1f)
-                )
+                    com.revlens.app.ui.components.ActionCardButton(
+                        text = "Cohorts",
+                        icon = Icons.AutoMirrored.Filled.TrendingUp,
+                        onClick = onNavigateToCohortAnalysis,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
 
             profile?.let { p ->
