@@ -42,6 +42,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.revlens.app.domain.model.SessionState
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import com.revlens.app.domain.model.Role
 import com.revlens.app.presentation.MainViewModel
 import com.revlens.app.ui.components.ConfirmDialog
 import com.revlens.app.ui.components.DestructiveButton
@@ -55,14 +57,18 @@ import com.revlens.app.ui.theme.RevLensTypography
 fun AccountActionsScreen(
     viewModel: MainViewModel,
     onNavigateBack: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onNavigateToCreateWorkspace: () -> Unit = onLogout
 ) {
     val session by viewModel.session.collectAsState()
     val isGuest = session !is SessionState.Authenticated
     val currentUser = (session as? SessionState.Authenticated)?.user
+    val activeWorkspace by viewModel.activeWorkspace.collectAsState()
+    val currentUserRole by viewModel.currentUserRole.collectAsState()
 
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showLeaveDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -202,6 +208,51 @@ fun AccountActionsScreen(
                 )
             }
 
+            // SECTION: LEAVE BUSINESS (Non-owner roles only)
+            if (!isGuest && currentUserRole != Role.Owner && activeWorkspace != null) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(RevLensTheme.colors.surface)
+                        .border(
+                            1.dp, RevLensTheme.colors.error.copy(alpha = 0.35f),
+                            RoundedCornerShape(16.dp)
+                        )
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                            contentDescription = null,
+                            tint = RevLensTheme.colors.error,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = "Leave Business",
+                            style = RevLensTypography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = RevLensTheme.colors.textPrimary
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "You are currently joined to ${activeWorkspace?.name} with ${currentUserRole.name} access. Leaving this business will remove your membership and free your account so you can start your own business or accept a new workspace invitation.",
+                        style = RevLensTypography.bodySmall,
+                        color = RevLensTheme.colors.textSecondary
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    DestructiveButton(
+                        text = "Leave ${activeWorkspace?.name}",
+                        onClick = { showLeaveDialog = true },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
             // SECTION 2: DANGER ZONE & DELETE ACCOUNT
             Column(
                 modifier = Modifier
@@ -245,6 +296,25 @@ fun AccountActionsScreen(
                 )
             }
         }
+    }
+
+    // Leave Business Typed Confirmation Dialog
+    if (showLeaveDialog && activeWorkspace != null) {
+        TypedConfirmDialog(
+            title = "Leave ${activeWorkspace?.name}?",
+            body = "Are you sure you want to leave this business? You will lose access to its metrics and can start your own business or accept another invitation.",
+            requiredWord = "LEAVE",
+            confirmText = "Leave Business",
+            onConfirm = {
+                showLeaveDialog = false
+                viewModel.leaveBusiness(
+                    onSuccess = { onNavigateToCreateWorkspace() },
+                    onError = { }
+                )
+            },
+            onDismiss = { showLeaveDialog = false },
+            isDestructive = true
+        )
     }
 
     // Log Out Dialog

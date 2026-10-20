@@ -10,7 +10,9 @@ import kotlinx.coroutines.launch
 
 class TeamViewModel(
     private val teamRepository: TeamRepository,
-    private val workspaceContext: WorkspaceContext
+    private val workspaceContext: WorkspaceContext,
+    private val authRepository: com.revlens.app.domain.repository.AuthRepository? = null,
+    private val sessionManager: com.revlens.app.domain.session.SessionManager? = null
 ) : MviViewModel<TeamUiState, TeamEvent, TeamEffect>(TeamUiState()) {
 
     private var currentWorkspaceId: String = "ws_default"
@@ -45,6 +47,12 @@ class TeamViewModel(
                     .collect { invites ->
                         update { copy(invites = invites) }
                     }
+            }
+            val userEmail = (sessionManager?.state?.value as? com.revlens.app.domain.model.SessionState.Authenticated)?.user?.email
+                ?: authRepository?.getCurrentUser()?.email
+            if (userEmail != null) {
+                val role = teamRepository.getUserRoleInWorkspace(wsId, userEmail) ?: com.revlens.app.domain.model.Role.Owner
+                update { copy(userRole = role) }
             }
         }
     }
@@ -103,7 +111,10 @@ class TeamViewModel(
 
         viewModelScope.launch {
             update { copy(isInviting = true) }
-            val res = teamRepository.inviteMember(currentWorkspaceId, email, state.value.inviteRole)
+            val inviter = (sessionManager?.state?.value as? com.revlens.app.domain.model.SessionState.Authenticated)?.user?.name
+                ?: authRepository?.getCurrentUser()?.name
+                ?: "Owner"
+            val res = teamRepository.inviteMember(currentWorkspaceId, email, state.value.inviteRole, inviterName = inviter)
             update { copy(isInviting = false) }
 
             res.onSuccess {

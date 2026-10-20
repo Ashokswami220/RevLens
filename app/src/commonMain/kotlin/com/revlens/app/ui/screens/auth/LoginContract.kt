@@ -20,4 +20,5 @@ sealed interface LoginEffect {
     data class ShowMessage(val text: UiText) : LoginEffect
     data object NavigateToDashboard : LoginEffect
     data object NavigateToCreateWorkspace : LoginEffect
+    data object NavigateToInviteAcceptance : LoginEffect
 }

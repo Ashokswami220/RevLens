@@ -59,7 +59,9 @@ val appModule = module {
             get(), get()
         )
     }
-    single<com.revlens.app.domain.repository.TeamRepository> { com.revlens.app.data.fake.FakeTeamRepository() }
+    single<com.revlens.app.domain.repository.TeamRepository> {
+        com.revlens.app.data.fake.FakeTeamRepository(getOrNull(), getOrNull())
+    }
     single<com.revlens.app.domain.repository.BillingRepository> { com.revlens.app.data.fake.FakeBillingRepository() }
     single<com.revlens.app.domain.repository.IntegrationRepository> { com.revlens.app.data.fake.FakeIntegrationRepository() }
     single<com.revlens.app.domain.repository.DeveloperRepository> { com.revlens.app.data.fake.FakeDeveloperRepository() }
@@ -70,11 +72,11 @@ val appModule = module {
     single { com.revlens.app.domain.usecase.ValidateResetTokenUseCase(get()) }
     single { com.revlens.app.domain.usecase.ResetPasswordUseCase(get()) }
     single { com.revlens.app.domain.usecase.CreateWorkspaceUseCase(get(), get(), get()) }
-    viewModel { MainViewModel(get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { MainViewModel(get(), get(), get(), get(), get(), get(), get(), getOrNull()) }
     viewModel { BusinessSetupViewModel() }
     viewModel {
         com.revlens.app.ui.screens.workspace.WorkspaceManagementViewModel(
-            get(), get(), get(), get()
+            get(), get(), get(), get(), getOrNull(), getOrNull(), getOrNull()
         )
     }
     viewModel { com.revlens.app.ui.screens.workspace.CreateWorkspaceViewModel(get()) }
@@ -106,9 +108,10 @@ val appModule = module {
             get(), get()
         )
     }
-    viewModel { com.revlens.app.ui.screens.auth.LoginViewModel(get(), get(), getOrNull()) }
+    viewModel { com.revlens.app.ui.screens.auth.LoginViewModel(get(), get(), getOrNull(), getOrNull()) }
+    viewModel { com.revlens.app.ui.screens.auth.InviteAcceptanceViewModel(get(), get(), get(), get(), getOrNull()) }
     viewModel { com.revlens.app.ui.screens.profile.ProfileViewModel(get(), get(), get(), get()) }
-    viewModel { com.revlens.app.ui.screens.team.TeamViewModel(get(), get()) }
+    viewModel { com.revlens.app.ui.screens.team.TeamViewModel(get(), get(), getOrNull(), getOrNull()) }
     viewModel { com.revlens.app.ui.screens.billing.BillingViewModel(get(), get()) }
     viewModel { com.revlens.app.ui.screens.integrations.IntegrationsViewModel(get(), get()) }
     viewModel { com.revlens.app.ui.screens.developer.ApiWebhooksViewModel(get(), get()) }

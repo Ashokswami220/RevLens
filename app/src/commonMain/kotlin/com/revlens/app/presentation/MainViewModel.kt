@@ -24,6 +24,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+import com.revlens.app.domain.model.Role
+import com.revlens.app.domain.repository.TeamRepository
+
 class MainViewModel(
     private val repository: ProfileRepository,
     private val scenarioRepository: ScenarioRepository,
@@ -31,7 +34,8 @@ class MainViewModel(
     private val workspaceContext: WorkspaceContext = DefaultWorkspaceContext(),
     private val sessionManager: SessionManager = DefaultSessionManager(),
     private val resolveGateUseCase: ResolveGateUseCase = ResolveGateUseCase(),
-    private val authRepository: com.revlens.app.domain.repository.AuthRepository? = null
+    private val authRepository: com.revlens.app.domain.repository.AuthRepository? = null,
+    private val teamRepository: TeamRepository? = null
 ) : ViewModel() {
 
     init {
@@ -107,6 +111,46 @@ class MainViewModel(
         started = SharingStarted.Eagerly,
         initialValue = Gate.Main
     )
+
+    val currentUserRole: StateFlow<Role> = combine(
+        activeWorkspace,
+        sessionManager.state
+    ) { ws, sess ->
+        val email = (sess as? SessionState.Authenticated)?.user?.email
+            ?: authRepository?.getCurrentUser()?.email
+        if (ws != null && !email.isNullOrBlank() && teamRepository != null) {
+            teamRepository.getUserRoleInWorkspace(ws.id, email) ?: Role.Owner
+        } else {
+            Role.Owner
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = Role.Owner
+    )
+
+    fun leaveBusiness(onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val wsId = activeWorkspace.value?.id ?: run {
+            onError("No active workspace found")
+            return
+        }
+        viewModelScope.launch {
+            val email = (sessionManager.state.value as? SessionState.Authenticated)?.user?.email
+                ?: authRepository?.getCurrentUser()?.email
+            if (email.isNullOrBlank() || teamRepository == null) {
+                onError("Could not verify user account")
+                return@launch
+            }
+            val result = teamRepository.leaveWorkspace(wsId, email)
+            result.onSuccess {
+                workspaceContext.switchTo("")
+                repository.setOnboardingCompleted(false)
+                onSuccess()
+            }.onFailure { err ->
+                onError(err.message ?: "Failed to leave business")
+            }
+        }
+    }
 
     fun updateProfile(updatedProfile: BusinessProfile) {
         viewModelScope.launch {

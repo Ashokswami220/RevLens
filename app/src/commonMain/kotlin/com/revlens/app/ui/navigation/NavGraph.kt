@@ -230,6 +230,10 @@ fun RevLensNavGraph(
                 "PublicPricing"
             ) -> "pricing"
 
+            currentDestination?.hasRoute<InviteAcceptanceRoute>() == true || currentRoute.contains(
+                "InviteAcceptance"
+            ) -> "invitation"
+
             else -> null
         }
         if (slug != null) {
@@ -484,7 +488,31 @@ fun RevLensNavGraph(
                                     launchSingleTop = true
                                 }
                             },
+                            onNavigateToInviteAcceptance = {
+                                navController.navigate(InviteAcceptanceRoute)
+                            },
                             onNavigateBack = null
+                        )
+                    }
+
+                    composable<InviteAcceptanceRoute> {
+                        val inviteViewModel: com.revlens.app.ui.screens.auth.InviteAcceptanceViewModel =
+                            org.koin.compose.viewmodel.koinViewModel()
+                        com.revlens.app.ui.screens.auth.InviteAcceptanceScreen(
+                            viewModel = inviteViewModel,
+                            onNavigateToDashboard = {
+                                navController.navigate(DashboardRoute) {
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                                BrowserRouter.updateUrl("dashboard")
+                            },
+                            onNavigateToCreateWorkspace = {
+                                navController.navigate(CreateWorkspaceRoute) {
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            }
                         )
                     }
 
@@ -673,6 +701,12 @@ fun RevLensNavGraph(
                                     launchSingleTop = true
                                 }
                                 BrowserRouter.updateUrl("login")
+                            },
+                            onNavigateToCreateWorkspace = {
+                                navController.navigate(CreateWorkspaceRoute) {
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
+                                }
                             }
                         )
                     }

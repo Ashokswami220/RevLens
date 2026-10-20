@@ -41,9 +41,9 @@ class TeamViewModelTest {
         advanceUntilIdle()
 
         val s = vm.state.value
-        assertEquals(3, s.members.size)
-        assertEquals(1, s.invites.size)
-        assertEquals(3, s.usedSeats)
+        assertEquals(1, s.members.size)
+        assertEquals(0, s.invites.size)
+        assertEquals(1, s.usedSeats)
         assertEquals(Role.Owner, s.members.first().role)
     }
 
@@ -67,16 +67,25 @@ class TeamViewModelTest {
         advanceUntilIdle()
 
         assertEquals(null, vm.state.value.error)
-        assertEquals(2, vm.state.value.invites.size)
+        assertEquals(1, vm.state.value.invites.size)
         assertTrue(vm.state.value.invites.any { it.email == "newmember@acme.ai" })
     }
 
     @Test
     fun testChangeRoleAndRemoveMember() = runTest(testDispatcher) {
         val repo = FakeTeamRepository()
+        repo.inviteMember("ws_1", "editor@acme.ai", Role.Editor)
+        val invite = repo.getPendingInvitesForEmail("editor@acme.ai").first()
+        repo.acceptInvite(
+            invite.inviteId,
+            com.revlens.app.domain.model.UserAccount("usr_2", "Editor User", "editor@acme.ai")
+        )
+
         val wsContext = DefaultWorkspaceContext("ws_1")
         val vm = TeamViewModel(repo, wsContext)
         advanceUntilIdle()
+
+        assertEquals(2, vm.state.value.members.size)
 
         // Change role of editor to Admin
         val editor = vm.state.value.members.find { it.role == Role.Editor }!!
@@ -91,7 +100,7 @@ class TeamViewModelTest {
         vm.onEvent(TeamEvent.ConfirmRemoveMember)
         advanceUntilIdle()
 
-        assertEquals(2, vm.state.value.members.size)
+        assertEquals(1, vm.state.value.members.size)
         assertFalse(vm.state.value.members.any { it.id == editor.id })
     }
 }

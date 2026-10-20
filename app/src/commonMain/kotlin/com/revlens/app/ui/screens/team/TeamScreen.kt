@@ -7,20 +7,27 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -127,7 +134,11 @@ fun TeamScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 12.dp)
+                    ) {
                         Text(
                             text = "Team Capacity",
                             style = RevLensTypography.titleMedium,
@@ -141,16 +152,41 @@ fun TeamScreen(
                         )
                     }
 
-                    PrimaryButton(
-                        text = "+ Invite",
+                    val canInvite = state.members.size < state.totalSeats
+                    Button(
                         onClick = { viewModel.onEvent(TeamEvent.OpenInviteSheet) },
-                        enabled = state.members.size + state.invites.size < state.totalSeats
-                    )
+                        enabled = canInvite,
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = RevLensTheme.colors.brandPrimary,
+                            contentColor = RevLensTheme.colors.background,
+                            disabledContainerColor = RevLensTheme.colors.surfaceElevated,
+                            disabledContentColor = RevLensTheme.colors.textTertiary
+                        ),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                        modifier = Modifier.height(38.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Add,
+                                contentDescription = "Invite",
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = "Invite",
+                                style = RevLensTypography.labelMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
 
                 UsageMeter(
                     label = "Seats Allocated",
-                    used = state.members.size + state.invites.size,
+                    used = state.members.size,
                     limit = state.totalSeats,
                     unitLabel = "seats"
                 )
@@ -193,20 +229,37 @@ fun TeamScreen(
             // TAB CONTENT
             when (state.activeTab) {
                 TeamTab.Members -> {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        state.members.forEach { member ->
-                            MemberRow(
-                                member = member,
-                                canManage = state.userRole == Role.Owner || state.userRole == Role.Admin,
-                                onRoleChange = { newRole ->
-                                    viewModel.onEvent(
-                                        TeamEvent.ChangeMemberRole(member.id, newRole)
-                                    )
-                                },
-                                onRemove = {
-                                    viewModel.onEvent(TeamEvent.PromptRemoveMember(member))
-                                }
+                    if (state.members.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(RevLensTheme.colors.surface)
+                                .padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No team members found",
+                                style = RevLensTypography.bodyMedium,
+                                color = RevLensTheme.colors.textSecondary
                             )
+                        }
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            state.members.forEach { member ->
+                                MemberRow(
+                                    member = member,
+                                    canManage = state.userRole == Role.Owner || state.userRole == Role.Admin,
+                                    onRoleChange = { newRole ->
+                                        viewModel.onEvent(
+                                            TeamEvent.ChangeMemberRole(member.id, newRole)
+                                        )
+                                    },
+                                    onRemove = {
+                                        viewModel.onEvent(TeamEvent.PromptRemoveMember(member))
+                                    }
+                                )
+                            }
                         }
                     }
                 }

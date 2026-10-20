@@ -60,6 +60,7 @@ fun LoginScreen(
     viewModel: LoginViewModel = koinViewModel(),
     onNavigateToDashboard: () -> Unit,
     onNavigateToCreateWorkspace: () -> Unit = onNavigateToDashboard,
+    onNavigateToInviteAcceptance: () -> Unit = onNavigateToDashboard,
     onNavigateBack: (() -> Unit)? = null
 ) {
     val state by viewModel.state.collectAsState()
@@ -85,6 +86,10 @@ fun LoginScreen(
 
                 LoginEffect.NavigateToCreateWorkspace -> {
                     onNavigateToCreateWorkspace()
+                }
+
+                LoginEffect.NavigateToInviteAcceptance -> {
+                    onNavigateToInviteAcceptance()
                 }
             }
         }

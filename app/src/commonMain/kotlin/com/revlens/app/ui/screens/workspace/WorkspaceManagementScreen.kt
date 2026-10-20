@@ -250,30 +250,62 @@ fun WorkspaceManagementScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = RevLensTheme.colors.textPrimary
                             )
+                            val roleSubtitle = when (state.currentUserRole) {
+                                Role.Viewer -> "View-only access to metrics and reports"
+                                Role.Editor -> "Can modify scenarios and business data"
+                                Role.Admin -> "Administrative and team management access"
+                                Role.Owner -> "Full administrative and billing permissions"
+                            }
                             Text(
-                                text = "Full administrative and billing permissions",
+                                text = roleSubtitle,
                                 style = RevLensTypography.bodySmall,
                                 color = RevLensTheme.colors.textSecondary
                             )
                         }
-                        RoleChip(role = Role.Owner)
+                        RoleChip(role = state.currentUserRole)
                     }
 
-                    WorkspaceSettingRow(
-                        title = "Transfer Workspace Ownership",
-                        value = "Designate another team member as Owner",
-                        valueColor = RevLensTheme.colors.brandPrimary,
-                        onClick = {
-                            viewModel.onEvent(
-                                WorkspaceManagementEvent.ShowTransferOwnershipDialog
-                            )
-                        }
-                    )
+                    if (state.currentUserRole == Role.Owner) {
+                        WorkspaceSettingRow(
+                            title = "Transfer Workspace Ownership",
+                            value = "Designate another team member as Owner",
+                            valueColor = RevLensTheme.colors.textSecondary,
+                            badge = {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(RevLensTheme.colors.surfaceElevated)
+                                        .padding(horizontal = 7.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = "Soon",
+                                        style = RevLensTypography.labelSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = RevLensTheme.colors.textSecondary
+                                    )
+                                }
+                            },
+                            onClick = null
+                        )
+                    }
                 }
             }
 
-            // Danger Zone
-            if (state.allWorkspaces.size > 1) {
+            // Danger Zone or Leave Business
+            if (state.currentUserRole != Role.Owner) {
+                SectionCard(title = "Leave Business") {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        WorkspaceSettingRow(
+                            title = "Leave Workspace",
+                            value = "Relinquish your ${state.currentUserRole.name} access and leave this business",
+                            valueColor = RevLensTheme.colors.error,
+                            onClick = {
+                                viewModel.onEvent(WorkspaceManagementEvent.ShowLeaveDialog)
+                            }
+                        )
+                    }
+                }
+            } else if (state.allWorkspaces.size > 1) {
                 SectionCard(title = "Danger Zone") {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         WorkspaceSettingRow(
@@ -344,97 +376,16 @@ fun WorkspaceManagementScreen(
         )
     }
 
-    // Transfer Ownership Dialog
-    if (state.isTransferOwnershipDialogVisible) {
-        AlertDialog(
-            onDismissRequest = {
-                viewModel.onEvent(
-                    WorkspaceManagementEvent.HideTransferOwnershipDialog
-                )
-            },
-            title = {
-                Text(
-                    text = "Transfer Workspace Ownership",
-                    style = RevLensTypography.titleLarge,
-                    color = RevLensTheme.colors.textPrimary
-                )
-            },
-            text = {
-                Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "Transferring ownership gives another team member full control over workspace deletion, team billing, and role assignments. You will step down to Admin.",
-                        style = RevLensTypography.bodySmall,
-                        color = RevLensTheme.colors.textSecondary
-                    )
-
-                    Text(
-                        text = "Select New Owner:",
-                        style = RevLensTypography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = RevLensTheme.colors.textPrimary
-                    )
-
-                    state.eligibleTransferMembers.forEach { member ->
-                        val isSelected = member == state.selectedTransferMember
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(
-                                    if (isSelected) RevLensTheme.colors.brandPrimary.copy(
-                                        alpha = 0.12f
-                                    ) else RevLensTheme.colors.surfaceElevated
-                                )
-                                .clickable {
-                                    viewModel.onEvent(
-                                        WorkspaceManagementEvent.SelectTransferMember(member)
-                                    )
-                                }
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = member,
-                                style = RevLensTypography.bodyMedium,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isSelected) RevLensTheme.colors.brandPrimary else RevLensTheme.colors.textPrimary
-                            )
-                            if (isSelected) {
-                                Text(
-                                    "Selected", style = RevLensTypography.labelSmall,
-                                    color = RevLensTheme.colors.brandPrimary
-                                )
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                PrimaryButton(
-                    text = "Confirm Transfer",
-                    onClick = {
-                        viewModel.onEvent(
-                            WorkspaceManagementEvent.ConfirmTransferOwnership
-                        )
-                    },
-                    modifier = Modifier.width(160.dp)
-                )
-            },
-            dismissButton = {
-                TextLinkButton(
-                    text = "Cancel",
-                    onClick = {
-                        viewModel.onEvent(
-                            WorkspaceManagementEvent.HideTransferOwnershipDialog
-                        )
-                    }
-                )
-            },
-            containerColor = RevLensTheme.colors.surface
+    // Leave Workspace Confirmation Dialog
+    if (state.isLeaveDialogVisible && workspace != null) {
+        TypedConfirmDialog(
+            title = "Leave ${workspace.name}",
+            body = "Are you sure you want to leave this business? You will lose access to its metrics and can start your own business or accept another invitation.",
+            requiredWord = "LEAVE",
+            confirmText = "Leave Business",
+            onConfirm = { viewModel.onEvent(WorkspaceManagementEvent.ConfirmLeaveWorkspace) },
+            onDismiss = { viewModel.onEvent(WorkspaceManagementEvent.HideLeaveDialog) },
+            isDestructive = true
         )
     }
 
@@ -514,34 +465,51 @@ fun WorkspaceManagementScreen(
 private fun WorkspaceSettingRow(
     title: String,
     value: String,
-    onClick: () -> Unit,
-    valueColor: androidx.compose.ui.graphics.Color = RevLensTheme.colors.textSecondary
+    onClick: (() -> Unit)? = null,
+    valueColor: androidx.compose.ui.graphics.Color = RevLensTheme.colors.textSecondary,
+    badge: @Composable (() -> Unit)? = null
 ) {
+    val clickModifier = if (onClick != null) {
+        Modifier.clickable(onClick = onClick)
+    } else {
+        Modifier
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .then(clickModifier)
             .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = RevLensTypography.bodyLarge,
-                color = RevLensTheme.colors.textPrimary
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = RevLensTypography.bodyLarge,
+                    color = RevLensTheme.colors.textPrimary
+                )
+                if (badge != null) {
+                    badge()
+                }
+            }
             Text(
                 text = value,
                 style = RevLensTypography.bodySmall,
                 color = valueColor
             )
         }
-        Icon(
-            imageVector = Icons.Filled.ChevronRight,
-            contentDescription = null,
-            tint = RevLensTheme.colors.textTertiary,
-            modifier = Modifier.size(20.dp)
-        )
+        if (onClick != null) {
+            Icon(
+                imageVector = Icons.Filled.ChevronRight,
+                contentDescription = null,
+                tint = RevLensTheme.colors.textTertiary,
+                modifier = Modifier.size(20.dp)
+            )
+        }
     }
 }

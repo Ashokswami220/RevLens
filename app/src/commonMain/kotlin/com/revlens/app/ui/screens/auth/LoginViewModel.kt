@@ -13,7 +13,8 @@ import kotlinx.coroutines.withTimeoutOrNull
 class LoginViewModel(
     private val loginUseCase: LoginUseCase,
     private val sessionManager: SessionManager,
-    private val profileRepository: ProfileRepository? = null
+    private val profileRepository: ProfileRepository? = null,
+    private val teamRepository: com.revlens.app.domain.repository.TeamRepository? = null
 ) : MviViewModel<LoginUiState, LoginEvent, LoginEffect>(LoginUiState()) {
 
     override fun onEvent(event: LoginEvent) = when (event) {
@@ -29,7 +30,13 @@ class LoginViewModel(
             update { copy(isLoading = true, error = null) }
             try {
                 val result = loginUseCase.loginWithGoogle(idToken, email, displayName)
-                result.onSuccess {
+                result.onSuccess { userAccount ->
+                    val pending = teamRepository?.getPendingInvitesForEmail(userAccount.email) ?: emptyList()
+                    if (pending.isNotEmpty()) {
+                        emit(LoginEffect.NavigateToInviteAcceptance)
+                        return@onSuccess
+                    }
+
                     val remoteProf = runCatching {
                         withTimeoutOrNull(2500L) {
                             profileRepository?.syncRemoteProfile()

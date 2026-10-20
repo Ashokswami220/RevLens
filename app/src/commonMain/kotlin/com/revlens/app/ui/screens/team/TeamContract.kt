@@ -16,7 +16,7 @@ data class TeamUiState(
     val invites: List<TeamInvite> = emptyList(),
     val userRole: Role = Role.Owner,
     val totalSeats: Int = 5,
-    val usedSeats: Int = 3,
+    val usedSeats: Int = 1,
     val isInviteSheetVisible: Boolean = false,
     val inviteEmail: String = "",
     val inviteRole: Role = Role.Editor,

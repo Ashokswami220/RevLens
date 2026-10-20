@@ -49,6 +49,9 @@ object LoginRoute
 
 // Group B: Onboarding Routes
 @Serializable
+object InviteAcceptanceRoute
+
+@Serializable
 object CreateWorkspaceRoute
 
 // Group D: Analytics Routes

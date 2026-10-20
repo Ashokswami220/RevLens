@@ -17,6 +17,18 @@ data class TeamInvite(
     val id: String,
     val email: String,
     val role: Role,
-    val sentAt: String = "2 days ago",
-    val invitedBy: String = "Alex Vance"
+    val sentAt: String = "Just now",
+    val invitedBy: String = "Owner"
 )
+
+@Serializable
+data class TeamInviteDetail(
+    val inviteId: String,
+    val workspaceId: String,
+    val workspaceName: String,
+    val invitedEmail: String,
+    val role: Role,
+    val invitedBy: String,
+    val sentAt: String = "Recently"
+)
+
