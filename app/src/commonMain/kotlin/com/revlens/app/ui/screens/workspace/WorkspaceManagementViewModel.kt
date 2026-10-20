@@ -29,6 +29,9 @@ class WorkspaceManagementViewModel(
                     workspaces.firstOrNull { it.id == activeId } ?: workspaces.firstOrNull()
                 active to workspaces
             }.collect { (active, all) ->
+                if (active != null && workspaceContext.activeWorkspaceId.value != active.id) {
+                    workspaceContext.switchTo(active.id)
+                }
                 update { copy(activeWorkspace = active, allWorkspaces = all) }
             }
         }
@@ -50,9 +53,21 @@ class WorkspaceManagementViewModel(
 
             is WorkspaceManagementEvent.UpdateName -> {
                 val current = state.value.activeWorkspace ?: return
-                viewModelScope.launch {
-                    workspaceRepository.updateWorkspace(current.copy(name = event.newName))
+                val trimmed = event.newName.trim()
+                if (trimmed.isBlank() || trimmed == current.name) {
                     update { copy(isEditNameDialogVisible = false) }
+                    return
+                }
+                val updated = current.copy(name = trimmed)
+                update {
+                    copy(
+                        activeWorkspace = updated,
+                        allWorkspaces = allWorkspaces.map { if (it.id == updated.id) updated else it },
+                        isEditNameDialogVisible = false
+                    )
+                }
+                viewModelScope.launch {
+                    workspaceRepository.updateWorkspace(updated)
                     emit(
                         WorkspaceManagementEffect.ShowMessage(
                             UiText.DynamicString("Workspace renamed")
@@ -63,9 +78,16 @@ class WorkspaceManagementViewModel(
 
             is WorkspaceManagementEvent.UpdateBusinessModel -> {
                 val current = state.value.activeWorkspace ?: return
-                update { copy(activeWorkspace = current.copy(businessModel = event.model)) }
+                if (current.businessModel == event.model) return
+                val updated = current.copy(businessModel = event.model)
+                update {
+                    copy(
+                        activeWorkspace = updated,
+                        allWorkspaces = allWorkspaces.map { if (it.id == updated.id) updated else it }
+                    )
+                }
                 viewModelScope.launch {
-                    workspaceRepository.updateWorkspace(current.copy(businessModel = event.model))
+                    workspaceRepository.updateWorkspace(updated)
                 }
             }
 

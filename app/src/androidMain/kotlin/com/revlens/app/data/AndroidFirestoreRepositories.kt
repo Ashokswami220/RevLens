@@ -27,6 +27,7 @@ class AndroidFirestoreWorkspaceRepository(
     private val _workspaces = MutableStateFlow<List<Workspace>>(
         listOf(Workspace(id = "ws_default", name = "My Workspace", currency = "USD"))
     )
+    private var hasRemoteWorkspaces = false
     override val workspacesFlow: Flow<List<Workspace>> = callbackFlow {
         val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
         var firestoreListener: com.google.firebase.firestore.ListenerRegistration? = null
@@ -71,6 +72,7 @@ class AndroidFirestoreWorkspaceRepository(
                             )
                         }
                         if (list.isNotEmpty()) {
+                            hasRemoteWorkspaces = true
                             _workspaces.value = list
                             trySend(list)
                         } else {
@@ -90,11 +92,13 @@ class AndroidFirestoreWorkspaceRepository(
 
         val localJob = CoroutineScope(Dispatchers.IO).launch {
             localFallback.workspacesFlow.collect { localList ->
-                if (localList.isNotEmpty()) {
-                    _workspaces.value = localList
-                    trySend(localList)
-                } else {
-                    trySend(_workspaces.value)
+                if (!hasRemoteWorkspaces) {
+                    if (localList.isNotEmpty()) {
+                        _workspaces.value = localList
+                        trySend(localList)
+                    } else {
+                        trySend(_workspaces.value)
+                    }
                 }
             }
         }

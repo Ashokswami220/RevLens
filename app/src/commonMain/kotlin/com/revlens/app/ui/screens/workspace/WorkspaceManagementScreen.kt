@@ -185,12 +185,6 @@ fun WorkspaceManagementScreen(
                         onClick = { viewModel.onEvent(WorkspaceManagementEvent.ShowEditNameDialog) }
                     )
 
-                    WorkspaceSettingRow(
-                        title = "Time Zone",
-                        value = workspace?.timeZoneId ?: "UTC",
-                        onClick = { }
-                    )
-
                     Column {
                         Text(
                             text = "Business Model",
@@ -203,22 +197,26 @@ fun WorkspaceManagementScreen(
                                 text = "B2B SaaS",
                                 selected = workspace?.businessModel == BusinessModel.B2bSaas,
                                 onClick = {
-                                    viewModel.onEvent(
-                                        WorkspaceManagementEvent.UpdateBusinessModel(
-                                            BusinessModel.B2bSaas
+                                    if (workspace?.businessModel != BusinessModel.B2bSaas) {
+                                        viewModel.onEvent(
+                                            WorkspaceManagementEvent.UpdateBusinessModel(
+                                                BusinessModel.B2bSaas
+                                            )
                                         )
-                                    )
+                                    }
                                 }
                             )
                             ChoiceChip(
                                 text = "B2C SaaS",
                                 selected = workspace?.businessModel == BusinessModel.B2cSaas,
                                 onClick = {
-                                    viewModel.onEvent(
-                                        WorkspaceManagementEvent.UpdateBusinessModel(
-                                            BusinessModel.B2cSaas
+                                    if (workspace?.businessModel != BusinessModel.B2cSaas) {
+                                        viewModel.onEvent(
+                                            WorkspaceManagementEvent.UpdateBusinessModel(
+                                                BusinessModel.B2cSaas
+                                            )
                                         )
-                                    )
+                                    }
                                 }
                             )
                         }
