@@ -51,7 +51,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.revlens.app.domain.calc.AnalyticsPeriod
 import com.revlens.app.domain.calc.ConcentrationHealth
@@ -418,7 +420,7 @@ fun CustomerAnalyticsScreen(
 private fun KpiSummaryCard(
     label: String,
     value: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     tint: Color,
     modifier: Modifier = Modifier
 ) {
@@ -598,7 +600,7 @@ private fun LockedAnalyticsCard(
             text = message,
             style = RevLensTypography.bodySmall,
             color = RevLensTheme.colors.textSecondary,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            textAlign = TextAlign.Center
         )
         Button(
             onClick = onImportClick,

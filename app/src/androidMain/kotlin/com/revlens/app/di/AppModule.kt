@@ -4,19 +4,85 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import com.revlens.app.core.platform.BiometricAuthenticator
+import com.revlens.app.core.platform.DefaultBiometricAuthenticator
+import com.revlens.app.core.platform.DefaultFilePicker
+import com.revlens.app.core.platform.DefaultFileSharer
+import com.revlens.app.core.platform.DefaultLocalNotifier
+import com.revlens.app.core.platform.FilePicker
+import com.revlens.app.core.platform.FileSharer
+import com.revlens.app.core.platform.InMemorySecureStorage
+import com.revlens.app.core.platform.LocalNotifier
+import com.revlens.app.core.platform.SecureStorage
+import com.revlens.app.core.util.DefaultIdGenerator
+import com.revlens.app.core.util.IdGenerator
+import com.revlens.app.data.AndroidFirebaseAuthRepository
+import com.revlens.app.data.AndroidFirestoreProfileRepository
+import com.revlens.app.data.AndroidFirestoreScenarioRepository
+import com.revlens.app.data.AndroidFirestoreTeamRepository
+import com.revlens.app.data.AndroidFirestoreWorkspaceRepository
 import com.revlens.app.data.DataStoreProfileRepository
 import com.revlens.app.data.DataStoreScenarioRepository
+import com.revlens.app.data.DefaultAnalyticsRepository
+import com.revlens.app.data.DefaultAppLockRepository
+import com.revlens.app.data.DefaultExperimentRepository
+import com.revlens.app.data.DefaultNotificationPreferencesRepository
+import com.revlens.app.data.DefaultReportRepository
 import com.revlens.app.data.DefaultWorkspaceRepository
 import com.revlens.app.data.ProfileRepository
 import com.revlens.app.data.ScenarioRepository
+import com.revlens.app.data.fake.FakeBillingRepository
+import com.revlens.app.data.fake.FakeDeveloperRepository
+import com.revlens.app.data.fake.FakeIntegrationRepository
+import com.revlens.app.data.fake.FakeTeamRepository
 import com.revlens.app.domain.context.DefaultWorkspaceContext
 import com.revlens.app.domain.context.WorkspaceContext
+import com.revlens.app.domain.repository.AnalyticsRepository
+import com.revlens.app.domain.repository.AppLockRepository
+import com.revlens.app.domain.repository.AuthRepository
+import com.revlens.app.domain.repository.BillingRepository
+import com.revlens.app.domain.repository.DeveloperRepository
+import com.revlens.app.domain.repository.ExperimentRepository
+import com.revlens.app.domain.repository.IntegrationRepository
+import com.revlens.app.domain.repository.NotificationPreferencesRepository
+import com.revlens.app.domain.repository.ReportRepository
+import com.revlens.app.domain.repository.TeamRepository
 import com.revlens.app.domain.repository.WorkspaceRepository
 import com.revlens.app.domain.session.DefaultSessionManager
 import com.revlens.app.domain.session.SessionManager
+import com.revlens.app.domain.usecase.CreateWorkspaceUseCase
+import com.revlens.app.domain.usecase.LoginUseCase
+import com.revlens.app.domain.usecase.MigrateGuestDataUseCase
+import com.revlens.app.domain.usecase.RequestPasswordResetUseCase
+import com.revlens.app.domain.usecase.ResetPasswordUseCase
 import com.revlens.app.domain.usecase.ResolveGateUseCase
+import com.revlens.app.domain.usecase.SignUpUseCase
+import com.revlens.app.domain.usecase.ValidateResetTokenUseCase
 import com.revlens.app.presentation.MainViewModel
+import com.revlens.app.ui.screens.analytics.CacAnalyticsViewModel
+import com.revlens.app.ui.screens.analytics.CohortAnalysisViewModel
+import com.revlens.app.ui.screens.analytics.CustomerAnalyticsViewModel
+import com.revlens.app.ui.screens.analytics.LtvAnalysisViewModel
+import com.revlens.app.ui.screens.analytics.RevenueBreakdownViewModel
+import com.revlens.app.ui.screens.auth.InviteAcceptanceViewModel
+import com.revlens.app.ui.screens.auth.LoginViewModel
+import com.revlens.app.ui.screens.billing.BillingViewModel
+import com.revlens.app.ui.screens.data.DataImportViewModel
 import com.revlens.app.ui.screens.detailscreens.BusinessSetupViewModel
+import com.revlens.app.ui.screens.developer.ApiWebhooksViewModel
+import com.revlens.app.ui.screens.experiments.ExperimentDetailsViewModel
+import com.revlens.app.ui.screens.experiments.ExperimentsViewModel
+import com.revlens.app.ui.screens.integrations.IntegrationsViewModel
+import com.revlens.app.ui.screens.marketing.LandingViewModel
+import com.revlens.app.ui.screens.marketing.PublicPricingViewModel
+import com.revlens.app.ui.screens.notifications.NotificationSettingsViewModel
+import com.revlens.app.ui.screens.profile.ProfileViewModel
+import com.revlens.app.ui.screens.reports.ReportsViewModel
+import com.revlens.app.ui.screens.security.SecuritySettingsViewModel
+import com.revlens.app.ui.screens.simulator.GrowthSimulatorViewModel
+import com.revlens.app.ui.screens.team.TeamViewModel
+import com.revlens.app.ui.screens.workspace.CreateWorkspaceViewModel
+import com.revlens.app.ui.screens.workspace.WorkspaceManagementViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -26,104 +92,218 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "re
 val appModule = module {
     single<DataStore<Preferences>> { androidContext().dataStore }
     single<ProfileRepository> {
-        com.revlens.app.data.AndroidFirestoreProfileRepository(
+        AndroidFirestoreProfileRepository(
             localFallback = DataStoreProfileRepository(get()),
             workspaceContext = getOrNull()
         )
     }
     single<ScenarioRepository> {
-        com.revlens.app.data.AndroidFirestoreScenarioRepository(
+        AndroidFirestoreScenarioRepository(
             DataStoreScenarioRepository(get())
         )
     }
     single<WorkspaceRepository> {
-        com.revlens.app.data.AndroidFirestoreWorkspaceRepository(
+        AndroidFirestoreWorkspaceRepository(
             DefaultWorkspaceRepository()
         )
     }
     single<WorkspaceContext> { DefaultWorkspaceContext() }
     single<SessionManager> { DefaultSessionManager() }
     single { ResolveGateUseCase() }
-    single<com.revlens.app.core.util.IdGenerator> { com.revlens.app.core.util.DefaultIdGenerator() }
-    single<com.revlens.app.core.platform.FilePicker> { com.revlens.app.core.platform.DefaultFilePicker() }
-    single<com.revlens.app.core.platform.FileSharer> { com.revlens.app.core.platform.DefaultFileSharer() }
-    single<com.revlens.app.core.platform.SecureStorage> { com.revlens.app.core.platform.InMemorySecureStorage() }
-    single<com.revlens.app.core.platform.BiometricAuthenticator> { com.revlens.app.core.platform.DefaultBiometricAuthenticator() }
-    single<com.revlens.app.core.platform.LocalNotifier> { com.revlens.app.core.platform.DefaultLocalNotifier() }
-    single<com.revlens.app.domain.repository.AnalyticsRepository> { com.revlens.app.data.DefaultAnalyticsRepository() }
-    single<com.revlens.app.domain.repository.ExperimentRepository> { com.revlens.app.data.DefaultExperimentRepository() }
-    single<com.revlens.app.domain.repository.ReportRepository> { com.revlens.app.data.DefaultReportRepository() }
-    single<com.revlens.app.domain.repository.AppLockRepository> { com.revlens.app.data.DefaultAppLockRepository() }
-    single<com.revlens.app.domain.repository.NotificationPreferencesRepository> { com.revlens.app.data.DefaultNotificationPreferencesRepository() }
-    single<com.revlens.app.domain.repository.AuthRepository> {
-        com.revlens.app.data.AndroidFirebaseAuthRepository(
+    single<IdGenerator> { DefaultIdGenerator() }
+    single<FilePicker> { DefaultFilePicker() }
+    single<FileSharer> { DefaultFileSharer() }
+    single<SecureStorage> { InMemorySecureStorage() }
+    single<BiometricAuthenticator> { DefaultBiometricAuthenticator() }
+    single<LocalNotifier> { DefaultLocalNotifier() }
+    single<AnalyticsRepository> { DefaultAnalyticsRepository() }
+    single<ExperimentRepository> { DefaultExperimentRepository() }
+    single<ReportRepository> { DefaultReportRepository() }
+    single<AppLockRepository> { DefaultAppLockRepository() }
+    single<NotificationPreferencesRepository> { DefaultNotificationPreferencesRepository() }
+    single<AuthRepository> {
+        AndroidFirebaseAuthRepository(
             get(), getOrNull()
         )
     }
-    single<com.revlens.app.domain.repository.TeamRepository> {
-        com.revlens.app.data.AndroidFirestoreTeamRepository(
-            localFallback = com.revlens.app.data.fake.FakeTeamRepository(getOrNull(), getOrNull()),
-            workspaceContext = getOrNull(),
+    single<TeamRepository> {
+        AndroidFirestoreTeamRepository(
+            localFallback = FakeTeamRepository(getOrNull()),
             profileRepository = getOrNull()
         )
     }
-    single<com.revlens.app.domain.repository.BillingRepository> { com.revlens.app.data.fake.FakeBillingRepository() }
-    single<com.revlens.app.domain.repository.IntegrationRepository> { com.revlens.app.data.fake.FakeIntegrationRepository() }
-    single<com.revlens.app.domain.repository.DeveloperRepository> { com.revlens.app.data.fake.FakeDeveloperRepository() }
-    single { com.revlens.app.domain.usecase.MigrateGuestDataUseCase(get(), get(), get(), get()) }
-    single { com.revlens.app.domain.usecase.LoginUseCase(get(), get(), getOrNull()) }
-    single { com.revlens.app.domain.usecase.SignUpUseCase(get(), get(), getOrNull()) }
-    single { com.revlens.app.domain.usecase.RequestPasswordResetUseCase(get()) }
-    single { com.revlens.app.domain.usecase.ValidateResetTokenUseCase(get()) }
-    single { com.revlens.app.domain.usecase.ResetPasswordUseCase(get()) }
-    single { com.revlens.app.domain.usecase.CreateWorkspaceUseCase(get(), get(), get()) }
-    viewModel { MainViewModel(get(), get(), get(), get(), get(), get(), getOrNull(), getOrNull()) }
+    single<BillingRepository> { FakeBillingRepository() }
+    single<IntegrationRepository> { FakeIntegrationRepository() }
+    single<DeveloperRepository> { FakeDeveloperRepository() }
+    single { MigrateGuestDataUseCase(get(), get(), get(), get()) }
+    single { LoginUseCase(get(), get(), getOrNull()) }
+    single { SignUpUseCase(get(), get(), getOrNull()) }
+    single { RequestPasswordResetUseCase(get()) }
+    single { ValidateResetTokenUseCase(get()) }
+    single { ResetPasswordUseCase(get()) }
+    single { CreateWorkspaceUseCase(get(), get(), get()) }
+    viewModel {
+        MainViewModel(
+            repository = get(),
+            scenarioRepository = get(),
+            workspaceRepository = get(),
+            workspaceContext = get(),
+            sessionManager = get(),
+            authRepository = get(),
+            teamRepository = get()
+        )
+    }
     viewModel { BusinessSetupViewModel() }
     viewModel {
-        com.revlens.app.ui.screens.workspace.WorkspaceManagementViewModel(
-            get(), get(), get(), get(), getOrNull(), getOrNull(), getOrNull()
+        WorkspaceManagementViewModel(
+            workspaceRepository = get(),
+            workspaceContext = get(),
+            profileRepository = get(),
+            teamRepository = get(),
+            authRepository = get(),
+            sessionManager = get()
         )
     }
-    viewModel { com.revlens.app.ui.screens.workspace.CreateWorkspaceViewModel(get()) }
-    viewModel { com.revlens.app.ui.screens.data.DataImportViewModel(get(), get(), get()) }
     viewModel {
-        com.revlens.app.ui.screens.analytics.RevenueBreakdownViewModel(
-            get(), get(), get()
+        CreateWorkspaceViewModel(
+            createWorkspaceUseCase = get(),
+            teamRepository = get(),
+            workspaceRepository = get(),
+            workspaceContext = get(),
+            profileRepository = get(),
+            sessionManager = get(),
+            authRepository = get()
         )
     }
-    viewModel { com.revlens.app.ui.screens.analytics.LtvAnalysisViewModel(get(), get()) }
-    viewModel { com.revlens.app.ui.screens.analytics.CacAnalyticsViewModel(get(), get(), get()) }
-    viewModel { com.revlens.app.ui.screens.simulator.GrowthSimulatorViewModel(get(), get()) }
     viewModel {
-        com.revlens.app.ui.screens.analytics.CustomerAnalyticsViewModel(
-            get(), get(), get()
+        DataImportViewModel(
+            analyticsRepository = get(),
+            workspaceContext = get(),
+            filePicker = get()
         )
     }
-    viewModel { com.revlens.app.ui.screens.analytics.CohortAnalysisViewModel(get(), get(), get()) }
-    viewModel { com.revlens.app.ui.screens.experiments.ExperimentsViewModel(get(), get()) }
-    viewModel { com.revlens.app.ui.screens.experiments.ExperimentDetailsViewModel(get()) }
     viewModel {
-        com.revlens.app.ui.screens.reports.ReportsViewModel(
-            get(), get(), get(), get(), get()
+        RevenueBreakdownViewModel(
+            profileRepository = get(),
+            analyticsRepository = get(),
+            workspaceContext = get()
         )
     }
-    viewModel { com.revlens.app.ui.screens.security.SecuritySettingsViewModel(get(), get(), get()) }
     viewModel {
-        com.revlens.app.ui.screens.notifications.NotificationSettingsViewModel(
-            get(), get()
+        LtvAnalysisViewModel(
+            profileRepository = get(),
+            analyticsRepository = get()
         )
     }
-    viewModel { com.revlens.app.ui.screens.auth.LoginViewModel(get(), get(), getOrNull(), getOrNull()) }
-    viewModel { com.revlens.app.ui.screens.auth.InviteAcceptanceViewModel(get(), get(), get(), get(), getOrNull()) }
-    viewModel { com.revlens.app.ui.screens.profile.ProfileViewModel(get(), get(), get(), get()) }
-    viewModel { com.revlens.app.ui.screens.team.TeamViewModel(get(), get(), getOrNull(), getOrNull()) }
-    viewModel { com.revlens.app.ui.screens.billing.BillingViewModel(get(), get()) }
-    viewModel { com.revlens.app.ui.screens.integrations.IntegrationsViewModel(get(), get()) }
-    viewModel { com.revlens.app.ui.screens.developer.ApiWebhooksViewModel(get(), get()) }
-    viewModel { com.revlens.app.ui.screens.marketing.PublicPricingViewModel() }
-    viewModel { com.revlens.app.ui.screens.marketing.LandingViewModel() }
+    viewModel {
+        CacAnalyticsViewModel(
+            profileRepository = get(),
+            analyticsRepository = get(),
+            workspaceContext = get()
+        )
+    }
+    viewModel {
+        GrowthSimulatorViewModel(
+            profileRepository = get(),
+            scenarioRepository = get()
+        )
+    }
+    viewModel {
+        CustomerAnalyticsViewModel(
+            profileRepository = get(),
+            analyticsRepository = get()
+        )
+    }
+    viewModel {
+        CohortAnalysisViewModel(
+            profileRepository = get(),
+            analyticsRepository = get()
+        )
+    }
+    viewModel {
+        ExperimentsViewModel(
+            experimentRepository = get(),
+            workspaceContext = get()
+        )
+    }
+    viewModel {
+        ExperimentDetailsViewModel(
+            experimentRepository = get()
+        )
+    }
+    viewModel {
+        ReportsViewModel(
+            reportRepository = get(),
+            workspaceContext = get(),
+            profileRepository = get(),
+            scenarioRepository = get(),
+            fileSharer = get()
+        )
+    }
+    viewModel {
+        SecuritySettingsViewModel(
+            appLockRepository = get(),
+            biometricAuthenticator = get(),
+            sessionManager = get()
+        )
+    }
+    viewModel {
+        NotificationSettingsViewModel(
+            preferencesRepository = get(),
+            localNotifier = get()
+        )
+    }
+    viewModel {
+        LoginViewModel(
+            loginUseCase = get(),
+            profileRepository = get(),
+            teamRepository = get()
+        )
+    }
+    viewModel {
+        InviteAcceptanceViewModel(
+            teamRepository = get(),
+            workspaceContext = get(),
+            profileRepository = get(),
+            sessionManager = get(),
+            authRepository = get(),
+            workspaceRepository = get()
+        )
+    }
+    viewModel {
+        ProfileViewModel(
+            authRepository = get(),
+            sessionManager = get(),
+            workspaceRepository = get(),
+            workspaceContext = get()
+        )
+    }
+    viewModel {
+        TeamViewModel(
+            teamRepository = get(),
+            workspaceContext = get(),
+            sessionManager = get(),
+            authRepository = get()
+        )
+    }
+    viewModel {
+        BillingViewModel(
+            billingRepository = get(),
+            workspaceContext = get()
+        )
+    }
+    viewModel {
+        IntegrationsViewModel(
+            integrationRepository = get(),
+            workspaceContext = get()
+        )
+    }
+    viewModel {
+        ApiWebhooksViewModel(
+            developerRepository = get(),
+            workspaceContext = get()
+        )
+    }
+    viewModel { PublicPricingViewModel() }
+    viewModel { LandingViewModel() }
 }
-
-
-
-

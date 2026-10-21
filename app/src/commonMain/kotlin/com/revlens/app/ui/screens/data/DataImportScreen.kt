@@ -1,5 +1,6 @@
 package com.revlens.app.ui.screens.data
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -47,7 +48,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.revlens.app.core.platform.PickedFile
 import com.revlens.app.domain.calc.CanonicalField
+import com.revlens.app.domain.calc.ParsedCsv
+import com.revlens.app.domain.calc.ValidationReport
 import com.revlens.app.ui.components.PrimaryButton
 import com.revlens.app.ui.components.SecondaryButton
 import com.revlens.app.ui.components.display.CsvPreviewTable
@@ -320,7 +324,7 @@ private fun DatasetTypeOptionCard(
         onClick = onClick,
         shape = RoundedCornerShape(12.dp),
         color = bg,
-        border = androidx.compose.foundation.BorderStroke(
+        border = BorderStroke(
             if (isSelected) 2.dp else 1.dp, borderColor
         ),
         modifier = Modifier.fillMaxWidth()
@@ -366,8 +370,8 @@ private fun DatasetTypeOptionCard(
 
 @Composable
 private fun StepUploadFile(
-    pickedFile: com.revlens.app.core.platform.PickedFile?,
-    parsedCsv: com.revlens.app.domain.calc.ParsedCsv?,
+    pickedFile: PickedFile?,
+    parsedCsv: ParsedCsv?,
     onPickClick: () -> Unit,
     onRemoveClick: () -> Unit
 ) {
@@ -474,7 +478,7 @@ private fun StepColumnMapping(
 
 @Composable
 private fun StepReviewValidation(
-    report: com.revlens.app.domain.calc.ValidationReport?,
+    report: ValidationReport?,
     skipErrors: Boolean,
     updateBaseline: Boolean,
     onToggleSkipErrors: (Boolean) -> Unit,
@@ -606,7 +610,7 @@ private fun WizardBottomBar(
 ) {
     Surface(
         color = RevLensTheme.colors.surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, RevLensTheme.colors.borderDefault),
+        border = BorderStroke(1.dp, RevLensTheme.colors.borderDefault),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(

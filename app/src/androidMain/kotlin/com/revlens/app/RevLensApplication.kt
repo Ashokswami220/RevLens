@@ -1,6 +1,10 @@
 package com.revlens.app
 
 import android.app.Application
+import com.google.firebase.FirebaseApp
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreSettings
+import com.google.firebase.firestore.PersistentCacheSettings
 import com.revlens.app.di.appModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
@@ -9,14 +13,14 @@ class RevLensApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         try {
-            com.google.firebase.FirebaseApp.initializeApp(this)
-            val settings = com.google.firebase.firestore.FirebaseFirestoreSettings.Builder()
+            FirebaseApp.initializeApp(this)
+            val settings = FirebaseFirestoreSettings.Builder()
                 .setLocalCacheSettings(
-                    com.google.firebase.firestore.PersistentCacheSettings.newBuilder()
+                    PersistentCacheSettings.newBuilder()
                         .build()
                 )
                 .build()
-            com.google.firebase.firestore.FirebaseFirestore.getInstance().firestoreSettings =
+            FirebaseFirestore.getInstance().firestoreSettings =
                 settings
         } catch (_: Throwable) {
         }

@@ -1,5 +1,6 @@
 package com.revlens.app.ui.screens.analytics
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -39,6 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.revlens.app.domain.calc.RevenueBreakdownResult
+import com.revlens.app.domain.calc.WaterfallStep
 import com.revlens.app.ui.components.ActionCardButton
 import com.revlens.app.ui.components.DeltaChip
 import com.revlens.app.ui.components.DeltaType
@@ -127,7 +129,6 @@ fun RevenueBreakdownScreen(
             ) {
                 SourceModeSelector(
                     currentMode = state.sourceMode,
-                    hasActualData = state.hasActualData,
                     onModeSelected = {
                         viewModel.onEvent(
                             RevenueBreakdownEvent.SelectSourceMode(it)
@@ -261,7 +262,6 @@ fun RevenueBreakdownScreen(
 @Composable
 private fun SourceModeSelector(
     currentMode: RevenueSourceMode,
-    hasActualData: Boolean,
     onModeSelected: (RevenueSourceMode) -> Unit
 ) {
     Row(
@@ -348,7 +348,7 @@ private fun QuickRatioHeroCard(result: RevenueBreakdownResult, currencySymbol: S
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = RevLensTheme.colors.surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, RevLensTheme.colors.borderDefault),
+        border = BorderStroke(1.dp, RevLensTheme.colors.borderDefault),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
@@ -421,7 +421,7 @@ private fun QuickRatioHeroCard(result: RevenueBreakdownResult, currencySymbol: S
 
 @Composable
 private fun StepDetailCard(
-    step: com.revlens.app.domain.calc.WaterfallStep, currencySymbol: String = "$"
+    step: WaterfallStep, currencySymbol: String = "$"
 ) {
     Box(
         modifier = Modifier

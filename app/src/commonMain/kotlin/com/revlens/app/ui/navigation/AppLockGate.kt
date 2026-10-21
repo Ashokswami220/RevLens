@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.revlens.app.core.platform.BiometricAuthenticator
+import com.revlens.app.domain.model.AppLockPreferences
 import com.revlens.app.domain.repository.AppLockRepository
 import com.revlens.app.ui.theme.RevLensTheme
 import com.revlens.app.ui.theme.RevLensTypography
@@ -45,7 +46,7 @@ fun AppLockGate(
     content: @Composable () -> Unit
 ) {
     val prefs by appLockRepository.preferencesFlow.collectAsState(
-        initial = com.revlens.app.domain.model.AppLockPreferences()
+        initial = AppLockPreferences()
     )
     val coroutineScope = rememberCoroutineScope()
 

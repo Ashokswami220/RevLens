@@ -4,24 +4,27 @@ import com.revlens.app.domain.model.Member
 import com.revlens.app.domain.model.Role
 import com.revlens.app.domain.model.TeamInvite
 
-enum class TeamTab(val label: String) {
-    Members("Members"),
-    Invites("Invites"),
-    Permissions("Permissions Matrix")
+enum class TeamTab {
+    Members,
+    Invites,
+    Permissions
 }
 
 data class TeamUiState(
-    val activeTab: TeamTab = TeamTab.Members,
     val members: List<Member> = emptyList(),
     val invites: List<TeamInvite> = emptyList(),
+    val activeTab: TeamTab = TeamTab.Members,
     val userRole: Role = Role.Owner,
+    val currentUserId: String = "",
+    val currentUserEmail: String = "",
+    val workspaceJoinCode: String = "",
     val totalSeats: Int = 5,
-    val usedSeats: Int = 1,
     val isInviteSheetVisible: Boolean = false,
     val inviteEmail: String = "",
     val inviteRole: Role = Role.Editor,
     val isInviting: Boolean = false,
     val memberToRemove: Member? = null,
+    val isLoading: Boolean = false,
     val error: String? = null
 )
 

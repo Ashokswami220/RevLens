@@ -1,5 +1,6 @@
 package com.revlens.app.ui.screens.analytics
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -266,7 +267,7 @@ private fun LtvHeroCard(state: LtvAnalysisUiState) {
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = RevLensTheme.colors.surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, RevLensTheme.colors.borderDefault),
+        border = BorderStroke(1.dp, RevLensTheme.colors.borderDefault),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
@@ -452,7 +453,7 @@ private fun SensitivityCurveCard(
             val effectiveH = h - (pad * 2)
 
             val path = Path()
-            points.forEachIndexed { idx, (churn, ltv) ->
+            points.forEachIndexed { idx, (_, ltv) ->
                 val x = (idx.toFloat() / (points.size - 1)) * w
                 val y = pad + effectiveH - ((ltv.toDouble() / maxVal).toFloat() * effectiveH)
                 if (idx == 0) path.moveTo(x, y) else path.lineTo(x, y)

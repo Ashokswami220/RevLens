@@ -48,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.revlens.app.model.BigDecimal
+import com.revlens.app.domain.policy.RolePermissions
 import com.revlens.app.model.BusinessProfile
 import com.revlens.app.model.Plan
 import com.revlens.app.model.toBigDecimalOrNull
@@ -77,6 +78,9 @@ fun BusinessSetupScreen(
     onNavigateBack: () -> Unit
 ) {
     val profile by viewModel.profile.collectAsState()
+    val userRole by viewModel.currentUserRole.collectAsState()
+    val canEdit =
+        RolePermissions.canEditBaselinesAndScenarios(userRole)
     val uiState by setupViewModel.uiState.collectAsState()
 
     val currentCurrency = CurrencyUtils.getCurrency(uiState.currencyCode)
@@ -318,67 +322,70 @@ fun BusinessSetupScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            PrimaryButton(
-                text = "Save Data",
-                onClick = {
-                    val currentProfile = profile
-                    val newProfile = currentProfile?.copy(
-                        currencyCode = uiState.currencyCode,
-                        monthlyChurnRate = uiState.churnRateStr.toDoubleOrNull()
-                            ?.div(100.0) ?: currentProfile.monthlyChurnRate,
-                        monthlyGrowthRate = uiState.growthRateStr.toDoubleOrNull()
-                            ?.div(100.0) ?: currentProfile.monthlyGrowthRate,
-                        cac = uiState.cacStr.toBigDecimalOrNull() ?: currentProfile.cac,
-                        fixedCosts = uiState.fixedCostsStr.toBigDecimalOrNull()
-                            ?: currentProfile.fixedCosts,
-                        variableCostPerCustomer = uiState.varCostsStr.toBigDecimalOrNull()
-                            ?: currentProfile.variableCostPerCustomer,
-                        plans = uiState.editablePlans.map { editablePlan ->
-                            val originalPlan =
-                                currentProfile.plans.find { it.id == editablePlan.id }
-                            originalPlan?.copy(
-                                name = editablePlan.name.ifEmpty { originalPlan.name },
-                                price = editablePlan.priceStr.toBigDecimalOrNull()
-                                    ?: originalPlan.price,
-                                customerCount = editablePlan.customerCountStr.toIntOrNull()
-                                    ?: originalPlan.customerCount
-                            )
-                                ?: Plan(
-                                    id = editablePlan.id,
-                                    name = editablePlan.name,
-                                    price = editablePlan.priceStr.toBigDecimalOrNull()
-                                        ?: BigDecimal.ZERO,
-                                    customerCount = editablePlan.customerCountStr.toIntOrNull()
-                                        ?: 0
-                                )
-                        }
-                    )
-                        ?: BusinessProfile(
+            if (canEdit) {
+                PrimaryButton(
+                    text = "Save Data",
+                    onClick = {
+                        val currentProfile = profile
+                        val newProfile = currentProfile?.copy(
                             currencyCode = uiState.currencyCode,
                             monthlyChurnRate = uiState.churnRateStr.toDoubleOrNull()
-                                ?.div(100.0) ?: 0.0,
+                                ?.div(100.0) ?: currentProfile.monthlyChurnRate,
                             monthlyGrowthRate = uiState.growthRateStr.toDoubleOrNull()
-                                ?.div(100.0) ?: 0.0,
-                            cac = uiState.cacStr.toBigDecimalOrNull() ?: BigDecimal.ZERO,
+                                ?.div(100.0) ?: currentProfile.monthlyGrowthRate,
+                            cac = uiState.cacStr.toBigDecimalOrNull() ?: currentProfile.cac,
                             fixedCosts = uiState.fixedCostsStr.toBigDecimalOrNull()
-                                ?: BigDecimal.ZERO,
+                                ?: currentProfile.fixedCosts,
                             variableCostPerCustomer = uiState.varCostsStr.toBigDecimalOrNull()
-                                ?: BigDecimal.ZERO,
+                                ?: currentProfile.variableCostPerCustomer,
                             plans = uiState.editablePlans.map { editablePlan ->
-                                Plan(
-                                    id = editablePlan.id,
-                                    name = editablePlan.name,
+                                val originalPlan =
+                                    currentProfile.plans.find { it.id == editablePlan.id }
+                                originalPlan?.copy(
+                                    name = editablePlan.name.ifEmpty { originalPlan.name },
                                     price = editablePlan.priceStr.toBigDecimalOrNull()
-                                        ?: BigDecimal.ZERO,
-                                    customerCount = editablePlan.customerCountStr.toIntOrNull() ?: 0
+                                        ?: originalPlan.price,
+                                    customerCount = editablePlan.customerCountStr.toIntOrNull()
+                                        ?: originalPlan.customerCount
                                 )
+                                    ?: Plan(
+                                        id = editablePlan.id,
+                                        name = editablePlan.name,
+                                        price = editablePlan.priceStr.toBigDecimalOrNull()
+                                            ?: BigDecimal.ZERO,
+                                        customerCount = editablePlan.customerCountStr.toIntOrNull()
+                                            ?: 0
+                                    )
                             }
                         )
-                    viewModel.updateProfile(newProfile)
-                    onNavigateBack()
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
+                            ?: BusinessProfile(
+                                currencyCode = uiState.currencyCode,
+                                monthlyChurnRate = uiState.churnRateStr.toDoubleOrNull()
+                                    ?.div(100.0) ?: 0.0,
+                                monthlyGrowthRate = uiState.growthRateStr.toDoubleOrNull()
+                                    ?.div(100.0) ?: 0.0,
+                                cac = uiState.cacStr.toBigDecimalOrNull() ?: BigDecimal.ZERO,
+                                fixedCosts = uiState.fixedCostsStr.toBigDecimalOrNull()
+                                    ?: BigDecimal.ZERO,
+                                variableCostPerCustomer = uiState.varCostsStr.toBigDecimalOrNull()
+                                    ?: BigDecimal.ZERO,
+                                plans = uiState.editablePlans.map { editablePlan ->
+                                    Plan(
+                                        id = editablePlan.id,
+                                        name = editablePlan.name,
+                                        price = editablePlan.priceStr.toBigDecimalOrNull()
+                                            ?: BigDecimal.ZERO,
+                                        customerCount = editablePlan.customerCountStr.toIntOrNull()
+                                            ?: 0
+                                    )
+                                }
+                            )
+                        viewModel.updateProfile(newProfile)
+                        onNavigateBack()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }

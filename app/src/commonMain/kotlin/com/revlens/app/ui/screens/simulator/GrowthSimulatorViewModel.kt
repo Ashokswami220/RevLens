@@ -12,6 +12,7 @@ import com.revlens.app.model.BigDecimal
 import com.revlens.app.model.BusinessProfile
 import com.revlens.app.model.Plan
 import com.revlens.app.model.Scenario
+import com.revlens.app.utils.CurrencyUtils
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
@@ -41,7 +42,7 @@ class GrowthSimulatorViewModel(
                             baselineMrrMinor = mrrMinor,
                             baselineCustomers = customers,
                             baselineChurnRate = churn,
-                            currencySymbol = com.revlens.app.utils.CurrencyUtils.getCurrency(
+                            currencySymbol = CurrencyUtils.getCurrency(
                                 profile.currencyCode
                             ).symbol
                         )

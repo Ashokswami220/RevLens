@@ -4,17 +4,17 @@ import androidx.lifecycle.viewModelScope
 import com.revlens.app.core.ui.MviViewModel
 import com.revlens.app.core.ui.toUiText
 import com.revlens.app.data.ProfileRepository
-import com.revlens.app.domain.session.SessionManager
+import com.revlens.app.domain.repository.TeamRepository
 import com.revlens.app.domain.usecase.LoginUseCase
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.time.Duration.Companion.milliseconds
 
 class LoginViewModel(
     private val loginUseCase: LoginUseCase,
-    private val sessionManager: SessionManager,
     private val profileRepository: ProfileRepository? = null,
-    private val teamRepository: com.revlens.app.domain.repository.TeamRepository? = null
+    private val teamRepository: TeamRepository? = null
 ) : MviViewModel<LoginUiState, LoginEvent, LoginEffect>(LoginUiState()) {
 
     override fun onEvent(event: LoginEvent) = when (event) {
@@ -31,20 +31,21 @@ class LoginViewModel(
             try {
                 val result = loginUseCase.loginWithGoogle(idToken, email, displayName)
                 result.onSuccess { userAccount ->
-                    val pending = teamRepository?.getPendingInvitesForEmail(userAccount.email) ?: emptyList()
+                    val pending =
+                        teamRepository?.getPendingInvitesForEmail(userAccount.email) ?: emptyList()
                     if (pending.isNotEmpty()) {
                         emit(LoginEffect.NavigateToInviteAcceptance)
                         return@onSuccess
                     }
 
                     val remoteProf = runCatching {
-                        withTimeoutOrNull(2500L) {
+                        withTimeoutOrNull(2500L.milliseconds) {
                             profileRepository?.syncRemoteProfile()
                         }
                     }.getOrNull()
 
                     val localProf = runCatching {
-                        withTimeoutOrNull(1500L) {
+                        withTimeoutOrNull(1500L.milliseconds) {
                             profileRepository?.profileFlow?.first()
                         }
                     }.getOrNull()

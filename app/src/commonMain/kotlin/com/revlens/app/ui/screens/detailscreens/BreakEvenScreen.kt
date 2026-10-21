@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -41,14 +42,18 @@ fun BreakEvenScreen(viewModel: MainViewModel) {
     val profile by viewModel.profile.collectAsState()
 
     var cacSimulated by rememberSaveable { mutableStateOf(profile?.cac?.toFloat() ?: 100f) }
-    var fixedCostsSimulated by rememberSaveable { mutableStateOf(profile?.fixedCosts?.toFloat() ?: 5000f) }
+    var fixedCostsSimulated by rememberSaveable {
+        mutableStateOf(
+            profile?.fixedCosts?.toFloat() ?: 5000f
+        )
+    }
     var variableCostSimulated by rememberSaveable {
         mutableStateOf(
             profile?.variableCostPerCustomer?.toFloat() ?: 10f
         )
     }
 
-    androidx.compose.runtime.LaunchedEffect(profile) {
+    LaunchedEffect(profile) {
         profile?.let { p ->
             cacSimulated = p.cac.toFloat()
             fixedCostsSimulated = p.fixedCosts.toFloat()
@@ -85,7 +90,6 @@ fun BreakEvenScreen(viewModel: MainViewModel) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Segmented Tabs
-
 
         SectionCard(title = "Break-Even Results") {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -185,7 +189,6 @@ fun BreakEvenScreen(viewModel: MainViewModel) {
                 )
             }
         }
-
 
     }
 }

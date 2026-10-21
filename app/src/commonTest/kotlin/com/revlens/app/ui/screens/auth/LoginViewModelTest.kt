@@ -39,7 +39,7 @@ class LoginViewModelTest {
     fun testInitialState() {
         val repo = FakeAuthRepository(InMemorySecureStorage())
         val session = DefaultSessionManager()
-        val vm = LoginViewModel(LoginUseCase(repo, session), session)
+        val vm = LoginViewModel(LoginUseCase(repo, session))
 
         val s = vm.state.value
         assertFalse(s.isLoading)
@@ -50,7 +50,7 @@ class LoginViewModelTest {
     fun testGoogleSignInSuccess() = runTest(testDispatcher) {
         val repo = FakeAuthRepository(InMemorySecureStorage())
         val session = DefaultSessionManager()
-        val vm = LoginViewModel(LoginUseCase(repo, session), session)
+        val vm = LoginViewModel(LoginUseCase(repo, session))
 
         vm.onEvent(LoginEvent.GoogleSignInClicked())
         advanceUntilIdle()
@@ -65,7 +65,7 @@ class LoginViewModelTest {
     fun testGoogleSignInNewUserNavigatesToCreateWorkspace() = runTest(testDispatcher) {
         val repo = FakeAuthRepository(InMemorySecureStorage())
         val session = DefaultSessionManager(SessionState.SignedOut)
-        val vm = LoginViewModel(LoginUseCase(repo, session), session)
+        val vm = LoginViewModel(LoginUseCase(repo, session))
 
         var emittedEffect: LoginEffect? = null
         val job = launch {

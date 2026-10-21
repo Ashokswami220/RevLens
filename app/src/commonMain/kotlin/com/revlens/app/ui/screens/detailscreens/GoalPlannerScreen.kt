@@ -11,6 +11,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,10 +44,14 @@ fun GoalPlannerScreen(
 
     val currentMrr = profile?.currentMrr?.toFloat() ?: 1000f
     val initialGoal = profile?.mrrGoal?.toFloat() ?: (currentMrr * 2)
-    var targetMrr by rememberSaveable { mutableStateOf(initialGoal.coerceIn(currentMrr, maxOf(currentMrr * 10, currentMrr + 1000f))) }
+    var targetMrr by rememberSaveable {
+        mutableStateOf(
+            initialGoal.coerceIn(currentMrr, maxOf(currentMrr * 10, currentMrr + 1000f))
+        )
+    }
     var targetMonths by rememberSaveable { mutableStateOf(12f) }
 
-    androidx.compose.runtime.LaunchedEffect(profile) {
+    LaunchedEffect(profile) {
         val base = profile?.currentMrr?.toFloat() ?: 1000f
         val goal = profile?.mrrGoal?.toFloat() ?: (base * 2)
         targetMrr = goal.coerceIn(base, maxOf(base * 10, base + 1000f))
@@ -147,7 +152,6 @@ fun GoalPlannerScreen(
         }
     }
 }
-
 
 @Composable
 private fun ResultRow(label: String, value: String, caption: String? = null) {

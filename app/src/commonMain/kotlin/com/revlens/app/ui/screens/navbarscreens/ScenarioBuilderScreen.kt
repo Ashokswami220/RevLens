@@ -24,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.revlens.app.domain.calc.PricingSimulationEngine
+import com.revlens.app.domain.model.Role
 import com.revlens.app.model.Scenario
 import com.revlens.app.presentation.MainViewModel
 import com.revlens.app.ui.components.ActionCardButton
@@ -47,7 +48,7 @@ fun ScenarioBuilderScreen(
 ) {
     val scenarios by viewModel.scenarios.collectAsState()
     val userRole by viewModel.currentUserRole.collectAsState()
-    val isViewer = userRole == com.revlens.app.domain.model.Role.Viewer
+    val isViewer = userRole == Role.Viewer
 
     val profile by viewModel.profile.collectAsState()
     val currencyFormatter = remember(profile?.currencyCode) {

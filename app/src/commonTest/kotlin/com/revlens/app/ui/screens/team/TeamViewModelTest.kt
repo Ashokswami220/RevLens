@@ -3,6 +3,7 @@ package com.revlens.app.ui.screens.team
 import com.revlens.app.data.fake.FakeTeamRepository
 import com.revlens.app.domain.context.DefaultWorkspaceContext
 import com.revlens.app.domain.model.Role
+import com.revlens.app.domain.model.UserAccount
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -45,7 +46,6 @@ class TeamViewModelTest {
         val s = vm.state.value
         assertEquals(1, s.members.size)
         assertEquals(0, s.invites.size)
-        assertEquals(1, s.usedSeats)
         assertEquals(Role.Owner, s.members.first().role)
     }
 
@@ -77,10 +77,11 @@ class TeamViewModelTest {
     fun testChangeRoleAndRemoveMember() = runTest(testDispatcher) {
         val repo = FakeTeamRepository()
         repo.inviteMember("ws_1", "editor@acme.ai", Role.Editor)
-        val invite = repo.getPendingInvitesForEmail("editor@acme.ai").first()
+        val invite = repo.getPendingInvitesForEmail("editor@acme.ai")
+            .first()
         repo.acceptInvite(
             invite.inviteId,
-            com.revlens.app.domain.model.UserAccount("usr_2", "Editor User", "editor@acme.ai")
+            UserAccount("usr_2", "Editor User", "editor@acme.ai")
         )
 
         val wsContext = DefaultWorkspaceContext("ws_1")

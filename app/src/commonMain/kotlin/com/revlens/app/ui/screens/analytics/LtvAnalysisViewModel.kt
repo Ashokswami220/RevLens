@@ -7,6 +7,8 @@ import com.revlens.app.domain.calc.LtvCalculator
 import com.revlens.app.domain.repository.AnalyticsRepository
 import com.revlens.app.model.BigDecimal
 import com.revlens.app.model.BusinessProfile
+import com.revlens.app.ui.components.display.DataSourceMode
+import com.revlens.app.utils.CurrencyUtils
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
@@ -40,7 +42,7 @@ class LtvAnalysisViewModel(
                     }
 
                     val symbol =
-                        com.revlens.app.utils.CurrencyUtils.getCurrency(profile.currencyCode).symbol
+                        CurrencyUtils.getCurrency(profile.currencyCode).symbol
                     update {
                         copy(
                             baseArpu = arpu,
@@ -50,9 +52,9 @@ class LtvAnalysisViewModel(
                             cac = profile.cac,
                             currencySymbol = symbol,
                             dataSourceMode = if (dataset != null && dataset.subscriptions.isNotEmpty()) {
-                                com.revlens.app.ui.components.display.DataSourceMode.ACTUAL
+                                DataSourceMode.ACTUAL
                             } else {
-                                com.revlens.app.ui.components.display.DataSourceMode.MODELED
+                                DataSourceMode.MODELED
                             }
                         )
                     }

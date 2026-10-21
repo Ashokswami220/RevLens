@@ -13,6 +13,7 @@ import com.revlens.app.domain.repository.AnalyticsRepository
 import com.revlens.app.model.BigDecimal
 import com.revlens.app.model.BusinessProfile
 import com.revlens.app.ui.components.display.DataSourceMode
+import com.revlens.app.utils.CurrencyUtils
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
@@ -79,7 +80,7 @@ class CacAnalyticsViewModel(
                 ((arpu.toDouble() - varCost.toDouble()) / arpu.toDouble()) * 100.0
             } else 80.0
             CacCalculator.calculateActual(
-                spendRecords = dataset!!.spend,
+                spendRecords = dataset.spend,
                 subscriptions = dataset.subscriptions,
                 arpu = arpu,
                 grossMarginPercent = margin
@@ -91,7 +92,7 @@ class CacAnalyticsViewModel(
             )
         }
 
-        val symbol = com.revlens.app.utils.CurrencyUtils.getCurrency(profile.currencyCode).symbol
+        val symbol = CurrencyUtils.getCurrency(profile.currencyCode).symbol
         update {
             copy(
                 result = result,

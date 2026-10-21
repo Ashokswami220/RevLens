@@ -1,5 +1,6 @@
 package com.revlens.app.ui.screens.analytics
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -241,7 +242,7 @@ private fun CacHeroCard(result: CacAnalysisResult, currencySymbol: String = "$")
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = RevLensTheme.colors.surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, RevLensTheme.colors.borderDefault),
+        border = BorderStroke(1.dp, RevLensTheme.colors.borderDefault),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(

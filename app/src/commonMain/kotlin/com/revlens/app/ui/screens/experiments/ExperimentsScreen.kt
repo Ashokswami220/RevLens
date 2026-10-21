@@ -43,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.revlens.app.domain.model.ExperimentMetric
 import com.revlens.app.domain.model.ExperimentType
@@ -187,7 +188,7 @@ fun ExperimentsScreen(
                         text = "Start testing live hypotheses to compare observed revenue with model predictions.",
                         style = RevLensTypography.bodySmall,
                         color = RevLensTheme.colors.textSecondary,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        textAlign = TextAlign.Center,
                         modifier = Modifier.padding(horizontal = 24.dp)
                     )
                     Button(
@@ -227,8 +228,7 @@ fun ExperimentsScreen(
                             treatmentDesc = tDesc
                         )
                     )
-                },
-                onDismiss = { viewModel.onEvent(ExperimentsEvent.DismissCreateSheet) }
+                }
             )
         }
     }
@@ -236,8 +236,7 @@ fun ExperimentsScreen(
 
 @Composable
 private fun CreateExperimentSheet(
-    onCreate: (String, ExperimentType, ExperimentMetric, Double, Double, Int, String, String) -> Unit,
-    onDismiss: () -> Unit
+    onCreate: (String, ExperimentType, ExperimentMetric, Double, Double, Int, String, String) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var selectedType by remember { mutableStateOf(ExperimentType.PRICE_TEST) }

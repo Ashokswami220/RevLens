@@ -6,6 +6,7 @@ import com.revlens.app.domain.model.ReportSnapshot
 import com.revlens.app.domain.model.ReportTemplate
 import com.revlens.app.model.BusinessProfile
 import com.revlens.app.model.Scenario
+import com.revlens.app.utils.CurrencyUtils
 
 object ReportBuilder {
 
@@ -30,7 +31,7 @@ object ReportBuilder {
         val churnRate = profile?.monthlyChurnRate ?: 4.2
         val ltv = if (churnRate > 0) arpu / (churnRate / 100.0) else 1945.0
         val currencySymbol =
-            com.revlens.app.utils.CurrencyUtils.getCurrency(profile?.currencyCode).symbol
+            CurrencyUtils.getCurrency(profile?.currencyCode).symbol
 
         val metrics = mutableMapOf<String, String>()
         if (sections.contains(ReportSection.KPIS)) {
@@ -142,7 +143,7 @@ object ReportBuilder {
         }
 
         val currencySymbol =
-            com.revlens.app.utils.CurrencyUtils.getCurrency(profile?.currencyCode).symbol
+            CurrencyUtils.getCurrency(profile?.currencyCode).symbol
         val baseMrr = profile?.currentMrr?.toDouble() ?: 42500.0
         if (sections.contains(ReportSection.SCENARIOS) && scenarios.isNotEmpty()) {
             sb.append("\"--- MODELED SCENARIOS ---\"\n")

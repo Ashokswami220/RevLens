@@ -17,7 +17,9 @@ import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -31,6 +33,51 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.revlens.app.core.platform.BiometricAuthenticator
+import com.revlens.app.domain.repository.AppLockRepository
+import com.revlens.app.ui.components.PrimaryButton
+import com.revlens.app.ui.screens.analytics.CacAnalyticsScreen
+import com.revlens.app.ui.screens.analytics.CacAnalyticsViewModel
+import com.revlens.app.ui.screens.analytics.CohortAnalysisScreen
+import com.revlens.app.ui.screens.analytics.CohortAnalysisViewModel
+import com.revlens.app.ui.screens.analytics.CustomerAnalyticsScreen
+import com.revlens.app.ui.screens.analytics.CustomerAnalyticsViewModel
+import com.revlens.app.ui.screens.analytics.LtvAnalysisScreen
+import com.revlens.app.ui.screens.analytics.LtvAnalysisViewModel
+import com.revlens.app.ui.screens.analytics.RevenueBreakdownScreen
+import com.revlens.app.ui.screens.analytics.RevenueBreakdownViewModel
+import com.revlens.app.ui.screens.auth.InviteAcceptanceScreen
+import com.revlens.app.ui.screens.auth.InviteAcceptanceViewModel
+import com.revlens.app.ui.screens.auth.LoginScreen
+import com.revlens.app.ui.screens.auth.LoginViewModel
+import com.revlens.app.ui.screens.billing.BillingScreen
+import com.revlens.app.ui.screens.billing.BillingViewModel
+import com.revlens.app.ui.screens.data.DataImportScreen
+import com.revlens.app.ui.screens.data.DataImportViewModel
+import com.revlens.app.ui.screens.developer.ApiWebhooksScreen
+import com.revlens.app.ui.screens.developer.ApiWebhooksViewModel
+import com.revlens.app.ui.screens.experiments.ExperimentDetailsScreen
+import com.revlens.app.ui.screens.experiments.ExperimentDetailsViewModel
+import com.revlens.app.ui.screens.experiments.ExperimentsScreen
+import com.revlens.app.ui.screens.experiments.ExperimentsViewModel
+import com.revlens.app.ui.screens.integrations.IntegrationsScreen
+import com.revlens.app.ui.screens.integrations.IntegrationsViewModel
+import com.revlens.app.ui.screens.marketing.LandingScreen
+import com.revlens.app.ui.screens.marketing.LandingViewModel
+import com.revlens.app.ui.screens.marketing.PublicPricingScreen
+import com.revlens.app.ui.screens.marketing.PublicPricingViewModel
+import com.revlens.app.ui.screens.notifications.NotificationSettingsScreen
+import com.revlens.app.ui.screens.notifications.NotificationSettingsViewModel
+import com.revlens.app.ui.screens.profile.ProfileScreen
+import com.revlens.app.ui.screens.profile.ProfileViewModel
+import com.revlens.app.ui.screens.reports.ReportsScreen
+import com.revlens.app.ui.screens.reports.ReportsViewModel
+import com.revlens.app.ui.screens.security.AccountActionsScreen
+import com.revlens.app.ui.screens.security.SecuritySettingsScreen
+import com.revlens.app.ui.screens.security.SecuritySettingsViewModel
+import com.revlens.app.ui.screens.team.TeamScreen
+import com.revlens.app.ui.screens.team.TeamViewModel
+import com.revlens.app.ui.theme.RevLensTypography
 import com.revlens.app.presentation.MainViewModel
 import com.revlens.app.ui.components.BottomNavItem
 import com.revlens.app.ui.components.LocalAppNavigator
@@ -50,6 +97,7 @@ import com.revlens.app.ui.screens.navbarscreens.SimulatorScreen
 import com.revlens.app.ui.screens.workspace.CreateWorkspaceScreen
 import com.revlens.app.ui.screens.workspace.WorkspaceManagementScreen
 import com.revlens.app.ui.theme.RevLensTheme
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 private const val ANIM_DURATION = 350
@@ -74,6 +122,41 @@ fun RevLensNavGraph(
 ) {
     val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsState()
     val hasSeenIntro by viewModel.hasSeenIntro.collectAsState()
+    val accessRevokedMessage by viewModel.accessRevokedMessage.collectAsState()
+
+    if (accessRevokedMessage != null) {
+        AlertDialog(
+            onDismissRequest = { /* Require explicit OK click */ },
+            containerColor = RevLensTheme.colors.surface,
+            title = {
+                Text(
+                    text = "Workspace Access Removed",
+                    style = RevLensTypography.titleLarge,
+                    color = RevLensTheme.colors.textPrimary
+                )
+            },
+            text = {
+                Text(
+                    text = accessRevokedMessage ?: "",
+                    style = RevLensTypography.bodyMedium,
+                    color = RevLensTheme.colors.textSecondary
+                )
+            },
+            confirmButton = {
+                PrimaryButton(
+                    text = "OK",
+                    onClick = {
+                        viewModel.acknowledgeAccessRevoked {
+                            navController.navigate(CreateWorkspaceRoute) {
+                                popUpTo(0) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }
+                    }
+                )
+            }
+        )
+    }
 
     if (isOnboardingCompleted == null) {
         Box(
@@ -246,8 +329,14 @@ fun RevLensNavGraph(
             val destination: Any = if (hasSeenIntro) LoginRoute else IntroRoute
             val currentRoute = navController.currentDestination?.route.orEmpty()
             val isAlreadyThere = when (destination) {
-                is LoginRoute -> navController.currentDestination?.hasRoute<LoginRoute>() == true || currentRoute.contains("Login")
-                is IntroRoute -> navController.currentDestination?.hasRoute<IntroRoute>() == true || currentRoute.contains("Intro")
+                is LoginRoute -> navController.currentDestination?.hasRoute<LoginRoute>() == true || currentRoute.contains(
+                    "Login"
+                )
+
+                is IntroRoute -> navController.currentDestination?.hasRoute<IntroRoute>() == true || currentRoute.contains(
+                    "Intro"
+                )
+
                 else -> false
             }
             if (!isAlreadyThere) {
@@ -365,10 +454,10 @@ fun RevLensNavGraph(
         }
     }
 
-    val appLockRepository: com.revlens.app.domain.repository.AppLockRepository =
-        org.koin.compose.koinInject()
-    val biometricAuthenticator: com.revlens.app.core.platform.BiometricAuthenticator =
-        org.koin.compose.koinInject()
+    val appLockRepository: AppLockRepository =
+        koinInject()
+    val biometricAuthenticator: BiometricAuthenticator =
+        koinInject()
 
     AppLockGate(
         appLockRepository = appLockRepository,
@@ -472,9 +561,9 @@ fun RevLensNavGraph(
                     }
 
                     composable<LoginRoute> {
-                        val loginViewModel: com.revlens.app.ui.screens.auth.LoginViewModel =
-                            org.koin.compose.viewmodel.koinViewModel()
-                        com.revlens.app.ui.screens.auth.LoginScreen(
+                        val loginViewModel: LoginViewModel =
+                            koinViewModel()
+                        LoginScreen(
                             viewModel = loginViewModel,
                             onNavigateToDashboard = {
                                 navController.navigate(DashboardRoute) {
@@ -497,9 +586,9 @@ fun RevLensNavGraph(
                     }
 
                     composable<InviteAcceptanceRoute> {
-                        val inviteViewModel: com.revlens.app.ui.screens.auth.InviteAcceptanceViewModel =
-                            org.koin.compose.viewmodel.koinViewModel()
-                        com.revlens.app.ui.screens.auth.InviteAcceptanceScreen(
+                        val inviteViewModel: InviteAcceptanceViewModel =
+                            koinViewModel()
+                        InviteAcceptanceScreen(
                             viewModel = inviteViewModel,
                             onNavigateToDashboard = {
                                 navController.navigate(DashboardRoute) {
@@ -521,6 +610,13 @@ fun RevLensNavGraph(
                         CreateWorkspaceScreen(
                             onNavigateToOnboarding = {
                                 navController.navigate(OnboardingRoute)
+                            },
+                            onNavigateToDashboard = {
+                                navController.navigate(DashboardRoute) {
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                                BrowserRouter.updateUrl("dashboard")
                             },
                             onBackClick = null
                         )
@@ -693,7 +789,7 @@ fun RevLensNavGraph(
                     }
 
                     composable<AccountActionsRoute> {
-                        com.revlens.app.ui.screens.security.AccountActionsScreen(
+                        AccountActionsScreen(
                             viewModel = viewModel,
                             onNavigateBack = { navController.popBackStack() },
                             onLogout = {
@@ -725,9 +821,9 @@ fun RevLensNavGraph(
                     }
 
                     composable<DataImportRoute> {
-                        val importViewModel: com.revlens.app.ui.screens.data.DataImportViewModel =
-                            org.koin.compose.viewmodel.koinViewModel()
-                        com.revlens.app.ui.screens.data.DataImportScreen(
+                        val importViewModel: DataImportViewModel =
+                            koinViewModel()
+                        DataImportScreen(
                             viewModel = importViewModel,
                             onNavigateBack = { navController.popBackStack() },
                             onNavigateToAnalytics = {
@@ -739,9 +835,9 @@ fun RevLensNavGraph(
                     }
 
                     composable<RevenueBreakdownRoute> {
-                        val breakdownViewModel: com.revlens.app.ui.screens.analytics.RevenueBreakdownViewModel =
-                            org.koin.compose.viewmodel.koinViewModel()
-                        com.revlens.app.ui.screens.analytics.RevenueBreakdownScreen(
+                        val breakdownViewModel: RevenueBreakdownViewModel =
+                            koinViewModel()
+                        RevenueBreakdownScreen(
                             viewModel = breakdownViewModel,
                             onNavigateBack = { navController.popBackStack() },
                             onNavigateToDataImport = { navController.navigate(DataImportRoute) },
@@ -754,9 +850,9 @@ fun RevLensNavGraph(
                     }
 
                     composable<LtvAnalysisRoute> {
-                        val ltvViewModel: com.revlens.app.ui.screens.analytics.LtvAnalysisViewModel =
-                            org.koin.compose.viewmodel.koinViewModel()
-                        com.revlens.app.ui.screens.analytics.LtvAnalysisScreen(
+                        val ltvViewModel: LtvAnalysisViewModel =
+                            koinViewModel()
+                        LtvAnalysisScreen(
                             viewModel = ltvViewModel,
                             onNavigateBack = { navController.popBackStack() },
                             onNavigateToWhatIf = {
@@ -767,9 +863,9 @@ fun RevLensNavGraph(
                     }
 
                     composable<CacAnalyticsRoute> {
-                        val cacViewModel: com.revlens.app.ui.screens.analytics.CacAnalyticsViewModel =
-                            org.koin.compose.viewmodel.koinViewModel()
-                        com.revlens.app.ui.screens.analytics.CacAnalyticsScreen(
+                        val cacViewModel: CacAnalyticsViewModel =
+                            koinViewModel()
+                        CacAnalyticsScreen(
                             viewModel = cacViewModel,
                             onNavigateBack = { navController.popBackStack() },
                             onNavigateToGrowthSimulator = {
@@ -781,9 +877,9 @@ fun RevLensNavGraph(
                     }
 
                     composable<CustomerAnalyticsRoute> {
-                        val customerViewModel: com.revlens.app.ui.screens.analytics.CustomerAnalyticsViewModel =
-                            org.koin.compose.viewmodel.koinViewModel()
-                        com.revlens.app.ui.screens.analytics.CustomerAnalyticsScreen(
+                        val customerViewModel: CustomerAnalyticsViewModel =
+                            koinViewModel()
+                        CustomerAnalyticsScreen(
                             viewModel = customerViewModel,
                             onNavigateBack = { navController.popBackStack() },
                             onNavigateToDataImport = { navController.navigate(DataImportRoute) }
@@ -791,9 +887,9 @@ fun RevLensNavGraph(
                     }
 
                     composable<CohortAnalysisRoute> {
-                        val cohortViewModel: com.revlens.app.ui.screens.analytics.CohortAnalysisViewModel =
-                            org.koin.compose.viewmodel.koinViewModel()
-                        com.revlens.app.ui.screens.analytics.CohortAnalysisScreen(
+                        val cohortViewModel: CohortAnalysisViewModel =
+                            koinViewModel()
+                        CohortAnalysisScreen(
                             viewModel = cohortViewModel,
                             onNavigateBack = { navController.popBackStack() },
                             onNavigateToDataImport = { navController.navigate(DataImportRoute) }
@@ -801,9 +897,9 @@ fun RevLensNavGraph(
                     }
 
                     composable<ExperimentsRoute> {
-                        val expViewModel: com.revlens.app.ui.screens.experiments.ExperimentsViewModel =
-                            org.koin.compose.viewmodel.koinViewModel()
-                        com.revlens.app.ui.screens.experiments.ExperimentsScreen(
+                        val expViewModel: ExperimentsViewModel =
+                            koinViewModel()
+                        ExperimentsScreen(
                             viewModel = expViewModel,
                             onNavigateBack = { navController.popBackStack() },
                             onNavigateToDetails = { id ->
@@ -816,9 +912,9 @@ fun RevLensNavGraph(
 
                     composable<ExperimentDetailsRoute> { backStackEntry ->
                         val route = backStackEntry.toRoute<ExperimentDetailsRoute>()
-                        val detailsViewModel: com.revlens.app.ui.screens.experiments.ExperimentDetailsViewModel =
-                            org.koin.compose.viewmodel.koinViewModel()
-                        com.revlens.app.ui.screens.experiments.ExperimentDetailsScreen(
+                        val detailsViewModel: ExperimentDetailsViewModel =
+                            koinViewModel()
+                        ExperimentDetailsScreen(
                             experimentId = route.id,
                             viewModel = detailsViewModel,
                             onNavigateBack = { navController.popBackStack() }
@@ -826,18 +922,18 @@ fun RevLensNavGraph(
                     }
 
                     composable<ReportsRoute> {
-                        val reportsViewModel: com.revlens.app.ui.screens.reports.ReportsViewModel =
-                            org.koin.compose.viewmodel.koinViewModel()
-                        com.revlens.app.ui.screens.reports.ReportsScreen(
+                        val reportsViewModel: ReportsViewModel =
+                            koinViewModel()
+                        ReportsScreen(
                             viewModel = reportsViewModel,
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }
 
                     composable<SecurityRoute> {
-                        val securityViewModel: com.revlens.app.ui.screens.security.SecuritySettingsViewModel =
-                            org.koin.compose.viewmodel.koinViewModel()
-                        com.revlens.app.ui.screens.security.SecuritySettingsScreen(
+                        val securityViewModel: SecuritySettingsViewModel =
+                            koinViewModel()
+                        SecuritySettingsScreen(
                             viewModel = securityViewModel,
                             onNavigateBack = { navController.popBackStack() },
                             onNavigateToSignUp = { navController.navigate(LoginRoute) }
@@ -845,18 +941,18 @@ fun RevLensNavGraph(
                     }
 
                     composable<NotificationsRoute> {
-                        val notifViewModel: com.revlens.app.ui.screens.notifications.NotificationSettingsViewModel =
-                            org.koin.compose.viewmodel.koinViewModel()
-                        com.revlens.app.ui.screens.notifications.NotificationSettingsScreen(
+                        val notifViewModel: NotificationSettingsViewModel =
+                            koinViewModel()
+                        NotificationSettingsScreen(
                             viewModel = notifViewModel,
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }
 
                     composable<ProfileRoute> {
-                        val profileViewModel: com.revlens.app.ui.screens.profile.ProfileViewModel =
-                            org.koin.compose.viewmodel.koinViewModel()
-                        com.revlens.app.ui.screens.profile.ProfileScreen(
+                        val profileViewModel: ProfileViewModel =
+                            koinViewModel()
+                        ProfileScreen(
                             viewModel = profileViewModel,
                             onNavigateBack = { navController.popBackStack() },
                             onNavigateToLogin = {
@@ -871,45 +967,45 @@ fun RevLensNavGraph(
                     }
 
                     composable<TeamRoute> {
-                        val teamViewModel: com.revlens.app.ui.screens.team.TeamViewModel =
-                            org.koin.compose.viewmodel.koinViewModel()
-                        com.revlens.app.ui.screens.team.TeamScreen(
+                        val teamViewModel: TeamViewModel =
+                            koinViewModel()
+                        TeamScreen(
                             viewModel = teamViewModel,
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }
 
                     composable<BillingRoute> {
-                        val billingViewModel: com.revlens.app.ui.screens.billing.BillingViewModel =
-                            org.koin.compose.viewmodel.koinViewModel()
-                        com.revlens.app.ui.screens.billing.BillingScreen(
+                        val billingViewModel: BillingViewModel =
+                            koinViewModel()
+                        BillingScreen(
                             viewModel = billingViewModel,
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }
 
                     composable<IntegrationsRoute> {
-                        val integrationsViewModel: com.revlens.app.ui.screens.integrations.IntegrationsViewModel =
-                            org.koin.compose.viewmodel.koinViewModel()
-                        com.revlens.app.ui.screens.integrations.IntegrationsScreen(
+                        val integrationsViewModel: IntegrationsViewModel =
+                            koinViewModel()
+                        IntegrationsScreen(
                             viewModel = integrationsViewModel,
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }
 
                     composable<ApiWebhooksRoute> {
-                        val developerViewModel: com.revlens.app.ui.screens.developer.ApiWebhooksViewModel =
-                            org.koin.compose.viewmodel.koinViewModel()
-                        com.revlens.app.ui.screens.developer.ApiWebhooksScreen(
+                        val developerViewModel: ApiWebhooksViewModel =
+                            koinViewModel()
+                        ApiWebhooksScreen(
                             viewModel = developerViewModel,
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }
 
                     composable<LandingRoute> {
-                        val landingViewModel: com.revlens.app.ui.screens.marketing.LandingViewModel =
-                            org.koin.compose.viewmodel.koinViewModel()
-                        com.revlens.app.ui.screens.marketing.LandingScreen(
+                        val landingViewModel: LandingViewModel =
+                            koinViewModel()
+                        LandingScreen(
                             viewModel = landingViewModel,
                             onNavigateToAuth = { navController.navigate(LoginRoute) },
                             onNavigateToDemo = { navController.navigate(DashboardRoute) },
@@ -918,9 +1014,9 @@ fun RevLensNavGraph(
                     }
 
                     composable<PublicPricingRoute> {
-                        val pricingViewModel: com.revlens.app.ui.screens.marketing.PublicPricingViewModel =
-                            org.koin.compose.viewmodel.koinViewModel()
-                        com.revlens.app.ui.screens.marketing.PublicPricingScreen(
+                        val pricingViewModel: PublicPricingViewModel =
+                            koinViewModel()
+                        PublicPricingScreen(
                             viewModel = pricingViewModel,
                             onNavigateToAuth = { navController.navigate(LoginRoute) },
                             onNavigateToHome = { navController.navigate(LandingRoute) }
@@ -931,6 +1027,3 @@ fun RevLensNavGraph(
         }
     }
 }
-
-
-

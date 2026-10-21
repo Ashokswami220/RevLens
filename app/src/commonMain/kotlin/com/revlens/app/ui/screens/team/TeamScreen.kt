@@ -6,15 +6,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -48,6 +46,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,12 +57,15 @@ import com.revlens.app.domain.policy.RolePermissions
 import com.revlens.app.ui.components.DestructiveButton
 import com.revlens.app.ui.components.PrimaryButton
 import com.revlens.app.ui.components.RevLensTextField
+import com.revlens.app.ui.components.SectionCard
 import com.revlens.app.ui.components.TextLinkButton
+import com.revlens.app.ui.components.display.CodeBlock
 import com.revlens.app.ui.components.display.MemberRow
 import com.revlens.app.ui.components.display.RoleChip
 import com.revlens.app.ui.components.display.UsageMeter
 import com.revlens.app.ui.theme.RevLensTheme
 import com.revlens.app.ui.theme.RevLensTypography
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,6 +75,7 @@ fun TeamScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         viewModel.effects.collect { effect ->
@@ -82,6 +85,8 @@ fun TeamScreen(
             }
         }
     }
+
+    val canManageTeam = RolePermissions.canManageTeamAndInvites(state.userRole)
 
     Scaffold(
         topBar = {
@@ -139,20 +144,25 @@ fun TeamScreen(
                             .weight(1f)
                             .padding(end = 12.dp)
                     ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "Team Capacity",
+                                style = RevLensTypography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = RevLensTheme.colors.textPrimary
+                            )
+                            RoleChip(role = state.userRole)
+                        }
                         Text(
-                            text = "Team Capacity",
-                            style = RevLensTypography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = RevLensTheme.colors.textPrimary
-                        )
-                        Text(
-                            text = "Collaborate on baseline models and investor reports",
+                            text = "All team members share the same business profile and revenue models",
                             style = RevLensTypography.bodySmall,
                             color = RevLensTheme.colors.textSecondary
                         )
                     }
 
-                    val canManageTeam = state.userRole == Role.Owner || state.userRole == Role.Admin
                     if (canManageTeam) {
                         val canInvite = state.members.size < state.totalSeats
                         Button(
@@ -193,6 +203,30 @@ fun TeamScreen(
                     limit = state.totalSeats,
                     unitLabel = "seats"
                 )
+            }
+
+            // TEAM JOIN CODE CARD (Visible to Owner and Admin to share with teammates)
+            if (canManageTeam && state.workspaceJoinCode.isNotBlank()) {
+                SectionCard(title = "Team Join Code") {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = "Share this code with teammates so they can join this workspace from the post-login onboarding screen if they missed or declined their invite.",
+                            style = RevLensTypography.bodySmall,
+                            color = RevLensTheme.colors.textSecondary
+                        )
+                        CodeBlock(
+                            code = state.workspaceJoinCode,
+                            isMasked = false,
+                            onCopied = {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        "Team Join Code copied to clipboard"
+                                    )
+                                }
+                            }
+                        )
+                    }
+                }
             }
 
             // TABS (Members, Invites, Permissions)
@@ -250,9 +284,29 @@ fun TeamScreen(
                     } else {
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             state.members.forEach { member ->
+                                val isSelf =
+                                    (state.currentUserId.isNotBlank() && member.id == state.currentUserId) ||
+                                            (state.currentUserEmail.isNotBlank() && member.email.equals(
+                                                state.currentUserEmail, ignoreCase = true
+                                            ))
+
+                                val canChangeRole = RolePermissions.canChangeMemberRole(
+                                    actorRole = state.userRole,
+                                    targetRole = member.role,
+                                    isTargetSelf = isSelf
+                                )
+                                val canRemove = RolePermissions.canRemoveMember(
+                                    actorRole = state.userRole,
+                                    targetRole = member.role,
+                                    isTargetSelf = isSelf
+                                )
+
                                 MemberRow(
                                     member = member,
-                                    canManage = state.userRole == Role.Owner || state.userRole == Role.Admin,
+                                    canManage = canManageTeam,
+                                    isCurrentUser = isSelf,
+                                    canChangeRole = canChangeRole,
+                                    canRemove = canRemove,
                                     onRoleChange = { newRole ->
                                         viewModel.onEvent(
                                             TeamEvent.ChangeMemberRole(member.id, newRole)
@@ -301,7 +355,8 @@ fun TeamScreen(
                                 ) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        modifier = Modifier.weight(1f)
                                     ) {
                                         Box(
                                             modifier = Modifier
@@ -339,7 +394,7 @@ fun TeamScreen(
                                         }
                                     }
 
-                                    if (state.userRole == Role.Owner || state.userRole == Role.Admin) {
+                                    if (canManageTeam) {
                                         Row(
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -415,7 +470,8 @@ fun TeamScreen(
                                     color = RevLensTheme.colors.textSecondary
                                 )
                                 Row(
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier
+                                        .fillMaxWidth()
                                         .padding(top = 4.dp),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
@@ -542,7 +598,7 @@ fun TeamScreen(
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     Text(
-                        text = "This member will lose access to this workspace and all private scenarios immediately.",
+                        text = "This member will immediately lose access to this workspace and return to workspace onboarding.",
                         style = RevLensTypography.bodyMedium,
                         color = RevLensTheme.colors.textSecondary
                     )

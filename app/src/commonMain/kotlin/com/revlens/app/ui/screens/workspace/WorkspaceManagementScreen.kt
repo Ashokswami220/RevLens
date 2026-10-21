@@ -6,10 +6,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -19,31 +17,32 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.revlens.app.domain.model.BusinessModel
 import com.revlens.app.domain.model.Role
+import com.revlens.app.domain.policy.RolePermissions
+import com.revlens.app.domain.repository.TeamRepository
 import com.revlens.app.ui.components.ChoiceChip
 import com.revlens.app.ui.components.PrimaryButton
 import com.revlens.app.ui.components.RevLensTextField
@@ -54,6 +53,8 @@ import com.revlens.app.ui.components.display.RoleChip
 import com.revlens.app.ui.components.feedback.TypedConfirmDialog
 import com.revlens.app.ui.theme.RevLensTheme
 import com.revlens.app.ui.theme.RevLensTypography
+import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,6 +67,8 @@ fun WorkspaceManagementScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val teamRepository: TeamRepository = koinInject()
 
     LaunchedEffect(Unit) {
         viewModel.effects.collect { effect ->
@@ -81,6 +84,17 @@ fun WorkspaceManagementScreen(
     }
 
     val workspace = state.activeWorkspace
+    val wsId = workspace?.id ?: "ws_default"
+    val members by remember(wsId) { teamRepository.getMembers(wsId) }.collectAsState(
+        initial = emptyList()
+    )
+    var showTransferOwnershipDialog by remember { mutableStateOf(false) }
+
+    val canManageSettings =
+        state.currentUserRole == Role.Owner || state.currentUserRole == Role.Admin
+    val canEditBaseline = RolePermissions.canEditBaselinesAndScenarios(state.currentUserRole)
+    val canTransferOwnership = RolePermissions.canTransferOwnership(state.currentUserRole)
+    val canDeleteWorkspace = RolePermissions.canDeleteWorkspace(state.currentUserRole)
 
     Scaffold(
         topBar = {
@@ -100,7 +114,7 @@ fun WorkspaceManagementScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Header Row: Avatar + Name + Switch
+            // Single Active Workspace Header (No multi-workspace switcher)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -139,45 +153,13 @@ fun WorkspaceManagementScreen(
                             color = RevLensTheme.colors.textPrimary
                         )
                         Text(
-                            text = if (workspace?.businessModel == BusinessModel.B2cSaas) "B2C SaaS" else "B2B SaaS",
+                            text = "Single Active Workspace · ${if (workspace?.businessModel == BusinessModel.B2cSaas) "B2C SaaS" else "B2B SaaS"}",
                             style = RevLensTypography.bodySmall,
                             color = RevLensTheme.colors.textSecondary
                         )
                     }
                 }
-
-                if (state.allWorkspaces.size > 1) {
-                    Row(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(RevLensTheme.colors.surfaceElevated)
-                            .clickable {
-                                viewModel.onEvent(
-                                    WorkspaceManagementEvent.ShowSwitchSheet
-                                )
-                            }
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.SwapHoriz,
-                            contentDescription = "Switch",
-                            tint = RevLensTheme.colors.primaryAction,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Text(
-                            text = "Switch",
-                            style = RevLensTypography.labelMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = RevLensTheme.colors.textPrimary
-                        )
-                    }
-                }
             }
-
-            val canManageSettings = state.currentUserRole == Role.Owner || state.currentUserRole == Role.Admin
-            val canEditBaseline = state.currentUserRole != Role.Viewer
 
             // General Section
             SectionCard(title = "General Settings") {
@@ -234,7 +216,7 @@ fun WorkspaceManagementScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     WorkspaceSettingRow(
                         title = "Business Baseline",
-                        value = if (canEditBaseline) "Edit plans & baseline parameters" else "View-only access",
+                        value = if (canEditBaseline) "Edit plans & baseline parameters" else "Read-only access (Viewer)",
                         onClick = if (canEditBaseline) onNavigateToBaseline else null
                     )
                 }
@@ -248,7 +230,7 @@ fun WorkspaceManagementScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "Your Role",
                                 style = RevLensTypography.titleSmall,
@@ -256,10 +238,10 @@ fun WorkspaceManagementScreen(
                                 color = RevLensTheme.colors.textPrimary
                             )
                             val roleSubtitle = when (state.currentUserRole) {
-                                Role.Viewer -> "View-only access to metrics and reports"
-                                Role.Editor -> "Can modify scenarios and business data"
+                                Role.Viewer -> "Read-only access to metrics and reports"
+                                Role.Editor -> "Can modify scenarios and business baselines"
                                 Role.Admin -> "Administrative and team management access"
-                                Role.Owner -> "Full administrative and billing permissions"
+                                Role.Owner -> "Full administrative, ownership, and billing permissions"
                             }
                             Text(
                                 text = roleSubtitle,
@@ -270,39 +252,37 @@ fun WorkspaceManagementScreen(
                         RoleChip(role = state.currentUserRole)
                     }
 
-                    if (state.currentUserRole == Role.Owner) {
+                    if (canTransferOwnership) {
                         WorkspaceSettingRow(
                             title = "Transfer Workspace Ownership",
-                            value = "Designate another team member as Owner",
+                            value = "Pass Owner role to another team member",
                             valueColor = RevLensTheme.colors.textSecondary,
-                            badge = {
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(RevLensTheme.colors.surfaceElevated)
-                                        .padding(horizontal = 7.dp, vertical = 2.dp)
-                                ) {
-                                    Text(
-                                        text = "Soon",
-                                        style = RevLensTypography.labelSmall,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = RevLensTheme.colors.textSecondary
-                                    )
-                                }
-                            },
-                            onClick = null
+                            onClick = { showTransferOwnershipDialog = true }
                         )
                     }
                 }
             }
 
-            // Danger Zone or Leave Business
-            if (state.currentUserRole != Role.Owner) {
+            // Danger Zone (Owner: Delete Workspace | Non-Owner: Leave Workspace)
+            if (canDeleteWorkspace) {
+                SectionCard(title = "Danger Zone") {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        WorkspaceSettingRow(
+                            title = "Delete Workspace",
+                            value = "Permanently delete this workspace and return to onboarding",
+                            valueColor = RevLensTheme.colors.error,
+                            onClick = {
+                                viewModel.onEvent(WorkspaceManagementEvent.ShowDeleteDialog)
+                            }
+                        )
+                    }
+                }
+            } else {
                 SectionCard(title = "Leave Business") {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         WorkspaceSettingRow(
                             title = "Leave Workspace",
-                            value = "Relinquish your ${state.currentUserRole.name} access and leave this business",
+                            value = "Relinquish your ${state.currentUserRole.name} access and return to workspace onboarding",
                             valueColor = RevLensTheme.colors.error,
                             onClick = {
                                 viewModel.onEvent(WorkspaceManagementEvent.ShowLeaveDialog)
@@ -310,23 +290,89 @@ fun WorkspaceManagementScreen(
                         )
                     }
                 }
-            } else if (state.allWorkspaces.size > 1) {
-                SectionCard(title = "Danger Zone") {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        WorkspaceSettingRow(
-                            title = "Delete Workspace",
-                            value = "Permanently remove this workspace",
-                            valueColor = RevLensTheme.colors.error,
-                            onClick = {
-                                viewModel.onEvent(
-                                    WorkspaceManagementEvent.ShowDeleteDialog
-                                )
-                            }
-                        )
-                    }
-                }
             }
         }
+    }
+
+    // Transfer Ownership Dialog (Owner Only)
+    if (showTransferOwnershipDialog) {
+        val eligibleMembers = members.filter { it.role != Role.Owner }
+        AlertDialog(
+            onDismissRequest = { showTransferOwnershipDialog = false },
+            title = {
+                Text(
+                    text = "Transfer Workspace Ownership",
+                    style = RevLensTypography.titleLarge,
+                    color = RevLensTheme.colors.textPrimary
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    if (eligibleMembers.isEmpty()) {
+                        Text(
+                            text = "Invite at least one team member in Team & Permissions before transferring ownership.",
+                            style = RevLensTypography.bodyMedium,
+                            color = RevLensTheme.colors.textSecondary
+                        )
+                    } else {
+                        Text(
+                            text = "Select a team member to become the new Workspace Owner. Your role will be updated to Admin.",
+                            style = RevLensTypography.bodyMedium,
+                            color = RevLensTheme.colors.textSecondary
+                        )
+                        eligibleMembers.forEach { candidate ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(RevLensTheme.colors.surfaceElevated)
+                                    .clickable {
+                                        showTransferOwnershipDialog = false
+                                        scope.launch {
+                                            teamRepository.transferOwnership(wsId, candidate.id)
+                                                .onSuccess {
+                                                    snackbarHostState.showSnackbar(
+                                                        "Transferred ownership to ${candidate.name}"
+                                                    )
+                                                }
+                                                .onFailure { err ->
+                                                    snackbarHostState.showSnackbar(
+                                                        err.message ?: "Transfer failed"
+                                                    )
+                                                }
+                                        }
+                                    }
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = candidate.name,
+                                        style = RevLensTypography.bodyMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = RevLensTheme.colors.textPrimary
+                                    )
+                                    Text(
+                                        text = candidate.email,
+                                        style = RevLensTypography.bodySmall,
+                                        color = RevLensTheme.colors.textSecondary
+                                    )
+                                }
+                                RoleChip(role = candidate.role)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextLinkButton(
+                    text = "Close",
+                    onClick = { showTransferOwnershipDialog = false }
+                )
+            },
+            containerColor = RevLensTheme.colors.surface
+        )
     }
 
     // Edit Name Dialog
@@ -372,7 +418,7 @@ fun WorkspaceManagementScreen(
     if (state.isDeleteDialogVisible && workspace != null) {
         TypedConfirmDialog(
             title = "Delete ${workspace.name}",
-            body = "This will permanently remove this workspace and its associated data.",
+            body = "This will permanently remove this workspace and its associated revenue models.",
             requiredWord = workspace.name,
             confirmText = "Delete",
             onConfirm = { viewModel.onEvent(WorkspaceManagementEvent.ConfirmDeleteWorkspace) },
@@ -385,84 +431,13 @@ fun WorkspaceManagementScreen(
     if (state.isLeaveDialogVisible && workspace != null) {
         TypedConfirmDialog(
             title = "Leave ${workspace.name}",
-            body = "Are you sure you want to leave this business? You will lose access to its metrics and can start your own business or accept another invitation.",
+            body = "Are you sure you want to leave this business? You will lose access to its metrics and can create your own business or join another team.",
             requiredWord = "LEAVE",
             confirmText = "Leave Business",
             onConfirm = { viewModel.onEvent(WorkspaceManagementEvent.ConfirmLeaveWorkspace) },
             onDismiss = { viewModel.onEvent(WorkspaceManagementEvent.HideLeaveDialog) },
             isDestructive = true
         )
-    }
-
-    // Workspace Switcher Bottom Sheet
-    if (state.isSwitchSheetVisible) {
-        val sheetState = rememberModalBottomSheetState()
-        ModalBottomSheet(
-            onDismissRequest = { viewModel.onEvent(WorkspaceManagementEvent.HideSwitchSheet) },
-            sheetState = sheetState,
-            containerColor = RevLensTheme.colors.surface
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    text = "Switch Workspace",
-                    style = RevLensTypography.titleLarge,
-                    color = RevLensTheme.colors.textPrimary
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                state.allWorkspaces.forEach { ws ->
-                    val isActive = ws.id == workspace?.id
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(
-                                if (isActive) RevLensTheme.colors.surfaceElevated else RevLensTheme.colors.surface
-                            )
-                            .clickable {
-                                viewModel.onEvent(
-                                    WorkspaceManagementEvent.SwitchWorkspace(ws.id)
-                                )
-                            }
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = ws.name,
-                                style = RevLensTypography.bodyLarge,
-                                fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
-                                color = RevLensTheme.colors.textPrimary
-                            )
-                            Text(
-                                text = ws.currency,
-                                style = RevLensTypography.bodySmall,
-                                color = RevLensTheme.colors.textSecondary
-                            )
-                        }
-                        if (isActive) {
-                            Text(
-                                "Current", style = RevLensTypography.labelSmall,
-                                color = RevLensTheme.colors.brandPrimary
-                            )
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-                PrimaryButton(
-                    text = "+ New workspace",
-                    onClick = {
-                        viewModel.onEvent(WorkspaceManagementEvent.HideSwitchSheet)
-                        onNavigateToCreateWorkspace()
-                    }
-                )
-            }
-        }
     }
 }
 
@@ -471,7 +446,7 @@ private fun WorkspaceSettingRow(
     title: String,
     value: String,
     onClick: (() -> Unit)? = null,
-    valueColor: androidx.compose.ui.graphics.Color = RevLensTheme.colors.textSecondary,
+    valueColor: Color = RevLensTheme.colors.textSecondary,
     badge: @Composable (() -> Unit)? = null
 ) {
     val clickModifier = if (onClick != null) {

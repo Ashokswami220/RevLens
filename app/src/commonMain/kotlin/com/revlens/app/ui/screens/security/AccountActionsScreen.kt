@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Person
@@ -41,9 +42,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.revlens.app.domain.model.SessionState
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import com.revlens.app.domain.model.Role
+import com.revlens.app.domain.model.SessionState
 import com.revlens.app.presentation.MainViewModel
 import com.revlens.app.ui.components.ConfirmDialog
 import com.revlens.app.ui.components.DestructiveButton

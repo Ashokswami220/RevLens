@@ -8,24 +8,35 @@ import com.revlens.app.data.ScenarioRepository
 import com.revlens.app.domain.context.DefaultWorkspaceContext
 import com.revlens.app.domain.context.WorkspaceContext
 import com.revlens.app.domain.model.BusinessModel
+import com.revlens.app.domain.model.Role
 import com.revlens.app.domain.model.SessionState
 import com.revlens.app.domain.model.Workspace
+import com.revlens.app.domain.policy.RolePermissions
+import com.revlens.app.domain.repository.AuthRepository
+import com.revlens.app.domain.repository.MembershipCheckResult
+import com.revlens.app.domain.repository.TeamRepository
 import com.revlens.app.domain.repository.WorkspaceRepository
 import com.revlens.app.domain.session.DefaultSessionManager
 import com.revlens.app.domain.session.SessionManager
-import com.revlens.app.domain.usecase.ResolveGateUseCase
 import com.revlens.app.model.BusinessProfile
 import com.revlens.app.model.Scenario
-import com.revlens.app.ui.navigation.Gate
 import com.revlens.app.utils.getCurrentTimeMillis
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-
-import com.revlens.app.domain.model.Role
-import com.revlens.app.domain.repository.TeamRepository
+import kotlin.time.Duration.Companion.milliseconds
 
 class MainViewModel(
     private val repository: ProfileRepository,
@@ -33,11 +44,9 @@ class MainViewModel(
     private val workspaceRepository: WorkspaceRepository = DefaultWorkspaceRepository(),
     private val workspaceContext: WorkspaceContext = DefaultWorkspaceContext(),
     private val sessionManager: SessionManager = DefaultSessionManager(),
-    private val resolveGateUseCase: ResolveGateUseCase = ResolveGateUseCase(),
-    private val authRepository: com.revlens.app.domain.repository.AuthRepository? = null,
+    private val authRepository: AuthRepository? = null,
     private val teamRepository: TeamRepository? = null
 ) : ViewModel() {
-
 
     val profile: StateFlow<BusinessProfile?> = repository.profileFlow
         .stateIn(
@@ -67,6 +76,10 @@ class MainViewModel(
             initialValue = false
         )
 
+    // Non-null when the Owner removes this logged-in member from the workspace
+    private val _accessRevokedMessage = MutableStateFlow<String?>(null)
+    val accessRevokedMessage: StateFlow<String?> = _accessRevokedMessage.asStateFlow()
+
     fun setIntroSeen() {
         viewModelScope.launch {
             repository.setHasSeenIntro(true)
@@ -86,42 +99,44 @@ class MainViewModel(
 
     val session: StateFlow<SessionState> = sessionManager.state
 
-    val gate: StateFlow<Gate> = combine(
-        sessionManager.state,
-        activeWorkspace,
-        profile
-    ) { currentSession, ws, prof ->
-        resolveGateUseCase(
-            session = currentSession,
-            workspace = ws,
-            baseline = prof,
-            isWeb = false,
-            introSeen = true
-        )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = Gate.Main
-    )
-
+    @OptIn(ExperimentalCoroutinesApi::class)
     val currentUserRole: StateFlow<Role> = combine(
         activeWorkspace,
         sessionManager.state
     ) { ws, sess ->
-        runCatching {
-            val email = (sess as? SessionState.Authenticated)?.user?.email
-                ?: authRepository?.getCurrentUser()?.email
-            if (ws != null && !email.isNullOrBlank() && teamRepository != null) {
-                teamRepository.getUserRoleInWorkspace(ws.id, email) ?: Role.Owner
-            } else {
-                Role.Owner
-            }
-        }.getOrDefault(Role.Owner)
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = Role.Owner
-    )
+        Pair(ws, sess)
+    }.flatMapLatest { (ws, sess) ->
+        val teamRepo = teamRepository
+        if (ws == null || teamRepo == null) {
+            flowOf(Role.Owner)
+        } else {
+            teamRepo.getMembers(ws.id)
+                .map { members ->
+                    val user = (sess as? SessionState.Authenticated)?.user
+                        ?: authRepository?.getCurrentUser()
+                    val email = user?.email?.trim()
+                        ?.lowercase()
+                    val uid = user?.id
+                    if (email.isNullOrBlank() && uid.isNullOrBlank()) {
+                        Role.Owner
+                    } else {
+                        val matched = members.firstOrNull { m ->
+                            (!uid.isNullOrBlank() && m.id == uid) ||
+                                    (!email.isNullOrBlank() && m.email.equals(
+                                        email, ignoreCase = true
+                                    ))
+                        }
+                        matched?.role ?: (teamRepo.getUserRoleInWorkspace(ws.id, email.orEmpty())
+                            ?: Role.Owner)
+                    }
+                }
+        }
+    }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = Role.Owner
+        )
 
     init {
         viewModelScope.launch {
@@ -134,12 +149,92 @@ class MainViewModel(
         }
         viewModelScope.launch {
             runCatching {
-                activeWorkspace.collect { ws ->
-                    if (ws != null && workspaceContext.activeWorkspaceId.value != ws.id) {
-                        workspaceContext.switchTo(ws.id)
+                activeWorkspace.collectLatest { ws ->
+                    if (ws != null) {
+                        if (workspaceContext.activeWorkspaceId.value != ws.id) {
+                            workspaceContext.switchTo(ws.id)
+                        }
+                        // Always sync shared workspace profile from Firebase when switching/loading workspace
+                        if (ws.id != "ws_default") {
+                            val sharedProfile = runCatching {
+                                teamRepository?.getWorkspaceProfile(
+                                    ws.id
+                                )
+                            }.getOrNull()
+                            if (sharedProfile != null) {
+                                repository.saveProfile(sharedProfile)
+                                repository.setOnboardingCompleted(true)
+                            }
+                        }
                     }
                 }
             }
+        }
+        observeRealtimeMembershipRemoval()
+        startMembershipPolling()
+    }
+
+    private fun observeRealtimeMembershipRemoval() {
+        val teamRepo = teamRepository ?: return
+        viewModelScope.launch {
+            activeWorkspace.collectLatest { ws ->
+                if (ws == null || ws.id == "ws_default") return@collectLatest
+                var wasConfirmedMember = false
+                teamRepo.getMembers(ws.id)
+                    .collect { members ->
+                        val user = (sessionManager.state.value as? SessionState.Authenticated)?.user
+                            ?: authRepository?.getCurrentUser()
+                        if (user != null && members.isNotEmpty()) {
+                            val isMember = members.any { m ->
+                                (user.id.isNotBlank() && m.id == user.id) ||
+                                        (user.email.isNotBlank() && m.email.equals(
+                                            user.email, ignoreCase = true
+                                        ))
+                            }
+                            if (isMember) {
+                                wasConfirmedMember = true
+                            } else if (wasConfirmedMember) {
+                                triggerAccessRevoked()
+                            }
+                        }
+                    }
+            }
+        }
+    }
+
+    private fun startMembershipPolling() {
+        val teamRepo = teamRepository ?: return
+        viewModelScope.launch {
+            while (isActive) {
+                delay(6_000L.milliseconds)
+                val ws = activeWorkspace.value
+                val user = (sessionManager.state.value as? SessionState.Authenticated)?.user
+                    ?: authRepository?.getCurrentUser()
+                if (ws != null && ws.id != "ws_default" && user != null && _accessRevokedMessage.value == null) {
+                    val status = teamRepo.checkMembershipStatus(ws.id, user.id, user.email)
+                    if (status == MembershipCheckResult.REVOKED) {
+                        triggerAccessRevoked()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun triggerAccessRevoked() {
+        if (_accessRevokedMessage.value == null) {
+            _accessRevokedMessage.value =
+                "The workspace owner has removed your access to this workspace. Tap OK to go back to workspace setup, where you can create your own business or join another team."
+        }
+    }
+
+    fun acknowledgeAccessRevoked(onNavigateToWorkspaceSetup: () -> Unit = {}) {
+        viewModelScope.launch {
+            _accessRevokedMessage.value = null
+            val allWs = workspaceRepository.workspacesFlow.firstOrNull()
+                .orEmpty()
+            allWs.forEach { ws -> workspaceRepository.deleteWorkspace(ws.id) }
+            workspaceContext.switchTo("")
+            onNavigateToWorkspaceSetup()
         }
     }
 
@@ -157,16 +252,20 @@ class MainViewModel(
             }
             val result = teamRepository.leaveWorkspace(wsId, email)
             result.onSuccess {
+                val allWs = workspaceRepository.workspacesFlow.firstOrNull()
+                    .orEmpty()
+                allWs.forEach { ws -> workspaceRepository.deleteWorkspace(ws.id) }
                 workspaceContext.switchTo("")
-                repository.setOnboardingCompleted(false)
                 onSuccess()
-            }.onFailure { err ->
-                onError(err.message ?: "Failed to leave business")
             }
+                .onFailure { err ->
+                    onError(err.message ?: "Failed to leave business")
+                }
         }
     }
 
     fun updateProfile(updatedProfile: BusinessProfile) {
+        if (!RolePermissions.canEditBaselinesAndScenarios(currentUserRole.value)) return
         viewModelScope.launch {
             repository.saveProfile(updatedProfile)
             val currentWs = activeWorkspace.value
@@ -194,12 +293,6 @@ class MainViewModel(
         }
     }
 
-    fun resetOnboarding() {
-        viewModelScope.launch {
-            repository.setOnboardingCompleted(false)
-        }
-    }
-
     fun logout() {
         viewModelScope.launch {
             try {
@@ -222,20 +315,16 @@ class MainViewModel(
     }
 
     fun saveScenario(scenario: Scenario) {
+        if (!RolePermissions.canEditBaselinesAndScenarios(currentUserRole.value)) return
         viewModelScope.launch {
             scenarioRepository.saveScenario(scenario)
         }
     }
 
     fun deleteScenario(scenarioId: String) {
+        if (!RolePermissions.canEditBaselinesAndScenarios(currentUserRole.value)) return
         viewModelScope.launch {
             scenarioRepository.deleteScenario(scenarioId)
-        }
-    }
-
-    fun switchWorkspace(workspaceId: String) {
-        viewModelScope.launch {
-            workspaceContext.switchTo(workspaceId)
         }
     }
 
@@ -247,6 +336,10 @@ class MainViewModel(
         fiscalYearStartMonth: Int = 1
     ) {
         viewModelScope.launch {
+            val allWs = workspaceRepository.workspacesFlow.firstOrNull()
+                .orEmpty()
+            allWs.forEach { ws -> workspaceRepository.deleteWorkspace(ws.id) }
+
             val newWorkspace = Workspace(
                 id = "ws_${getCurrentTimeMillis()}",
                 name = name,

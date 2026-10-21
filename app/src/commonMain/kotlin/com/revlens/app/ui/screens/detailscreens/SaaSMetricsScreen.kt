@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import com.revlens.app.domain.calc.BreakEvenCalculator
 import com.revlens.app.domain.calc.LtvCalculator
 import com.revlens.app.presentation.MainViewModel
+import com.revlens.app.ui.components.ActionCardButton
 import com.revlens.app.ui.components.RevLensTopAppBar
 import com.revlens.app.ui.components.SectionCard
 import com.revlens.app.ui.components.Sparkline
@@ -78,21 +79,21 @@ fun SaaSMetricsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    com.revlens.app.ui.components.ActionCardButton(
+                    ActionCardButton(
                         text = "Bridge",
                         icon = Icons.AutoMirrored.Filled.TrendingUp,
                         onClick = onNavigateToRevenueBreakdown,
                         modifier = Modifier.weight(1f)
                     )
 
-                    com.revlens.app.ui.components.ActionCardButton(
+                    ActionCardButton(
                         text = "LTV",
                         icon = Icons.AutoMirrored.Filled.TrendingUp,
                         onClick = onNavigateToLtvAnalysis,
                         modifier = Modifier.weight(1f)
                     )
 
-                    com.revlens.app.ui.components.ActionCardButton(
+                    ActionCardButton(
                         text = "CAC",
                         icon = Icons.AutoMirrored.Filled.TrendingUp,
                         onClick = onNavigateToCacAnalytics,
@@ -104,14 +105,14 @@ fun SaaSMetricsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    com.revlens.app.ui.components.ActionCardButton(
+                    ActionCardButton(
                         text = "Customers",
                         icon = Icons.AutoMirrored.Filled.TrendingUp,
                         onClick = onNavigateToCustomerAnalytics,
                         modifier = Modifier.weight(1f)
                     )
 
-                    com.revlens.app.ui.components.ActionCardButton(
+                    ActionCardButton(
                         text = "Cohorts",
                         icon = Icons.AutoMirrored.Filled.TrendingUp,
                         onClick = onNavigateToCohortAnalysis,

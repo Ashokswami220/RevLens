@@ -58,11 +58,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.revlens.app.ui.theme.RevLensTypography
 import com.revlens.app.domain.calc.AlertRuleEvaluator
 import com.revlens.app.domain.calc.LtvCalculator
 import com.revlens.app.domain.model.AlertSeverity
 import com.revlens.app.domain.model.NotificationPrefs
+import com.revlens.app.domain.model.Role
 import com.revlens.app.domain.model.TriggeredAlert
 import com.revlens.app.domain.repository.NotificationPreferencesRepository
 import com.revlens.app.model.BigDecimal
@@ -72,6 +72,7 @@ import com.revlens.app.ui.components.ActionCardButton
 import com.revlens.app.ui.components.ProgressRing
 import com.revlens.app.ui.components.RevLensTopAppBar
 import com.revlens.app.ui.theme.RevLensTheme
+import com.revlens.app.ui.theme.RevLensTypography
 import com.revlens.app.utils.CurrencyUtils
 import com.revlens.app.utils.DateUtils
 import com.revlens.app.utils.RevLensFormatter
@@ -133,7 +134,7 @@ fun DashboardScreen(
                             tint = CyanAccent
                         )
                     }
-                    if (userRole != com.revlens.app.domain.model.Role.Viewer) {
+                    if (userRole != Role.Viewer) {
                         Box(
                             modifier = Modifier
                                 .height(18.dp)
@@ -224,7 +225,7 @@ fun DashboardScreen(
                             color = TextMuted,
                             textAlign = TextAlign.Center
                         )
-                        if (userRole != com.revlens.app.domain.model.Role.Viewer) {
+                        if (userRole != Role.Viewer) {
                             TextButton(
                                 onClick = onNavigateToInput,
                                 modifier = Modifier.padding(top = 8.dp)

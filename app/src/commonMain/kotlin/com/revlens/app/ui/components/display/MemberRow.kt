@@ -7,13 +7,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -27,8 +30,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.revlens.app.domain.model.Member
 import com.revlens.app.domain.model.Role
@@ -41,95 +44,120 @@ fun MemberRow(
     canManage: Boolean,
     onRoleChange: (Role) -> Unit,
     onRemove: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isCurrentUser: Boolean = false,
+    canChangeRole: Boolean = canManage && !isCurrentUser && member.role != Role.Owner,
+    canRemove: Boolean = canManage && !isCurrentUser && member.role != Role.Owner
 ) {
-    var roleMenuOpen by remember { mutableStateOf(false) }
+    var roleMenuExpanded by remember { mutableStateOf(false) }
+
+    val initials = member.name.split(" ")
+        .filter { it.isNotBlank() }
+        .mapNotNull {
+            it.firstOrNull()
+                ?.uppercase()
+        }
+        .take(2)
+        .joinToString("")
+        .ifEmpty { "U" }
 
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(RevLensTheme.colors.surfaceElevated)
+            .background(RevLensTheme.colors.surface)
             .border(1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(12.dp))
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(42.dp)
+                    .size(40.dp)
                     .clip(CircleShape)
-                    .background(
-                        when (member.role) {
-                            Role.Owner -> RevLensTheme.colors.brandPrimary
-                            Role.Admin -> RevLensTheme.colors.accentBlue
-                            Role.Editor -> Color(0xFF8E44AD)
-                            Role.Viewer -> RevLensTheme.colors.textSecondary
-                        }
-                    ),
+                    .background(RevLensTheme.colors.brandPrimary.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
-                val initial = if (member.name.isNotBlank()) member.name.take(1)
-                    .uppercase() else "U"
                 Text(
-                    text = initial,
+                    text = initials,
                     style = RevLensTypography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = RevLensTheme.colors.brandPrimary
                 )
             }
 
-            Column {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = member.name,
-                        style = RevLensTypography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = RevLensTheme.colors.textPrimary
-                    )
-                }
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = if (isCurrentUser) "${member.name} (You)" else member.name,
+                    style = RevLensTypography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = RevLensTheme.colors.textPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
                 Text(
                     text = "${member.email} · ${member.joinedAt}",
                     style = RevLensTypography.bodySmall,
-                    color = RevLensTheme.colors.textSecondary
+                    color = RevLensTheme.colors.textSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Box {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable(enabled = canManage && member.role != Role.Owner) {
-                            roleMenuOpen = true
-                        }
+                Row(
+                    modifier = if (canChangeRole) {
+                        Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { roleMenuExpanded = true }
+                            .padding(horizontal = 4.dp, vertical = 2.dp)
+                    } else {
+                        Modifier
+                    },
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     RoleChip(role = member.role)
+                    if (canChangeRole) {
+                        Icon(
+                            imageVector = Icons.Filled.ArrowDropDown,
+                            contentDescription = "Change Role",
+                            tint = RevLensTheme.colors.textSecondary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
 
-                if (canManage && member.role != Role.Owner) {
+                if (canChangeRole) {
                     DropdownMenu(
-                        expanded = roleMenuOpen,
-                        onDismissRequest = { roleMenuOpen = false }
+                        expanded = roleMenuExpanded,
+                        onDismissRequest = { roleMenuExpanded = false },
+                        modifier = Modifier.background(RevLensTheme.colors.surfaceElevated)
                     ) {
-                        listOf(Role.Admin, Role.Editor, Role.Viewer).forEach { role ->
+                        listOf(Role.Admin, Role.Editor, Role.Viewer).forEach { targetRole ->
                             DropdownMenuItem(
-                                text = { Text(role.name) },
+                                text = {
+                                    Text(
+                                        text = targetRole.name,
+                                        color = if (targetRole == member.role) RevLensTheme.colors.brandPrimary else RevLensTheme.colors.textPrimary,
+                                        fontWeight = if (targetRole == member.role) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                },
                                 onClick = {
-                                    onRoleChange(role)
-                                    roleMenuOpen = false
+                                    roleMenuExpanded = false
+                                    if (targetRole != member.role) {
+                                        onRoleChange(targetRole)
+                                    }
                                 }
                             )
                         }
@@ -137,13 +165,13 @@ fun MemberRow(
                 }
             }
 
-            if (canManage && member.role != Role.Owner) {
+            if (canRemove) {
                 IconButton(
                     onClick = onRemove,
                     modifier = Modifier.size(32.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.Delete,
+                        imageVector = Icons.Filled.DeleteOutline,
                         contentDescription = "Remove Member",
                         tint = RevLensTheme.colors.error,
                         modifier = Modifier.size(18.dp)

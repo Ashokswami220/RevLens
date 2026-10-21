@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.revlens.app.domain.calc.CohortGranularity
 import com.revlens.app.domain.calc.CohortMetric
@@ -227,7 +228,7 @@ fun CohortAnalysisScreen(
                             seriesList.add(result.averageCurve.map { it.toFloat() })
 
                             val dashedIndices = listOf(seriesList.size - 1)
-                            val colors = selectedRows.mapIndexed { i, _ ->
+                            val colors = List(selectedRows.size) { i ->
                                 curveColors.getOrElse(
                                     i
                                 ) { RevLensTheme.colors.brandPrimary }
@@ -312,7 +313,7 @@ fun CohortAnalysisScreen(
                                     text = "Import subscription CSV data with customer start and churn dates to unlock the empirical cohort heatmap.",
                                     style = RevLensTypography.bodySmall,
                                     color = RevLensTheme.colors.textSecondary,
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                    textAlign = TextAlign.Center
                                 )
                                 Button(
                                     onClick = {

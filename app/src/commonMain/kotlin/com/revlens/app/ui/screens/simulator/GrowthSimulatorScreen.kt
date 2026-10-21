@@ -1,5 +1,6 @@
 package com.revlens.app.ui.screens.simulator
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,7 +32,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -283,7 +283,7 @@ fun GrowthSimulatorScreen(
                     val baseSeries = List(
                         result.monthlySnapshots.size
                     ) { (state.baselineMrrMinor / 100).toFloat() }
-                    val xLabels = result.monthlySnapshots.mapIndexed { i, _ -> "M${i + 1}" }
+                    val xLabels = List(result.monthlySnapshots.size) { i -> "M${i + 1}" }
 
                     RevLensLineChart(
                         data = listOf(simSeries, baseSeries),
@@ -361,7 +361,7 @@ fun GrowthSimulatorScreen(
             OutlinedButton(
                 onClick = { viewModel.onEvent(GrowthSimulatorIntent.ResetToDefaults) },
                 shape = RoundedCornerShape(10.dp),
-                border = androidx.compose.foundation.BorderStroke(
+                border = BorderStroke(
                     1.dp, RevLensTheme.colors.borderDefault
                 )
             ) {
@@ -518,7 +518,11 @@ fun GrowthSimulatorScreen(
 
     // Cash Assumptions Dialog
     if (state.showCashSheet) {
-        var cashInput by rememberSaveable { mutableStateOf("${state.assumptions.startingCashMinor / 100}") }
+        var cashInput by rememberSaveable {
+            mutableStateOf(
+                "${state.assumptions.startingCashMinor / 100}"
+            )
+        }
 
         AlertDialog(
             onDismissRequest = { viewModel.onEvent(GrowthSimulatorIntent.DismissCashSheet) },

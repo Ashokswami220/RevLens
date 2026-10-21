@@ -1,10 +1,15 @@
 package com.revlens.app.data
 
 import android.content.Context
+import android.util.Log
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.revlens.app.core.platform.SecureStorage
 import com.revlens.app.core.ui.AppError
 import com.revlens.app.core.ui.AppException
@@ -12,6 +17,7 @@ import com.revlens.app.domain.model.AuthTokens
 import com.revlens.app.domain.model.UserAccount
 import com.revlens.app.domain.repository.AuthRepository
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -21,7 +27,12 @@ class AndroidFirebaseAuthRepository(
     private val secureStorage: SecureStorage? = null
 ) : AuthRepository {
 
-    private val auth: FirebaseAuth? get() = try { FirebaseAuth.getInstance() } catch (_: Throwable) { null }
+    private val auth: FirebaseAuth?
+        get() = try {
+            FirebaseAuth.getInstance()
+        } catch (_: Throwable) {
+            null
+        }
     private val json = Json { ignoreUnknownKeys = true }
     private var cachedUser: UserAccount? = null
 
@@ -50,7 +61,7 @@ class AndroidFirebaseAuthRepository(
                 cachedUser = user
                 saveTokens(user.id)
 
-                val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                val db = FirebaseFirestore.getInstance()
                 val anotherId =
                     fbUser.providerData.firstOrNull { it.providerId == "google.com" }?.uid
                         ?: fbUser.providerData.firstOrNull()?.uid
@@ -68,29 +79,29 @@ class AndroidFirebaseAuthRepository(
                 try {
                     db.collection("users")
                         .document(fbUser.uid)
-                        .set(userDoc, com.google.firebase.firestore.SetOptions.merge())
+                        .set(userDoc, SetOptions.merge())
                         .addOnSuccessListener {
-                            android.util.Log.d(
+                            Log.d(
                                 "RevLensFirestore",
                                 "Successfully saved user document to users/${fbUser.uid}"
                             )
                         }
                         .addOnFailureListener { e ->
-                            android.util.Log.e(
+                            Log.e(
                                 "RevLensFirestore", "Failed to save user document: ${e.message}", e
                             )
                             if (e.message?.contains(
                                     "PERMISSION_DENIED", ignoreCase = true
                                 ) == true
                             ) {
-                                android.util.Log.e(
+                                Log.e(
                                     "RevLensFirestore",
                                     "PERMISSION_DENIED: Firestore security rules in Firebase Console are blocking writes! Update rules in Firebase Console."
                                 )
                             }
                         }
                 } catch (e: Exception) {
-                    android.util.Log.e(
+                    Log.e(
                         "RevLensFirestore", "Failed to trigger save user profile in Firestore", e
                     )
                 }
@@ -135,15 +146,18 @@ class AndroidFirebaseAuthRepository(
 
     override suspend fun logout(): Result<Unit> {
         try {
-            try { auth?.signOut() } catch (_: Throwable) {}
+            try {
+                auth?.signOut()
+            } catch (_: Throwable) {
+            }
             cachedUser = null
             secureStorage?.remove("auth_tokens")
             try {
-                val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(
-                    com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN
+                val gso = GoogleSignInOptions.Builder(
+                    GoogleSignInOptions.DEFAULT_SIGN_IN
                 )
                     .build()
-                com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(context, gso)
+                GoogleSignIn.getClient(context, gso)
                     .signOut()
             } catch (_: Exception) {
             }
@@ -169,8 +183,12 @@ class AndroidFirebaseAuthRepository(
         var jobTitle = cachedUser?.jobTitle
         if (jobTitle == null) {
             try {
-                kotlinx.coroutines.withTimeoutOrNull(800L) {
-                    val db = try { com.google.firebase.firestore.FirebaseFirestore.getInstance() } catch (_: Throwable) { null }
+                withTimeoutOrNull(800L) {
+                    val db = try {
+                        FirebaseFirestore.getInstance()
+                    } catch (_: Throwable) {
+                        null
+                    }
                     if (db != null) {
                         val doc = db.collection("users")
                             .document(fbUser.uid)
@@ -223,7 +241,11 @@ class AndroidFirebaseAuthRepository(
             )
             cachedUser = updated
 
-            val db = try { com.google.firebase.firestore.FirebaseFirestore.getInstance() } catch (_: Throwable) { null }
+            val db = try {
+                FirebaseFirestore.getInstance()
+            } catch (_: Throwable) {
+                null
+            }
             if (db != null) {
                 try {
                     val updateMap = mutableMapOf<String, Any>(
@@ -235,10 +257,10 @@ class AndroidFirebaseAuthRepository(
                     }
                     db.collection("users")
                         .document(fbUser.uid)
-                        .set(updateMap, com.google.firebase.firestore.SetOptions.merge())
+                        .set(updateMap, SetOptions.merge())
                         .await()
                 } catch (e: Exception) {
-                    android.util.Log.e(
+                    Log.e(
                         "RevLensFirestore", "Failed to update user profile in Firestore", e
                     )
                 }

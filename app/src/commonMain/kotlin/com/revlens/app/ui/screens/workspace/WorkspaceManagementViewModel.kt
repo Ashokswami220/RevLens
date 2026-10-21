@@ -4,13 +4,12 @@ import androidx.lifecycle.viewModelScope
 import com.revlens.app.core.ui.MviViewModel
 import com.revlens.app.core.ui.UiText
 import com.revlens.app.data.ProfileRepository
-import com.revlens.app.data.ScenarioRepository
 import com.revlens.app.domain.context.WorkspaceContext
-import com.revlens.app.domain.repository.WorkspaceRepository
 import com.revlens.app.domain.model.Role
 import com.revlens.app.domain.model.SessionState
 import com.revlens.app.domain.repository.AuthRepository
 import com.revlens.app.domain.repository.TeamRepository
+import com.revlens.app.domain.repository.WorkspaceRepository
 import com.revlens.app.domain.session.SessionManager
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -19,7 +18,6 @@ class WorkspaceManagementViewModel(
     private val workspaceRepository: WorkspaceRepository,
     private val workspaceContext: WorkspaceContext,
     private val profileRepository: ProfileRepository,
-    private val scenarioRepository: ScenarioRepository,
     private val teamRepository: TeamRepository? = null,
     private val authRepository: AuthRepository? = null,
     private val sessionManager: SessionManager? = null
@@ -41,7 +39,11 @@ class WorkspaceManagementViewModel(
                     workspaceContext.switchTo(active.id)
                 }
                 val role = resolveRole(active?.id)
-                update { copy(activeWorkspace = active, allWorkspaces = all, currentUserRole = role) }
+                update {
+                    copy(
+                        activeWorkspace = active, allWorkspaces = all, currentUserRole = role
+                    )
+                }
             }
         }
     }
@@ -50,7 +52,8 @@ class WorkspaceManagementViewModel(
         val repo = teamRepository
         if (workspaceId.isNullOrBlank() || repo == null) return Role.Owner
         val email = getCurrentUserEmail() ?: return Role.Owner
-        return runCatching { repo.getUserRoleInWorkspace(workspaceId, email) }.getOrNull() ?: Role.Owner
+        return runCatching { repo.getUserRoleInWorkspace(workspaceId, email) }.getOrNull()
+            ?: Role.Owner
     }
 
     private suspend fun getCurrentUserEmail(): String? {
@@ -175,7 +178,11 @@ class WorkspaceManagementViewModel(
                     val email = getCurrentUserEmail()
                     if (email == null || teamRepository == null) {
                         update { copy(isLeaveDialogVisible = false) }
-                        emit(WorkspaceManagementEffect.ShowMessage(UiText.DynamicString("Could not identify current user.")))
+                        emit(
+                            WorkspaceManagementEffect.ShowMessage(
+                                UiText.DynamicString("Could not identify current user.")
+                            )
+                        )
                         return@launch
                     }
                     val result = teamRepository.leaveWorkspace(current.id, email)
@@ -183,12 +190,23 @@ class WorkspaceManagementViewModel(
                         update { copy(isLeaveDialogVisible = false) }
                         workspaceContext.switchTo("")
                         profileRepository.setOnboardingCompleted(false)
-                        emit(WorkspaceManagementEffect.ShowMessage(UiText.DynamicString("You left ${current.name}.")))
+                        emit(
+                            WorkspaceManagementEffect.ShowMessage(
+                                UiText.DynamicString("You left ${current.name}.")
+                            )
+                        )
                         emit(WorkspaceManagementEffect.NavigateToCreateWorkspace)
-                    }.onFailure { err ->
-                        update { copy(isLeaveDialogVisible = false) }
-                        emit(WorkspaceManagementEffect.ShowMessage(UiText.DynamicString(err.message ?: "Could not leave workspace.")))
                     }
+                        .onFailure { err ->
+                            update { copy(isLeaveDialogVisible = false) }
+                            emit(
+                                WorkspaceManagementEffect.ShowMessage(
+                                    UiText.DynamicString(
+                                        err.message ?: "Could not leave workspace."
+                                    )
+                                )
+                            )
+                        }
                 }
             }
         }

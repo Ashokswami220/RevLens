@@ -1,6 +1,7 @@
 package com.revlens.app.ui.screens.auth
 
 import android.app.Activity
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -43,22 +44,22 @@ actual fun rememberGoogleSignInLauncher(
                 val account = task.getResult(ApiException::class.java)
                 onTokenReceived(account.idToken, account.email, account.displayName)
             } catch (e: ApiException) {
-                android.util.Log.e(
+                Log.e(
                     "RevLensAuth", "Google sign-in failed with status code: ${e.statusCode}"
                 )
                 if (e.statusCode == 10) {
-                    android.util.Log.e(
+                    Log.e(
                         "RevLensAuth",
                         "DEVELOPER_ERROR (10): Register your SHA-1 fingerprint in Firebase Console under com.revlens.app"
                     )
                 }
                 onTokenReceived(null, null, null)
             } catch (e: Exception) {
-                android.util.Log.e("RevLensAuth", "Google sign-in unexpected error: ${e.message}")
+                Log.e("RevLensAuth", "Google sign-in unexpected error: ${e.message}")
                 onTokenReceived(null, null, null)
             }
         } else {
-            android.util.Log.w(
+            Log.w(
                 "RevLensAuth",
                 "Google sign-in activity result was not OK (resultCode=${result.resultCode})"
             )
@@ -78,7 +79,7 @@ actual fun rememberGoogleSignInLauncher(
                             launcher.launch(googleSignInClient.signInIntent)
                         } catch (e: Exception) {
                             isLaunching = false
-                            android.util.Log.e(
+                            Log.e(
                                 "RevLensAuth", "Failed to launch Google Sign-In intent", e
                             )
                         }

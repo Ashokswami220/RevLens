@@ -47,17 +47,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.revlens.app.domain.model.Role
 import com.revlens.app.domain.model.SessionState
+import com.revlens.app.domain.policy.RolePermissions
+import com.revlens.app.domain.repository.TeamRepository
 import com.revlens.app.presentation.MainViewModel
 import com.revlens.app.ui.components.PrimaryButton
 import com.revlens.app.ui.components.RevLensTopAppBar
 import com.revlens.app.ui.components.SectionCard
-import com.revlens.app.ui.components.TextLinkButton
 import com.revlens.app.ui.components.display.RoleChip
 import com.revlens.app.ui.components.feedback.UpgradePromptSheet
 import com.revlens.app.ui.theme.RevLensTheme
 import com.revlens.app.ui.theme.RevLensTypography
+import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,17 +83,32 @@ fun SettingsScreen(
 ) {
     val activeWorkspace by viewModel.activeWorkspace.collectAsState()
     val session by viewModel.session.collectAsState()
+    val userRole by viewModel.currentUserRole.collectAsState()
     val isGuest = session !is SessionState.Authenticated
 
-    val teamRepository: com.revlens.app.domain.repository.TeamRepository = org.koin.compose.koinInject()
+    val teamRepository: TeamRepository = koinInject()
     val wsId = activeWorkspace?.id ?: "ws_default"
-    val teamMembers by remember(wsId) { teamRepository.getMembers(wsId) }.collectAsState(initial = emptyList())
+    val teamMembers by remember(wsId) { teamRepository.getMembers(wsId) }.collectAsState(
+        initial = emptyList()
+    )
     val seatsUsed = teamMembers.size.coerceAtLeast(1)
+
+    val canEditBaseline = RolePermissions.canEditBaselinesAndScenarios(userRole)
+    val canManageApiAndIntegrations = RolePermissions.canManageApiAndIntegrations(userRole)
+    val canManageBilling = RolePermissions.canManageBilling(userRole)
 
     var darkModeEnabled by remember { mutableStateOf(true) }
     var lockedFeaturePrompt by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+
+    fun showRoleDeniedToast(requiredRolesText: String) {
+        scope.launch {
+            snackbarHostState.showSnackbar(
+                "Permission denied (${userRole.name}): $requiredRolesText"
+            )
+        }
+    }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -179,7 +196,7 @@ fun SettingsScreen(
                     )
                     if (!isGuest) {
                         Spacer(modifier = Modifier.height(2.dp))
-                        RoleChip(role = Role.Owner)
+                        RoleChip(role = userRole)
                     }
                 }
 
@@ -251,7 +268,7 @@ fun SettingsScreen(
                     )
                     SettingsNavigationRow(
                         title = "Team & Permissions",
-                        subtitle = if (isGuest) "1 member (Local)" else "$seatsUsed of 5 seats used",
+                        subtitle = if (isGuest) "1 member (Local)" else "$seatsUsed of 5 seats used · Your role: ${userRole.name}",
                         isLocked = isGuest,
                         onClick = {
                             if (isGuest) lockedFeaturePrompt = "Team & Permissions"
@@ -260,8 +277,17 @@ fun SettingsScreen(
                     )
                     SettingsNavigationRow(
                         title = "Business Baseline",
-                        subtitle = "Edit plans, pricing & cost parameters",
-                        onClick = onNavigateToBaseline
+                        subtitle = if (canEditBaseline) "Edit plans, pricing & cost parameters" else "Read-only for Viewers",
+                        isLocked = !canEditBaseline,
+                        onClick = {
+                            if (!canEditBaseline) {
+                                showRoleDeniedToast(
+                                    "Only Owners, Admins, and Editors can edit baselines."
+                                )
+                            } else {
+                                onNavigateToBaseline()
+                            }
+                        }
                     )
                 }
             }
@@ -271,30 +297,51 @@ fun SettingsScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     SettingsNavigationRow(
                         title = "Import Data (CSV)",
-                        subtitle = "Upload real subscriptions & spend history",
-                        onClick = onNavigateToDataImport
+                        subtitle = if (canEditBaseline) "Upload real subscriptions & spend history" else "Requires Editor, Admin, or Owner role",
+                        isLocked = !canEditBaseline,
+                        onClick = {
+                            if (!canEditBaseline) {
+                                showRoleDeniedToast(
+                                    "Viewers cannot upload or overwrite workspace datasets."
+                                )
+                            } else {
+                                onNavigateToDataImport()
+                            }
+                        }
                     )
                     SettingsNavigationRow(
                         title = "Reports & Exports",
-                        subtitle = "Generate investor updates & summaries",
+                        subtitle = "Generate investor updates & CSV summaries",
                         onClick = onNavigateToReports
                     )
                     SettingsNavigationRow(
                         title = "Integrations",
-                        subtitle = "Stripe, Paddle, Google Sheets, Slack",
-                        isLocked = isGuest,
+                        subtitle = if (canManageApiAndIntegrations) "Stripe, Paddle, Google Sheets, Slack" else "Requires Owner or Admin role",
+                        isLocked = isGuest || !canManageApiAndIntegrations,
                         onClick = {
                             if (isGuest) lockedFeaturePrompt = "Integrations"
-                            else onNavigateToIntegrations()
+                            else if (!canManageApiAndIntegrations) {
+                                showRoleDeniedToast(
+                                    "Only Workspace Owners and Admins can manage integrations."
+                                )
+                            } else {
+                                onNavigateToIntegrations()
+                            }
                         }
                     )
                     SettingsNavigationRow(
                         title = "API & Webhooks",
-                        subtitle = "API keys, developer webhooks & delivery logs",
-                        isLocked = isGuest,
+                        subtitle = if (canManageApiAndIntegrations) "API keys, developer webhooks & delivery logs" else "Requires Owner or Admin role",
+                        isLocked = isGuest || !canManageApiAndIntegrations,
                         onClick = {
                             if (isGuest) lockedFeaturePrompt = "Developer API"
-                            else onNavigateToApiWebhooks()
+                            else if (!canManageApiAndIntegrations) {
+                                showRoleDeniedToast(
+                                    "Only Workspace Owners and Admins can manage API keys and webhooks."
+                                )
+                            } else {
+                                onNavigateToApiWebhooks()
+                            }
                         }
                     )
                 }
@@ -305,11 +352,17 @@ fun SettingsScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     SettingsNavigationRow(
                         title = "Billing & Subscription",
-                        subtitle = "Free plan · Manage subscription",
-                        isLocked = isGuest,
+                        subtitle = if (canManageBilling) "Manage plan, seats & invoices" else "Only Workspace Owner can manage billing",
+                        isLocked = isGuest || !canManageBilling,
                         onClick = {
                             if (isGuest) lockedFeaturePrompt = "Billing & Subscriptions"
-                            else onNavigateToBilling()
+                            else if (!canManageBilling) {
+                                showRoleDeniedToast(
+                                    "Only the Workspace Owner can manage billing and subscriptions."
+                                )
+                            } else {
+                                onNavigateToBilling()
+                            }
                         }
                     )
                     SettingsNavigationRow(
@@ -407,7 +460,6 @@ fun SettingsScreen(
         }
     }
 
-    // Locked Feature Prompt Bottom Sheet
     lockedFeaturePrompt?.let { feature ->
         UpgradePromptSheet(
             featureName = feature,
@@ -441,7 +493,7 @@ private fun SettingsNavigationRow(
                 Text(
                     text = title,
                     style = RevLensTypography.bodyLarge,
-                    color = RevLensTheme.colors.textPrimary
+                    color = if (isLocked) RevLensTheme.colors.textSecondary else RevLensTheme.colors.textPrimary
                 )
                 if (isLocked) {
                     Icon(
