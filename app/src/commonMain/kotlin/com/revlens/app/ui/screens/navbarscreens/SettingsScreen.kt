@@ -83,6 +83,11 @@ fun SettingsScreen(
     val session by viewModel.session.collectAsState()
     val isGuest = session !is SessionState.Authenticated
 
+    val teamRepository: com.revlens.app.domain.repository.TeamRepository = org.koin.compose.koinInject()
+    val wsId = activeWorkspace?.id ?: "ws_default"
+    val teamMembers by remember(wsId) { teamRepository.getMembers(wsId) }.collectAsState(initial = emptyList())
+    val seatsUsed = teamMembers.size.coerceAtLeast(1)
+
     var darkModeEnabled by remember { mutableStateOf(true) }
     var lockedFeaturePrompt by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -246,7 +251,7 @@ fun SettingsScreen(
                     )
                     SettingsNavigationRow(
                         title = "Team & Permissions",
-                        subtitle = if (isGuest) "1 member (Local)" else "3 of 5 seats used",
+                        subtitle = if (isGuest) "1 member (Local)" else "$seatsUsed of 5 seats used",
                         isLocked = isGuest,
                         onClick = {
                             if (isGuest) lockedFeaturePrompt = "Team & Permissions"

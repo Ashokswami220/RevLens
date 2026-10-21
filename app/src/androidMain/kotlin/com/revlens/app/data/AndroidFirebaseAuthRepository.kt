@@ -21,7 +21,7 @@ class AndroidFirebaseAuthRepository(
     private val secureStorage: SecureStorage? = null
 ) : AuthRepository {
 
-    private val auth: FirebaseAuth get() = FirebaseAuth.getInstance()
+    private val auth: FirebaseAuth? get() = try { FirebaseAuth.getInstance() } catch (_: Throwable) { null }
     private val json = Json { ignoreUnknownKeys = true }
     private var cachedUser: UserAccount? = null
 
@@ -33,8 +33,9 @@ class AndroidFirebaseAuthRepository(
     ): Result<UserAccount> {
         try {
             if (idToken != null) {
+                val fbAuth = auth ?: throw AppException(AppError.Unauthorized)
                 val credential = GoogleAuthProvider.getCredential(idToken, null)
-                val authResult = auth.signInWithCredential(credential)
+                val authResult = fbAuth.signInWithCredential(credential)
                     .await()
                 val fbUser = authResult.user ?: throw AppException(AppError.Unauthorized)
 
@@ -134,7 +135,7 @@ class AndroidFirebaseAuthRepository(
 
     override suspend fun logout(): Result<Unit> {
         try {
-            auth.signOut()
+            try { auth?.signOut() } catch (_: Throwable) {}
             cachedUser = null
             secureStorage?.remove("auth_tokens")
             try {
@@ -164,19 +165,23 @@ class AndroidFirebaseAuthRepository(
     }
 
     override suspend fun getCurrentUser(): UserAccount? {
-        val fbUser = auth.currentUser ?: return null
+        val fbUser = auth?.currentUser ?: return cachedUser
         var jobTitle = cachedUser?.jobTitle
         if (jobTitle == null) {
             try {
-                val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                val doc = db.collection("users")
-                    .document(fbUser.uid)
-                    .get()
-                    .await()
-                if (doc.exists()) {
-                    jobTitle = doc.getString("jobTitle")
+                kotlinx.coroutines.withTimeoutOrNull(800L) {
+                    val db = try { com.google.firebase.firestore.FirebaseFirestore.getInstance() } catch (_: Throwable) { null }
+                    if (db != null) {
+                        val doc = db.collection("users")
+                            .document(fbUser.uid)
+                            .get()
+                            .await()
+                        if (doc.exists()) {
+                            jobTitle = doc.getString("jobTitle")
+                        }
+                    }
                 }
-            } catch (_: Exception) {
+            } catch (_: Throwable) {
             }
         }
         val user = UserAccount(
@@ -200,7 +205,7 @@ class AndroidFirebaseAuthRepository(
     }
 
     override suspend fun updateProfile(name: String, jobTitle: String?): Result<UserAccount> {
-        val fbUser = auth.currentUser ?: return Result.failure(AppException(AppError.Unauthorized))
+        val fbUser = auth?.currentUser ?: return Result.failure(AppException(AppError.Unauthorized))
         try {
             val updates = UserProfileChangeRequest.Builder()
                 .setDisplayName(name.trim())
@@ -218,23 +223,25 @@ class AndroidFirebaseAuthRepository(
             )
             cachedUser = updated
 
-            val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
-            try {
-                val updateMap = mutableMapOf<String, Any>(
-                    "name" to name.trim(),
-                    "updatedAt" to System.currentTimeMillis()
-                )
-                if (jobTitle != null) {
-                    updateMap["jobTitle"] = jobTitle
+            val db = try { com.google.firebase.firestore.FirebaseFirestore.getInstance() } catch (_: Throwable) { null }
+            if (db != null) {
+                try {
+                    val updateMap = mutableMapOf<String, Any>(
+                        "name" to name.trim(),
+                        "updatedAt" to System.currentTimeMillis()
+                    )
+                    if (jobTitle != null) {
+                        updateMap["jobTitle"] = jobTitle
+                    }
+                    db.collection("users")
+                        .document(fbUser.uid)
+                        .set(updateMap, com.google.firebase.firestore.SetOptions.merge())
+                        .await()
+                } catch (e: Exception) {
+                    android.util.Log.e(
+                        "RevLensFirestore", "Failed to update user profile in Firestore", e
+                    )
                 }
-                db.collection("users")
-                    .document(fbUser.uid)
-                    .set(updateMap, com.google.firebase.firestore.SetOptions.merge())
-                    .await()
-            } catch (e: Exception) {
-                android.util.Log.e(
-                    "RevLensFirestore", "Failed to update user profile in Firestore", e
-                )
             }
 
             return Result.success(updated)
@@ -245,7 +252,7 @@ class AndroidFirebaseAuthRepository(
 
     override suspend fun deleteAccount(): Result<Unit> {
         try {
-            auth.currentUser?.delete()
+            auth?.currentUser?.delete()
                 ?.await()
             cachedUser = null
             secureStorage?.remove("auth_tokens")
@@ -267,8 +274,14 @@ class AndroidFirebaseAuthRepository(
     }
 
     private suspend fun <T> Task<T>.await(): T = suspendCancellableCoroutine { cont ->
-        addOnSuccessListener { cont.resume(it) }
-        addOnFailureListener { cont.resumeWithException(it) }
-        addOnCanceledListener { cont.cancel() }
+        addOnSuccessListener {
+            if (cont.isActive) cont.resume(it)
+        }
+        addOnFailureListener {
+            if (cont.isActive) cont.resumeWithException(it)
+        }
+        addOnCanceledListener {
+            if (cont.isActive) cont.cancel()
+        }
     }
 }

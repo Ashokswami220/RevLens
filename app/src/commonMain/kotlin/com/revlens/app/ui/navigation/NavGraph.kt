@@ -244,9 +244,10 @@ fun RevLensNavGraph(
     LaunchedEffect(isOnboardingCompleted, hasSeenIntro) {
         if (isOnboardingCompleted == false) {
             val destination: Any = if (hasSeenIntro) LoginRoute else IntroRoute
+            val currentRoute = navController.currentDestination?.route.orEmpty()
             val isAlreadyThere = when (destination) {
-                is LoginRoute -> navController.currentDestination?.hasRoute<LoginRoute>() == true
-                is IntroRoute -> navController.currentDestination?.hasRoute<IntroRoute>() == true
+                is LoginRoute -> navController.currentDestination?.hasRoute<LoginRoute>() == true || currentRoute.contains("Login")
+                is IntroRoute -> navController.currentDestination?.hasRoute<IntroRoute>() == true || currentRoute.contains("Intro")
                 else -> false
             }
             if (!isAlreadyThere) {

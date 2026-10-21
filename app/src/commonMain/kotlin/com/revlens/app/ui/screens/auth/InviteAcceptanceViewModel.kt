@@ -10,6 +10,7 @@ import com.revlens.app.domain.model.UserAccount
 import com.revlens.app.domain.repository.AuthRepository
 import com.revlens.app.domain.repository.TeamRepository
 import com.revlens.app.domain.session.SessionManager
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 class InviteAcceptanceViewModel(
@@ -69,6 +70,22 @@ class InviteAcceptanceViewModel(
             val result = teamRepository.acceptInvite(inviteId, user)
             result.onSuccess { targetWorkspaceId ->
                 workspaceContext.switchTo(targetWorkspaceId)
+                // Synchronize existing business profile from workspace so the member accesses the SAME profile
+                try {
+                    val wsProfile = teamRepository.getWorkspaceProfile(targetWorkspaceId)
+                    if (wsProfile != null) {
+                        profileRepository.saveProfile(wsProfile)
+                    } else {
+                        val remote = profileRepository.syncRemoteProfile()
+                        if (remote == null) {
+                            val current = profileRepository.profileFlow.firstOrNull()
+                            if (current != null) {
+                                teamRepository.saveWorkspaceProfile(targetWorkspaceId, current)
+                            }
+                        }
+                    }
+                } catch (_: Exception) {
+                }
                 profileRepository.setOnboardingCompleted(true)
                 update { copy(isLoading = false) }
                 emit(InviteAcceptanceEffect.ShowMessage(UiText.DynamicString("Welcome to the workspace!")))

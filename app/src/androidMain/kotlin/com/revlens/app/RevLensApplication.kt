@@ -18,7 +18,7 @@ class RevLensApplication : Application() {
                 .build()
             com.google.firebase.firestore.FirebaseFirestore.getInstance().firestoreSettings =
                 settings
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
         }
         startKoin {
             androidContext(this@RevLensApplication)

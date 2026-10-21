@@ -26,11 +26,13 @@ class TeamViewModelTest {
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+        FakeTeamRepository.reset()
     }
 
     @AfterTest
     fun tearDown() {
         Dispatchers.resetMain()
+        FakeTeamRepository.reset()
     }
 
     @Test

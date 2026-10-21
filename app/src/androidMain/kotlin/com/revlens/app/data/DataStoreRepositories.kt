@@ -44,7 +44,7 @@ class DataStoreProfileRepository(
     }
 
     override val isOnboardingCompletedFlow: Flow<Boolean> = dataStore.data.map { preferences ->
-        (preferences[ONBOARDING_COMPLETED_KEY] == true) && (preferences[PROFILE_KEY] != null)
+        preferences[ONBOARDING_COMPLETED_KEY] == true
     }
 
     override suspend fun setOnboardingCompleted(completed: Boolean) {

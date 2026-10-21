@@ -30,6 +30,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,12 +55,15 @@ fun InviteAcceptanceScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         viewModel.effects.collect { effect ->
             when (effect) {
                 is InviteAcceptanceEffect.ShowMessage -> {
-                    snackbarHostState.showSnackbar(effect.text.asString())
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar(effect.text.asString())
+                    }
                 }
                 InviteAcceptanceEffect.NavigateToDashboard -> {
                     onNavigateToDashboard()
@@ -84,191 +89,94 @@ fun InviteAcceptanceScreen(
                 CircularProgressIndicator(color = RevLensTheme.colors.brandPrimary)
             }
         } else {
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp, vertical = 32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                    .padding(horizontal = 24.dp, vertical = 40.dp),
+                contentAlignment = Alignment.Center
             ) {
-                // Header badge
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(RevLensTheme.colors.brandPrimary.copy(alpha = 0.12f))
-                        .padding(horizontal = 14.dp, vertical = 6.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                val invite = state.invites.firstOrNull()
+                if (invite != null) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Filled.MailOutline,
-                            contentDescription = null,
-                            tint = RevLensTheme.colors.brandPrimary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Text(
-                            text = "Workspace Invitation",
-                            style = RevLensTypography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = RevLensTheme.colors.brandPrimary
-                        )
+                        // Minimal Icon badge
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clip(CircleShape)
+                                .background(RevLensTheme.colors.brandPrimary.copy(alpha = 0.12f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.MailOutline,
+                                contentDescription = null,
+                                tint = RevLensTheme.colors.brandPrimary,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+
+                        // Title & Subtitle (Clean & Minimal)
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "Join ${invite.workspaceName}",
+                                style = RevLensTypography.headlineMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = RevLensTheme.colors.textPrimary,
+                                textAlign = TextAlign.Center
+                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = "Invited by ${invite.invitedBy} as",
+                                    style = RevLensTypography.bodyMedium,
+                                    color = RevLensTheme.colors.textSecondary
+                                )
+                                RoleChip(role = invite.role)
+                            }
+                            Text(
+                                text = "Collaborate with your team on revenue forecasting, SaaS metrics, and financial models.",
+                                style = RevLensTypography.bodySmall,
+                                color = RevLensTheme.colors.textSecondary,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 12.dp).padding(top = 4.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Standard PrimaryButton & Decline Link (Direct layout, no card)
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(14.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            PrimaryButton(
+                                text = "Accept Invitation",
+                                onClick = { viewModel.onEvent(InviteAcceptanceEvent.AcceptInvite(invite.inviteId)) },
+                                isLoading = state.isLoading,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            TextLinkButton(
+                                text = "Decline & create my own business",
+                                onClick = { viewModel.onEvent(InviteAcceptanceEvent.DeclineInvite(invite.inviteId)) }
+                            )
+                        }
                     }
                 }
-
-                // Title & Subtitle
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "You've been invited to join",
-                        style = RevLensTypography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = RevLensTheme.colors.textPrimary,
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = "Connect with your team to review live SaaS metrics, scenarios, and financial plans.",
-                        style = RevLensTypography.bodyMedium,
-                        color = RevLensTheme.colors.textSecondary,
-                        textAlign = TextAlign.Center
-                    )
-                }
-
-                // Invitation Cards
-                state.invites.forEach { invite ->
-                    InviteCard(
-                        invite = invite,
-                        isLoading = state.isLoading,
-                        onAccept = { viewModel.onEvent(InviteAcceptanceEvent.AcceptInvite(invite.inviteId)) },
-                        onDecline = { viewModel.onEvent(InviteAcceptanceEvent.DeclineInvite(invite.inviteId)) }
-                    )
-                }
             }
-        }
-    }
-}
-
-@Composable
-private fun InviteCard(
-    invite: TeamInviteDetail,
-    isLoading: Boolean,
-    onAccept: () -> Unit,
-    onDecline: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(RevLensTheme.colors.surface)
-            .border(1.dp, RevLensTheme.colors.borderDefault, RoundedCornerShape(16.dp))
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        // Workspace Row
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(CircleShape)
-                    .background(RevLensTheme.colors.brandPrimary)
-            ) {
-                val initials = invite.workspaceName.take(2).uppercase().ifBlank { "WS" }
-                Text(
-                    text = initials,
-                    style = RevLensTypography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = RevLensTheme.colors.background
-                )
-            }
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = invite.workspaceName,
-                    style = RevLensTypography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = RevLensTheme.colors.textPrimary
-                )
-                Text(
-                    text = "Invited by ${invite.invitedBy} • ${invite.sentAt}",
-                    style = RevLensTypography.bodySmall,
-                    color = RevLensTheme.colors.textSecondary
-                )
-            }
-
-            RoleChip(role = invite.role)
-        }
-
-        // Role explanation box
-        val roleDescription = when (invite.role) {
-            Role.Viewer -> "View-only access: You will have access to all real-time dashboards, charts, scenario simulations, and metrics without modifying financial baseline parameters."
-            Role.Editor -> "Editor access: You can create new scenarios, model pricing variations, and forecast growth alongside the team."
-            Role.Admin, Role.Owner -> "Administrative access: You can manage baseline metrics, invite team members, and configure workspace settings."
-        }
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(RevLensTheme.colors.surfaceElevated)
-                .padding(14.dp)
-        ) {
-            Text(
-                text = roleDescription,
-                style = RevLensTypography.bodySmall,
-                color = RevLensTheme.colors.textSecondary
-            )
-        }
-
-        // Single-tenancy notice
-        Row(
-            verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .background(RevLensTheme.colors.brandPrimary.copy(alpha = 0.08f))
-                .padding(12.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Info,
-                contentDescription = null,
-                tint = RevLensTheme.colors.brandPrimary,
-                modifier = Modifier.size(18.dp)
-            )
-            Text(
-                text = "A RevLens account belongs to one business at a time. Accepting connects you to ${invite.workspaceName} and skips company setup.",
-                style = RevLensTypography.bodySmall,
-                color = RevLensTheme.colors.textPrimary
-            )
-        }
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        // Actions
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            PrimaryButton(
-                text = if (isLoading) "Joining..." else "Accept & Go to Dashboard",
-                onClick = onAccept,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            TextLinkButton(
-                text = "Decline Invitation (Create My Own Business)",
-                onClick = onDecline,
-                modifier = Modifier.fillMaxWidth()
-            )
         }
     }
 }

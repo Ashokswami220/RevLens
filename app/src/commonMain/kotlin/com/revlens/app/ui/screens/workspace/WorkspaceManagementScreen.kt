@@ -176,13 +176,18 @@ fun WorkspaceManagementScreen(
                 }
             }
 
+            val canManageSettings = state.currentUserRole == Role.Owner || state.currentUserRole == Role.Admin
+            val canEditBaseline = state.currentUserRole != Role.Viewer
+
             // General Section
             SectionCard(title = "General Settings") {
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     WorkspaceSettingRow(
                         title = "Workspace Name",
                         value = workspace?.name ?: "",
-                        onClick = { viewModel.onEvent(WorkspaceManagementEvent.ShowEditNameDialog) }
+                        onClick = if (canManageSettings) {
+                            { viewModel.onEvent(WorkspaceManagementEvent.ShowEditNameDialog) }
+                        } else null
                     )
 
                     Column {
@@ -197,7 +202,7 @@ fun WorkspaceManagementScreen(
                                 text = "B2B SaaS",
                                 selected = workspace?.businessModel == BusinessModel.B2bSaas,
                                 onClick = {
-                                    if (workspace?.businessModel != BusinessModel.B2bSaas) {
+                                    if (canManageSettings && workspace?.businessModel != BusinessModel.B2bSaas) {
                                         viewModel.onEvent(
                                             WorkspaceManagementEvent.UpdateBusinessModel(
                                                 BusinessModel.B2bSaas
@@ -210,7 +215,7 @@ fun WorkspaceManagementScreen(
                                 text = "B2C SaaS",
                                 selected = workspace?.businessModel == BusinessModel.B2cSaas,
                                 onClick = {
-                                    if (workspace?.businessModel != BusinessModel.B2cSaas) {
+                                    if (canManageSettings && workspace?.businessModel != BusinessModel.B2cSaas) {
                                         viewModel.onEvent(
                                             WorkspaceManagementEvent.UpdateBusinessModel(
                                                 BusinessModel.B2cSaas
@@ -229,8 +234,8 @@ fun WorkspaceManagementScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     WorkspaceSettingRow(
                         title = "Business Baseline",
-                        value = "Edit plans & baseline parameters",
-                        onClick = onNavigateToBaseline
+                        value = if (canEditBaseline) "Edit plans & baseline parameters" else "View-only access",
+                        onClick = if (canEditBaseline) onNavigateToBaseline else null
                     )
                 }
             }

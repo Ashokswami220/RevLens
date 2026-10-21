@@ -38,14 +38,6 @@ class MainViewModel(
     private val teamRepository: TeamRepository? = null
 ) : ViewModel() {
 
-    init {
-        viewModelScope.launch {
-            val user = authRepository?.getCurrentUser()
-            if (user != null) {
-                sessionManager.onLoggedIn(user)
-            }
-        }
-    }
 
     val profile: StateFlow<BusinessProfile?> = repository.profileFlow
         .stateIn(
@@ -116,18 +108,40 @@ class MainViewModel(
         activeWorkspace,
         sessionManager.state
     ) { ws, sess ->
-        val email = (sess as? SessionState.Authenticated)?.user?.email
-            ?: authRepository?.getCurrentUser()?.email
-        if (ws != null && !email.isNullOrBlank() && teamRepository != null) {
-            teamRepository.getUserRoleInWorkspace(ws.id, email) ?: Role.Owner
-        } else {
-            Role.Owner
-        }
+        runCatching {
+            val email = (sess as? SessionState.Authenticated)?.user?.email
+                ?: authRepository?.getCurrentUser()?.email
+            if (ws != null && !email.isNullOrBlank() && teamRepository != null) {
+                teamRepository.getUserRoleInWorkspace(ws.id, email) ?: Role.Owner
+            } else {
+                Role.Owner
+            }
+        }.getOrDefault(Role.Owner)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = Role.Owner
     )
+
+    init {
+        viewModelScope.launch {
+            runCatching {
+                val user = authRepository?.getCurrentUser()
+                if (user != null) {
+                    sessionManager.onLoggedIn(user)
+                }
+            }
+        }
+        viewModelScope.launch {
+            runCatching {
+                activeWorkspace.collect { ws ->
+                    if (ws != null && workspaceContext.activeWorkspaceId.value != ws.id) {
+                        workspaceContext.switchTo(ws.id)
+                    }
+                }
+            }
+        }
+    }
 
     fun leaveBusiness(onSuccess: () -> Unit, onError: (String) -> Unit) {
         val wsId = activeWorkspace.value?.id ?: run {
@@ -156,10 +170,13 @@ class MainViewModel(
         viewModelScope.launch {
             repository.saveProfile(updatedProfile)
             val currentWs = activeWorkspace.value
-            if (currentWs != null && currentWs.currency != updatedProfile.currencyCode) {
-                workspaceRepository.updateWorkspace(
-                    currentWs.copy(currency = updatedProfile.currencyCode)
-                )
+            if (currentWs != null) {
+                teamRepository?.saveWorkspaceProfile(currentWs.id, updatedProfile)
+                if (currentWs.currency != updatedProfile.currencyCode) {
+                    workspaceRepository.updateWorkspace(
+                        currentWs.copy(currency = updatedProfile.currencyCode)
+                    )
+                }
             }
         }
     }
@@ -169,6 +186,7 @@ class MainViewModel(
             repository.saveProfile(profile)
             val currentWs = activeWorkspace.value
             if (currentWs != null) {
+                teamRepository?.saveWorkspaceProfile(currentWs.id, profile)
                 val updatedWs = currentWs.copy(currency = profile.currencyCode)
                 workspaceRepository.updateWorkspace(updatedWs)
             }
@@ -189,7 +207,6 @@ class MainViewModel(
             } catch (_: Exception) {
             }
             sessionManager.signOut(wipeLocalSyncedData = false)
-            repository.setOnboardingCompleted(false)
         }
     }
 

@@ -42,8 +42,15 @@ fun GoalPlannerScreen(
     val profile by viewModel.profile.collectAsState()
 
     val currentMrr = profile?.currentMrr?.toFloat() ?: 1000f
-    var targetMrr by rememberSaveable { mutableStateOf(currentMrr * 2) }
+    val initialGoal = profile?.mrrGoal?.toFloat() ?: (currentMrr * 2)
+    var targetMrr by rememberSaveable { mutableStateOf(initialGoal.coerceIn(currentMrr, maxOf(currentMrr * 10, currentMrr + 1000f))) }
     var targetMonths by rememberSaveable { mutableStateOf(12f) }
+
+    androidx.compose.runtime.LaunchedEffect(profile) {
+        val base = profile?.currentMrr?.toFloat() ?: 1000f
+        val goal = profile?.mrrGoal?.toFloat() ?: (base * 2)
+        targetMrr = goal.coerceIn(base, maxOf(base * 10, base + 1000f))
+    }
 
     val goalPlan = remember(profile, targetMrr, targetMonths) {
         profile?.let {
@@ -76,11 +83,12 @@ fun GoalPlannerScreen(
 
             SectionCard(title = "Set Your Goal") {
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    val safeMax = maxOf(currentMrr * 10, currentMrr + 1000f)
                     LabeledSlider(
                         label = "Target MRR",
-                        value = targetMrr,
+                        value = targetMrr.coerceIn(currentMrr, safeMax),
                         onValueChange = { targetMrr = it },
-                        valueRange = currentMrr..currentMrr * 10,
+                        valueRange = currentMrr..safeMax,
                         valueString = currencyFormatter.format(targetMrr),
                         caption = "Your revenue goal"
                     )

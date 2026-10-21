@@ -48,7 +48,13 @@ fun BreakEvenScreen(viewModel: MainViewModel) {
         )
     }
 
-    // If profile changes, we might want to update initial sliders, but for simplicity we rely on initial value.
+    androidx.compose.runtime.LaunchedEffect(profile) {
+        profile?.let { p ->
+            cacSimulated = p.cac.toFloat()
+            fixedCostsSimulated = p.fixedCosts.toFloat()
+            variableCostSimulated = p.variableCostPerCustomer.toFloat()
+        }
+    }
 
     val simulatedProfile by remember(
         profile, cacSimulated, fixedCostsSimulated, variableCostSimulated

@@ -152,34 +152,37 @@ fun TeamScreen(
                         )
                     }
 
-                    val canInvite = state.members.size < state.totalSeats
-                    Button(
-                        onClick = { viewModel.onEvent(TeamEvent.OpenInviteSheet) },
-                        enabled = canInvite,
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = RevLensTheme.colors.brandPrimary,
-                            contentColor = RevLensTheme.colors.background,
-                            disabledContainerColor = RevLensTheme.colors.surfaceElevated,
-                            disabledContentColor = RevLensTheme.colors.textTertiary
-                        ),
-                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
-                        modifier = Modifier.height(38.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    val canManageTeam = state.userRole == Role.Owner || state.userRole == Role.Admin
+                    if (canManageTeam) {
+                        val canInvite = state.members.size < state.totalSeats
+                        Button(
+                            onClick = { viewModel.onEvent(TeamEvent.OpenInviteSheet) },
+                            enabled = canInvite,
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = RevLensTheme.colors.brandPrimary,
+                                contentColor = RevLensTheme.colors.background,
+                                disabledContainerColor = RevLensTheme.colors.surfaceElevated,
+                                disabledContentColor = RevLensTheme.colors.textTertiary
+                            ),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                            modifier = Modifier.height(38.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Filled.Add,
-                                contentDescription = "Invite",
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Text(
-                                text = "Invite",
-                                style = RevLensTypography.labelMedium,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Add,
+                                    contentDescription = "Invite",
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "Invite",
+                                    style = RevLensTypography.labelMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }
@@ -336,32 +339,34 @@ fun TeamScreen(
                                         }
                                     }
 
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        TextLinkButton(
-                                            text = "Resend",
-                                            onClick = {
-                                                viewModel.onEvent(
-                                                    TeamEvent.ResendInvite(invite.id)
+                                    if (state.userRole == Role.Owner || state.userRole == Role.Admin) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            TextLinkButton(
+                                                text = "Resend",
+                                                onClick = {
+                                                    viewModel.onEvent(
+                                                        TeamEvent.ResendInvite(invite.id)
+                                                    )
+                                                }
+                                            )
+                                            IconButton(
+                                                onClick = {
+                                                    viewModel.onEvent(
+                                                        TeamEvent.RevokeInvite(invite.id)
+                                                    )
+                                                },
+                                                modifier = Modifier.size(28.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Close,
+                                                    contentDescription = "Revoke",
+                                                    tint = RevLensTheme.colors.error,
+                                                    modifier = Modifier.size(16.dp)
                                                 )
                                             }
-                                        )
-                                        IconButton(
-                                            onClick = {
-                                                viewModel.onEvent(
-                                                    TeamEvent.RevokeInvite(invite.id)
-                                                )
-                                            },
-                                            modifier = Modifier.size(28.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Filled.Close,
-                                                contentDescription = "Revoke",
-                                                tint = RevLensTheme.colors.error,
-                                                modifier = Modifier.size(16.dp)
-                                            )
                                         }
                                     }
                                 }

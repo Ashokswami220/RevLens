@@ -55,8 +55,10 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.revlens.app.ui.theme.RevLensTypography
 import com.revlens.app.domain.calc.AlertRuleEvaluator
 import com.revlens.app.domain.calc.LtvCalculator
 import com.revlens.app.domain.model.AlertSeverity
@@ -105,6 +107,7 @@ fun DashboardScreen(
     onNavigateToGoalPlanner: () -> Unit = {}
 ) {
     val profile by viewModel.profile.collectAsState()
+    val userRole by viewModel.currentUserRole.collectAsState()
     val notifPrefsRepo: NotificationPreferencesRepository = koinInject()
     val notifPrefs by notifPrefsRepo.preferencesFlow.collectAsState(initial = NotificationPrefs())
     val dismissedAlertIds by notifPrefsRepo.dismissedAlertIdsFlow.collectAsState(
@@ -130,33 +133,35 @@ fun DashboardScreen(
                             tint = CyanAccent
                         )
                     }
-                    Box(
-                        modifier = Modifier
-                            .height(18.dp)
-                            .width(1.dp)
-                            .background(CardBorder)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    TextButton(
-                        onClick = onNavigateToInput,
-                        contentPadding = PaddingValues(
-                            horizontal = 8.dp, vertical = 4.dp
-                        ),
-                        modifier = Modifier.height(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Edit,
-                            contentDescription = "Edit Data",
-                            tint = CyanAccent,
-                            modifier = Modifier.size(15.dp)
+                    if (userRole != com.revlens.app.domain.model.Role.Viewer) {
+                        Box(
+                            modifier = Modifier
+                                .height(18.dp)
+                                .width(1.dp)
+                                .background(CardBorder)
                         )
-                        Spacer(modifier = Modifier.width(5.dp))
-                        Text(
-                            text = "Edit Data",
-                            color = CyanAccent,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        TextButton(
+                            onClick = onNavigateToInput,
+                            contentPadding = PaddingValues(
+                                horizontal = 8.dp, vertical = 4.dp
+                            ),
+                            modifier = Modifier.height(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Edit,
+                                contentDescription = "Edit Data",
+                                tint = CyanAccent,
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Spacer(modifier = Modifier.width(5.dp))
+                            Text(
+                                text = "Edit Data",
+                                color = CyanAccent,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                 }
@@ -183,7 +188,8 @@ fun DashboardScreen(
                 )
             }
 
-            profile?.let { currentProfile ->
+            val currentProfile = profile
+            if (currentProfile != null) {
                 DashboardContent(
                     profile = currentProfile,
                     onNavigateToPricing = onNavigateToPricing,
@@ -192,6 +198,46 @@ fun DashboardScreen(
                     onNavigateToGrowth = onNavigateToGrowth,
                     onNavigateToGoalPlanner = onNavigateToGoalPlanner
                 )
+            } else {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = CardBg,
+                    border = adaptiveCardBorder()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "No Financial Baseline Configured",
+                            style = RevLensTypography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "Configure pricing tiers, customer counts, and churn rates to view live SaaS forecasts and revenue breakdown.",
+                            style = RevLensTypography.bodySmall,
+                            color = TextMuted,
+                            textAlign = TextAlign.Center
+                        )
+                        if (userRole != com.revlens.app.domain.model.Role.Viewer) {
+                            TextButton(
+                                onClick = onNavigateToInput,
+                                modifier = Modifier.padding(top = 8.dp)
+                            ) {
+                                Text(
+                                    text = "Configure Baseline",
+                                    color = CyanAccent,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }

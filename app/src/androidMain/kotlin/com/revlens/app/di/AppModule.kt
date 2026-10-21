@@ -27,7 +27,8 @@ val appModule = module {
     single<DataStore<Preferences>> { androidContext().dataStore }
     single<ProfileRepository> {
         com.revlens.app.data.AndroidFirestoreProfileRepository(
-            DataStoreProfileRepository(get())
+            localFallback = DataStoreProfileRepository(get()),
+            workspaceContext = getOrNull()
         )
     }
     single<ScenarioRepository> {
@@ -56,23 +57,27 @@ val appModule = module {
     single<com.revlens.app.domain.repository.NotificationPreferencesRepository> { com.revlens.app.data.DefaultNotificationPreferencesRepository() }
     single<com.revlens.app.domain.repository.AuthRepository> {
         com.revlens.app.data.AndroidFirebaseAuthRepository(
-            get(), get()
+            get(), getOrNull()
         )
     }
     single<com.revlens.app.domain.repository.TeamRepository> {
-        com.revlens.app.data.fake.FakeTeamRepository(getOrNull(), getOrNull())
+        com.revlens.app.data.AndroidFirestoreTeamRepository(
+            localFallback = com.revlens.app.data.fake.FakeTeamRepository(getOrNull(), getOrNull()),
+            workspaceContext = getOrNull(),
+            profileRepository = getOrNull()
+        )
     }
     single<com.revlens.app.domain.repository.BillingRepository> { com.revlens.app.data.fake.FakeBillingRepository() }
     single<com.revlens.app.domain.repository.IntegrationRepository> { com.revlens.app.data.fake.FakeIntegrationRepository() }
     single<com.revlens.app.domain.repository.DeveloperRepository> { com.revlens.app.data.fake.FakeDeveloperRepository() }
     single { com.revlens.app.domain.usecase.MigrateGuestDataUseCase(get(), get(), get(), get()) }
-    single { com.revlens.app.domain.usecase.LoginUseCase(get(), get(), get()) }
-    single { com.revlens.app.domain.usecase.SignUpUseCase(get(), get(), get()) }
+    single { com.revlens.app.domain.usecase.LoginUseCase(get(), get(), getOrNull()) }
+    single { com.revlens.app.domain.usecase.SignUpUseCase(get(), get(), getOrNull()) }
     single { com.revlens.app.domain.usecase.RequestPasswordResetUseCase(get()) }
     single { com.revlens.app.domain.usecase.ValidateResetTokenUseCase(get()) }
     single { com.revlens.app.domain.usecase.ResetPasswordUseCase(get()) }
     single { com.revlens.app.domain.usecase.CreateWorkspaceUseCase(get(), get(), get()) }
-    viewModel { MainViewModel(get(), get(), get(), get(), get(), get(), get(), getOrNull()) }
+    viewModel { MainViewModel(get(), get(), get(), get(), get(), get(), getOrNull(), getOrNull()) }
     viewModel { BusinessSetupViewModel() }
     viewModel {
         com.revlens.app.ui.screens.workspace.WorkspaceManagementViewModel(

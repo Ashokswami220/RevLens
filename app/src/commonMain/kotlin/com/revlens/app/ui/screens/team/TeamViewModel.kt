@@ -21,7 +21,7 @@ class TeamViewModel(
     init {
         viewModelScope.launch {
             workspaceContext.activeWorkspaceId.collectLatest { wsId ->
-                val id = wsId ?: "ws_default"
+                val id = wsId?.ifBlank { "ws_default" } ?: "ws_default"
                 currentWorkspaceId = id
                 startObservingWorkspace(id)
             }

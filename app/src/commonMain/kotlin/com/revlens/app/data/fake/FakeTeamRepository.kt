@@ -18,24 +18,40 @@ class FakeTeamRepository(
     initialInvites: Map<String, List<TeamInvite>>? = null
 ) : TeamRepository {
 
-    private val membersByWs = mutableMapOf<String, MutableStateFlow<List<Member>>>()
-    private val invitesByWs = mutableMapOf<String, MutableStateFlow<List<TeamInvite>>>()
-    private val workspaceNames = mutableMapOf<String, String>(
-        "ws_default" to "My Workspace",
-        "ws_1" to "Acme Corp"
-    )
+    companion object {
+        val persistentMembers = mutableMapOf<String, MutableStateFlow<List<Member>>>()
+        val persistentInvites = mutableMapOf<String, MutableStateFlow<List<TeamInvite>>>()
+        val workspaceNames = mutableMapOf<String, String>(
+            "ws_default" to "My Workspace",
+            "ws_1" to "Acme Corp"
+        )
+        val workspaceProfiles = mutableMapOf<String, com.revlens.app.model.BusinessProfile>()
+
+        fun reset() {
+            persistentMembers.clear()
+            persistentInvites.clear()
+            workspaceNames.clear()
+            workspaceNames.putAll(
+                mapOf(
+                    "ws_default" to "My Workspace",
+                    "ws_1" to "Acme Corp"
+                )
+            )
+            workspaceProfiles.clear()
+        }
+    }
 
     init {
         initialMembers?.forEach { (wsId, members) ->
-            membersByWs[wsId] = MutableStateFlow(members)
+            persistentMembers[wsId] = MutableStateFlow(members)
         }
         initialInvites?.forEach { (wsId, invites) ->
-            invitesByWs[wsId] = MutableStateFlow(invites)
+            persistentInvites[wsId] = MutableStateFlow(invites)
         }
     }
 
     private fun getMembersFlow(workspaceId: String): MutableStateFlow<List<Member>> {
-        return membersByWs.getOrPut(workspaceId) {
+        return persistentMembers.getOrPut(workspaceId) {
             val sessionUser = (sessionManager?.state?.value as? com.revlens.app.domain.model.SessionState.Authenticated)?.user
             val ownerName = sessionUser?.name?.takeIf { it.isNotBlank() }
                 ?: (if (sessionUser != null && sessionUser.email.isNotBlank()) sessionUser.email.substringBefore("@") else "Workspace Owner")
@@ -58,7 +74,7 @@ class FakeTeamRepository(
     }
 
     private fun getInvitesFlow(workspaceId: String): MutableStateFlow<List<TeamInvite>> {
-        return invitesByWs.getOrPut(workspaceId) {
+        return persistentInvites.getOrPut(workspaceId) {
             MutableStateFlow(emptyList())
         }
     }
@@ -68,10 +84,11 @@ class FakeTeamRepository(
         val sessionUser = (sessionManager?.state?.value as? com.revlens.app.domain.model.SessionState.Authenticated)?.user
         if (sessionUser != null && sessionUser.email.isNotBlank()) {
             val current = flow.value
-            if (current.any { it.email == "owner@revlens.io" }) {
+            // Update the Founder record if it has the placeholder email or if matching session
+            if (current.any { it.role == Role.Owner && (it.email == "owner@revlens.io" || it.email == sessionUser.email) }) {
                 flow.update { list ->
                     list.map { m ->
-                        if (m.email == "owner@revlens.io") {
+                        if (m.role == Role.Owner && (m.email == "owner@revlens.io" || m.email == sessionUser.email)) {
                             m.copy(
                                 id = sessionUser.id.ifBlank { m.id },
                                 name = sessionUser.name.ifBlank { sessionUser.email.substringBefore("@") },
@@ -94,20 +111,40 @@ class FakeTeamRepository(
     ): Result<TeamInvite> {
         val normalized = email.trim().lowercase()
         val currentMembers = getMembersFlow(workspaceId).value
-        if (currentMembers.any { it.email.lowercase() == normalized }) {
+        val sessionUser = (sessionManager?.state?.value as? com.revlens.app.domain.model.SessionState.Authenticated)?.user
+        val currentOwner = currentMembers.firstOrNull { it.role == Role.Owner }
+        val ownerEmail = currentOwner?.email?.trim()?.lowercase() ?: sessionUser?.email?.trim()?.lowercase()
+
+        // 1. Prevent inviting oneself
+        if (ownerEmail != null && ownerEmail == normalized) {
+            return Result.failure(
+                IllegalArgumentException("You cannot invite yourself to your own workspace.")
+            )
+        }
+
+        // 2. Prevent inviting someone who is already an accepted non-owner member
+        if (currentMembers.any { it.role != Role.Owner && it.email.trim().lowercase() == normalized }) {
             return Result.failure(
                 IllegalArgumentException("User is already a member of this workspace.")
             )
         }
 
+        // 3. If an invite is already pending, refresh it instead of throwing an error
         val currentInvites = getInvitesFlow(workspaceId).value
-        if (currentInvites.any { it.email.lowercase() == normalized }) {
-            return Result.failure(
-                IllegalArgumentException("An invitation is already pending for this email.")
+        val existingInvite = currentInvites.find { it.email.trim().lowercase() == normalized }
+        if (existingInvite != null) {
+            val updated = existingInvite.copy(
+                role = role,
+                sentAt = "Resent just now",
+                invitedBy = inviterName
             )
+            getInvitesFlow(workspaceId).update { list ->
+                list.map { if (it.id == existingInvite.id) updated else it }
+            }
+            return Result.success(updated)
         }
 
-        // Strict Single-Tenancy: check if user is already associated with any other business
+        // 4. Strict Single-Tenancy: check if user is already an accepted member of another business
         if (isUserAssociatedWithAnotherBusiness(normalized, currentWorkspaceId = workspaceId)) {
             return Result.failure(
                 IllegalArgumentException("Cannot invite user: This account is already associated with another business. A user can only belong to one business at a time.")
@@ -115,7 +152,7 @@ class FakeTeamRepository(
         }
 
         val invite = TeamInvite(
-            id = "inv_${(currentInvites.size + 1)}",
+            id = com.revlens.app.core.util.IdGenerator.newId("inv"),
             email = normalized,
             role = role,
             sentAt = "Just now",
@@ -184,9 +221,9 @@ class FakeTeamRepository(
     override suspend fun getPendingInvitesForEmail(email: String): List<TeamInviteDetail> {
         val normalized = email.trim().lowercase()
         val results = mutableListOf<TeamInviteDetail>()
-        invitesByWs.forEach { (wsId, flow) ->
-            val wsName = workspaceNames[wsId] ?: "Acme Corp"
-            flow.value.filter { it.email.lowercase() == normalized }.forEach { inv ->
+        persistentInvites.forEach { (wsId, flow) ->
+            val wsName = workspaceNames[wsId] ?: "My Workspace"
+            flow.value.filter { it.email.trim().lowercase() == normalized }.forEach { inv ->
                 results.add(
                     TeamInviteDetail(
                         inviteId = inv.id,
@@ -207,7 +244,7 @@ class FakeTeamRepository(
         var targetWsId: String? = null
         var foundInvite: TeamInvite? = null
 
-        invitesByWs.forEach { (wsId, flow) ->
+        persistentInvites.forEach { (wsId, flow) ->
             val match = flow.value.find { it.id == inviteId }
             if (match != null) {
                 targetWsId = wsId
@@ -223,30 +260,74 @@ class FakeTeamRepository(
         val invite = foundInvite!!
 
         // Remove from invites
-        invitesByWs[wsId]?.update { list -> list.filterNot { it.id == inviteId } }
+        persistentInvites[wsId]?.update { list -> list.filterNot { it.id == inviteId } }
 
         // Clear any other pending invites for this user (single-tenant exclusivity)
         val normalizedUserEmail = user.email.trim().lowercase()
-        invitesByWs.forEach { (_, flow) ->
-            flow.update { list -> list.filterNot { it.email.lowercase() == normalizedUserEmail } }
+        persistentInvites.forEach { (_, flow) ->
+            flow.update { list -> list.filterNot { it.email.trim().lowercase() == normalizedUserEmail } }
         }
 
         // Add as member in the workspace
         val newMember = Member(
             id = user.id.ifBlank { "mem_${user.email.hashCode()}" },
             name = user.name.ifBlank { user.email.substringBefore("@") },
-            email = user.email,
+            email = user.email.trim().lowercase(),
             role = invite.role,
             avatarUrl = user.avatarUrl,
             joinedAt = "Joined just now"
         )
-        getMembersFlow(wsId).update { list -> list + newMember }
+        val targetFlow = getMembersFlow(wsId)
+        targetFlow.update { list ->
+            val hasOwner = list.any { it.role == Role.Owner }
+            val baseList = if (!hasOwner) {
+                val inviter = invite.invitedBy.ifBlank { "Workspace Owner" }
+                listOf(
+                    Member(
+                        id = "mem_owner",
+                        name = inviter,
+                        email = "owner@revlens.io",
+                        role = Role.Owner,
+                        joinedAt = "Workspace Founder"
+                    )
+                ) + list
+            } else list
+
+            if (baseList.any { it.email.trim().lowercase() == normalizedUserEmail }) {
+                baseList.map { if (it.email.trim().lowercase() == normalizedUserEmail) newMember else it }
+            } else {
+                baseList + newMember
+            }
+        }
+
+        // Mirror to ws_default if wsId != ws_default and ws_default exists
+        if (wsId != "ws_default" && persistentMembers.containsKey("ws_default")) {
+            persistentMembers["ws_default"]?.update { list ->
+                if (list.none { it.email.trim().lowercase() == normalizedUserEmail }) {
+                    list + newMember
+                } else {
+                    list.map { if (it.email.trim().lowercase() == normalizedUserEmail) newMember else it }
+                }
+            }
+        }
+        // Mirror to other workspaces if wsId == ws_default
+        if (wsId == "ws_default") {
+            persistentMembers.filterKeys { it != "ws_default" }.values.forEach { flow ->
+                flow.update { list ->
+                    if (list.none { it.email.trim().lowercase() == normalizedUserEmail }) {
+                        list + newMember
+                    } else {
+                        list.map { if (it.email.trim().lowercase() == normalizedUserEmail) newMember else it }
+                    }
+                }
+            }
+        }
 
         return Result.success(wsId)
     }
 
     override suspend fun declineInvite(inviteId: String, email: String): Result<Unit> {
-        invitesByWs.forEach { (_, flow) ->
+        persistentInvites.forEach { (_, flow) ->
             flow.update { list -> list.filterNot { it.id == inviteId } }
         }
         return Result.success(Unit)
@@ -256,21 +337,21 @@ class FakeTeamRepository(
         email: String, currentWorkspaceId: String?
     ): Boolean {
         val normalized = email.trim().lowercase()
-        return membersByWs.any { (wsId, flow) ->
+        return persistentMembers.any { (wsId, flow) ->
             (currentWorkspaceId == null || wsId != currentWorkspaceId) &&
-                flow.value.any { it.email.lowercase() == normalized }
+                flow.value.any { it.email.trim().lowercase() == normalized && it.role != Role.Owner }
         }
     }
 
     override suspend fun getUserRoleInWorkspace(workspaceId: String, userEmail: String): Role? {
         val normalized = userEmail.trim().lowercase()
-        return getMembersFlow(workspaceId).value.find { it.email.lowercase() == normalized }?.role
+        return getMembersFlow(workspaceId).value.find { it.email.trim().lowercase() == normalized }?.role
     }
 
     override suspend fun leaveWorkspace(workspaceId: String, userEmail: String): Result<Unit> {
         val flow = getMembersFlow(workspaceId)
         val normalized = userEmail.trim().lowercase()
-        val member = flow.value.find { it.email.lowercase() == normalized }
+        val member = flow.value.find { it.email.trim().lowercase() == normalized }
             ?: return Result.failure(NoSuchElementException("You are not a member of this workspace."))
 
         if (member.role == Role.Owner) {
@@ -284,5 +365,16 @@ class FakeTeamRepository(
 
         flow.update { list -> list.filterNot { it.id == member.id } }
         return Result.success(Unit)
+    }
+
+    override suspend fun getWorkspaceProfile(workspaceId: String): com.revlens.app.model.BusinessProfile? {
+        return workspaceProfiles[workspaceId] ?: workspaceProfiles["ws_default"] ?: workspaceProfiles.values.firstOrNull()
+    }
+
+    override suspend fun saveWorkspaceProfile(workspaceId: String, profile: com.revlens.app.model.BusinessProfile) {
+        workspaceProfiles[workspaceId] = profile
+        if (workspaceId != "ws_default") {
+            workspaceProfiles["ws_default"] = profile
+        }
     }
 }

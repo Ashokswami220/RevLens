@@ -94,8 +94,8 @@ fun PricingSimulatorScreen(viewModel: MainViewModel) {
 
 
         if (profile != null) {
-            // Initialize selected plan if null
-            if (selectedPlanId == null && profile!!.plans.isNotEmpty()) {
+            // Initialize selected plan if null or if previous plan no longer exists
+            if (profile!!.plans.isNotEmpty() && (selectedPlanId == null || profile!!.plans.none { it.id == selectedPlanId })) {
                 selectedPlanId = profile!!.plans.first().id
             }
 

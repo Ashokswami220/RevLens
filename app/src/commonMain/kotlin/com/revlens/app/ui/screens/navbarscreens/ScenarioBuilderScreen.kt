@@ -46,6 +46,8 @@ fun ScenarioBuilderScreen(
     onNavigateToExperiments: () -> Unit = {}
 ) {
     val scenarios by viewModel.scenarios.collectAsState()
+    val userRole by viewModel.currentUserRole.collectAsState()
+    val isViewer = userRole == com.revlens.app.domain.model.Role.Viewer
 
     val profile by viewModel.profile.collectAsState()
     val currencyFormatter = remember(profile?.currencyCode) {
@@ -86,11 +88,13 @@ fun ScenarioBuilderScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            ActionCardButton(
-                text = "Create New Scenario",
-                icon = Icons.Outlined.AddCircleOutline,
-                onClick = onNavigateToCreate
-            )
+            if (!isViewer) {
+                ActionCardButton(
+                    text = "Create New Scenario",
+                    icon = Icons.Outlined.AddCircleOutline,
+                    onClick = onNavigateToCreate
+                )
+            }
 
             if (scenarios.size >= 2) {
                 ActionCardButton(
@@ -115,6 +119,7 @@ fun ScenarioBuilderScreen(
                         ScenarioCard(
                             scenario = scenario,
                             currencyFormatter = currencyFormatter,
+                            canDelete = !isViewer,
                             onDelete = { viewModel.deleteScenario(scenario.id) }
                         )
                     }
@@ -128,6 +133,7 @@ fun ScenarioBuilderScreen(
 fun ScenarioCard(
     scenario: Scenario,
     currencyFormatter: RevLensFormatter,
+    canDelete: Boolean = true,
     onDelete: () -> Unit
 ) {
     SectionCard(title = scenario.name) {
@@ -148,10 +154,12 @@ fun ScenarioCard(
                 color = RevLensTheme.colors.textSecondary
             )
 
-            PrimaryButton(
-                text = "Delete",
-                onClick = onDelete
-            )
+            if (canDelete) {
+                PrimaryButton(
+                    text = "Delete",
+                    onClick = onDelete
+                )
+            }
         }
     }
 }

@@ -22,4 +22,6 @@ interface TeamRepository {
     suspend fun isUserAssociatedWithAnotherBusiness(email: String, currentWorkspaceId: String? = null): Boolean
     suspend fun getUserRoleInWorkspace(workspaceId: String, userEmail: String): Role?
     suspend fun leaveWorkspace(workspaceId: String, userEmail: String): Result<Unit>
+    suspend fun getWorkspaceProfile(workspaceId: String): com.revlens.app.model.BusinessProfile? = null
+    suspend fun saveWorkspaceProfile(workspaceId: String, profile: com.revlens.app.model.BusinessProfile) {}
 }

@@ -47,9 +47,10 @@ class WorkspaceManagementViewModel(
     }
 
     private suspend fun resolveRole(workspaceId: String?): Role {
-        if (workspaceId == null || teamRepository == null) return Role.Owner
+        val repo = teamRepository
+        if (workspaceId.isNullOrBlank() || repo == null) return Role.Owner
         val email = getCurrentUserEmail() ?: return Role.Owner
-        return teamRepository.getUserRoleInWorkspace(workspaceId, email) ?: Role.Owner
+        return runCatching { repo.getUserRoleInWorkspace(workspaceId, email) }.getOrNull() ?: Role.Owner
     }
 
     private suspend fun getCurrentUserEmail(): String? {
