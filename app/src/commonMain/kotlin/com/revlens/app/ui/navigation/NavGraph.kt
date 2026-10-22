@@ -324,23 +324,18 @@ fun RevLensNavGraph(
         }
     }
 
-    LaunchedEffect(isOnboardingCompleted, hasSeenIntro) {
+    LaunchedEffect(isOnboardingCompleted) {
         if (isOnboardingCompleted == false) {
-            val destination: Any = if (hasSeenIntro) LoginRoute else IntroRoute
-            val currentRoute = navController.currentDestination?.route.orEmpty()
-            val isAlreadyThere = when (destination) {
-                is LoginRoute -> navController.currentDestination?.hasRoute<LoginRoute>() == true || currentRoute.contains(
-                    "Login"
-                )
-
-                is IntroRoute -> navController.currentDestination?.hasRoute<IntroRoute>() == true || currentRoute.contains(
-                    "Intro"
-                )
-
-                else -> false
-            }
-            if (!isAlreadyThere) {
-                navController.navigate(destination) {
+            val routeStr = navController.currentDestination?.route.orEmpty()
+            val isInAuthOrOnboardingFlow =
+                routeStr.contains("Intro") ||
+                    routeStr.contains("Login") ||
+                    routeStr.contains("InviteAcceptance") ||
+                    routeStr.contains("CreateWorkspace") ||
+                    routeStr.contains("Onboarding")
+            if (!isInAuthOrOnboardingFlow) {
+                val target: Any = if (hasSeenIntro) LoginRoute else IntroRoute
+                navController.navigate(target) {
                     popUpTo(0) { inclusive = true }
                     launchSingleTop = true
                 }
@@ -490,13 +485,16 @@ fun RevLensNavGraph(
                         launchSingleTop = true
                     }
                 }
-                NavHost(
-                    navController = navController,
-                    startDestination = when {
+                val initialStartDestination = androidx.compose.runtime.remember {
+                    when {
                         isOnboardingCompleted == true -> DashboardRoute
                         hasSeenIntro -> LoginRoute
                         else -> IntroRoute
-                    },
+                    }
+                }
+                NavHost(
+                    navController = navController,
+                    startDestination = initialStartDestination,
                     modifier = modifier.padding(innerPadding),
                     enterTransition = {
                         val isTargetMainTab = isMainTab(targetState.destination.route)
@@ -813,9 +811,10 @@ fun RevLensNavGraph(
                             onBackClick = { navController.popBackStack() },
                             onNavigateToBaseline = { navController.navigate(InputDataRoute) },
                             onNavigateToCreateWorkspace = {
-                                navController.navigate(
-                                    CreateWorkspaceRoute
-                                )
+                                navController.navigate(CreateWorkspaceRoute) {
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
+                                }
                             }
                         )
                     }

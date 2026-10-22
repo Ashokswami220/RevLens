@@ -128,7 +128,7 @@ val appModule = module {
     }
     single<TeamRepository> {
         AndroidFirestoreTeamRepository(
-            localFallback = FakeTeamRepository(getOrNull()),
+            localFallback = FakeTeamRepository(),
             profileRepository = getOrNull()
         )
     }
@@ -146,11 +146,7 @@ val appModule = module {
         MainViewModel(
             repository = get(),
             scenarioRepository = get(),
-            workspaceRepository = get(),
-            workspaceContext = get(),
-            sessionManager = get(),
-            authRepository = get(),
-            teamRepository = get()
+            workspaceRepository = get()
         )
     }
     viewModel { BusinessSetupViewModel() }

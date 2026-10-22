@@ -234,7 +234,7 @@ val wasmModule = module {
         )
     }
     single<TeamRepository> {
-        FakeTeamRepository(getOrNull())
+        FakeTeamRepository()
     }
     single<BillingRepository> { FakeBillingRepository() }
     single<IntegrationRepository> { FakeIntegrationRepository() }
@@ -250,11 +250,7 @@ val wasmModule = module {
         MainViewModel(
             repository = get(),
             scenarioRepository = get(),
-            workspaceRepository = get(),
-            workspaceContext = get(),
-            sessionManager = get(),
-            authRepository = get(),
-            teamRepository = get()
+            workspaceRepository = get()
         )
     }
     viewModel { BusinessSetupViewModel() }

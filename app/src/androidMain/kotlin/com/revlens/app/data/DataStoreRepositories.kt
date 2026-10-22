@@ -47,6 +47,12 @@ class DataStoreProfileRepository(
         preferences[ONBOARDING_COMPLETED_KEY] == true
     }
 
+    override suspend fun clearLocalData() {
+        dataStore.edit { preferences ->
+            preferences.clear()
+        }
+    }
+
     override suspend fun setOnboardingCompleted(completed: Boolean) {
         dataStore.edit { preferences ->
             if (completed) {

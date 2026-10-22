@@ -195,7 +195,7 @@ class WorkspaceManagementViewModel(
                                 UiText.DynamicString("You left ${current.name}.")
                             )
                         )
-                        emit(WorkspaceManagementEffect.NavigateToCreateWorkspace)
+                        emit(WorkspaceManagementEffect.NavigateToCreateWorkspace.also { viewModelScope.launch { profileRepository.clearLocalData() } })
                     }
                         .onFailure { err ->
                             update { copy(isLeaveDialogVisible = false) }

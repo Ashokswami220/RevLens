@@ -20,6 +20,8 @@ import com.revlens.app.domain.repository.TeamRepository
 import com.revlens.app.domain.repository.WorkspaceRepository
 import com.revlens.app.model.BusinessProfile
 import com.revlens.app.model.Scenario
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
@@ -31,9 +33,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.time.Duration.Companion.milliseconds
 
 private val safeFirestore: FirebaseFirestore?
     get() = try {
@@ -49,16 +48,35 @@ private val safeAuth: FirebaseAuth?
         null
     }
 
+private fun parseBusinessModel(raw: String?): BusinessModel {
+    if (raw.isNullOrBlank()) return BusinessModel.B2bSaas
+    return try {
+        BusinessModel.valueOf(raw)
+    } catch (_: Throwable) {
+        BusinessModel.B2bSaas
+    }
+}
+
+private fun parseRole(raw: String?): Role {
+    if (raw.isNullOrBlank()) return Role.Viewer
+    return try {
+        Role.valueOf(raw)
+    } catch (_: Throwable) {
+        Role.Viewer
+    }
+}
+
 class AndroidFirestoreWorkspaceRepository(
-    private val localFallback: WorkspaceRepository = DefaultWorkspaceRepository()
+    private val localFallback: WorkspaceRepository = DefaultWorkspaceRepository(emptyList())
 ) : WorkspaceRepository {
 
-    private val db: FirebaseFirestore? get() = safeFirestore
-    private val auth: FirebaseAuth? get() = safeAuth
-    private val _workspaces = MutableStateFlow(
-        listOf(Workspace(id = "ws_default", name = "My Workspace", currency = "USD"))
-    )
-    private var hasRemoteWorkspaces = false
+    private val db: FirebaseFirestore?
+        get() = safeFirestore
+
+    private val auth: FirebaseAuth?
+        get() = safeAuth
+
+    private val _workspaces = MutableStateFlow<List<Workspace>>(emptyList())
 
     override val workspacesFlow: Flow<List<Workspace>> = callbackFlow {
         val firestore = db
@@ -68,7 +86,11 @@ class AndroidFirestoreWorkspaceRepository(
         trySend(_workspaces.value)
 
         fun attachListener(uid: String) {
-            if (uid.isBlank() || firestore == null) return
+            if (uid.isBlank() || firestore == null) {
+                _workspaces.value = emptyList()
+                trySend(emptyList())
+                return
+            }
             firestoreListener?.remove()
             try {
                 firestoreListener = firestore.collection("users")
@@ -82,38 +104,32 @@ class AndroidFirestoreWorkspaceRepository(
                         if (snapshot != null) {
                             val list = snapshot.documents.mapNotNull { doc ->
                                 val id = doc.getString("id") ?: doc.id
+                                if (id.isBlank() || id == "ws_default") return@mapNotNull null
                                 val name = doc.getString("name") ?: "My Workspace"
                                 val currency = doc.getString("currency") ?: "USD"
                                 val timeZoneId = doc.getString("timeZoneId") ?: "UTC"
-                                val fiscalYearStartMonth = doc.getLong("fiscalYearStartMonth")
-                                    ?.toInt() ?: 1
-                                val bmStr = doc.getString("businessModel") ?: "B2bSaas"
-                                val bm = try {
-                                    BusinessModel.valueOf(bmStr)
-                                } catch (_: Throwable) {
-                                    BusinessModel.B2bSaas
-                                }
-                                val createdAtMillis =
-                                    doc.getLong("createdAtMillis") ?: System.currentTimeMillis()
+                                val fiscalYearStartMonth = doc.getLong("fiscalYearStartMonth")?.toInt() ?: 1
+                                val businessModel = parseBusinessModel(doc.getString("businessModel"))
+                                val createdAtMillis = doc.getLong("createdAtMillis") ?: System.currentTimeMillis()
+
                                 Workspace(
                                     id = id,
                                     name = name,
                                     currency = currency,
                                     timeZoneId = timeZoneId,
                                     fiscalYearStartMonth = fiscalYearStartMonth,
-                                    businessModel = bm,
+                                    businessModel = businessModel,
                                     createdAtMillis = createdAtMillis
                                 )
                             }
                             if (list.isNotEmpty()) {
-                                hasRemoteWorkspaces = true
-                                // Enforce single active workspace per user
-                                val singleList =
-                                    listOf(list.maxByOrNull { it.createdAtMillis } ?: list.first())
+                                val newest = list.maxByOrNull { it.createdAtMillis } ?: list.first()
+                                val singleList = listOf(newest)
                                 _workspaces.value = singleList
                                 trySend(singleList)
                             } else {
-                                trySend(_workspaces.value)
+                                _workspaces.value = emptyList()
+                                trySend(emptyList())
                             }
                         }
                     }
@@ -123,32 +139,29 @@ class AndroidFirestoreWorkspaceRepository(
         }
 
         val authStateListener = if (fbAuth != null) {
-            FirebaseAuth.AuthStateListener { fAuth ->
-                val uid = fAuth.currentUser?.uid
-                if (!uid.isNullOrBlank()) attachListener(uid) else firestoreListener?.remove()
+            FirebaseAuth.AuthStateListener { firebaseAuth ->
+                val uid = firebaseAuth.currentUser?.uid
+                if (!uid.isNullOrBlank()) {
+                    attachListener(uid)
+                } else {
+                    firestoreListener?.remove()
+                    _workspaces.value = emptyList()
+                    trySend(emptyList())
+                }
             }
-        } else null
+        } else {
+            null
+        }
 
         if (fbAuth != null && authStateListener != null) {
             try {
                 fbAuth.addAuthStateListener(authStateListener)
                 val initialUid = fbAuth.currentUser?.uid
-                if (!initialUid.isNullOrBlank()) attachListener(initialUid)
-            } catch (e: Throwable) {
-                Log.e("RevLensFirestore", "Workspace auth listener attach error", e)
-            }
-        }
-
-        val localJob = CoroutineScope(Dispatchers.IO).launch {
-            localFallback.workspacesFlow.collect { localList ->
-                if (!hasRemoteWorkspaces) {
-                    if (localList.isNotEmpty()) {
-                        _workspaces.value = listOf(localList.last())
-                        trySend(_workspaces.value)
-                    } else {
-                        trySend(_workspaces.value)
-                    }
+                if (!initialUid.isNullOrBlank()) {
+                    attachListener(initialUid)
                 }
+            } catch (e: Throwable) {
+                Log.e("RevLensFirestore", "Workspace auth listener error", e)
             }
         }
 
@@ -160,80 +173,58 @@ class AndroidFirestoreWorkspaceRepository(
                 }
             }
             firestoreListener?.remove()
-            localJob.cancel()
         }
     }
 
     override suspend fun getWorkspace(id: String): Workspace? {
-        val inMem = _workspaces.value.firstOrNull { it.id == id }
-        if (inMem != null) return inMem
-        val firestore = db ?: return localFallback.getWorkspace(id)
-        if (id.isBlank()) return localFallback.getWorkspace(id)
+        if (id.isBlank() || id == "ws_default") return null
+        val inMemory = _workspaces.value.firstOrNull { it.id == id }
+        if (inMemory != null) return inMemory
 
+        val firestore = db ?: return localFallback.getWorkspace(id)
         try {
-            val uid = auth?.currentUser?.uid
-            val snapshot = if (!uid.isNullOrBlank()) {
-                val userWs = firestore.collection("users")
-                    .document(uid)
-                    .collection("workspaces")
-                    .document(id)
-                    .get()
-                    .await()
-                if (userWs.exists()) userWs else firestore.collection("workspaces")
-                    .document(id)
-                    .get()
-                    .await()
-            } else {
-                firestore.collection("workspaces")
-                    .document(id)
-                    .get()
-                    .await()
-            }
+            val snapshot = firestore.collection("workspaces")
+                .document(id)
+                .get()
+                .await()
+
             if (snapshot.exists()) {
                 val name = snapshot.getString("name") ?: "My Workspace"
                 val currency = snapshot.getString("currency") ?: "USD"
                 val timeZoneId = snapshot.getString("timeZoneId") ?: "UTC"
-                val fiscalYearStartMonth = snapshot.getLong("fiscalYearStartMonth")
-                    ?.toInt() ?: 1
-                val bmStr = snapshot.getString("businessModel") ?: "B2bSaas"
-                val bm = try {
-                    BusinessModel.valueOf(bmStr)
-                } catch (_: Throwable) {
-                    BusinessModel.B2bSaas
-                }
-                val createdAtMillis =
-                    snapshot.getLong("createdAtMillis") ?: System.currentTimeMillis()
+                val fiscalYearStartMonth = snapshot.getLong("fiscalYearStartMonth")?.toInt() ?: 1
+                val businessModel = parseBusinessModel(snapshot.getString("businessModel"))
+                val createdAtMillis = snapshot.getLong("createdAtMillis") ?: System.currentTimeMillis()
+
                 return Workspace(
                     id = id,
                     name = name,
                     currency = currency,
                     timeZoneId = timeZoneId,
                     fiscalYearStartMonth = fiscalYearStartMonth,
-                    businessModel = bm,
+                    businessModel = businessModel,
                     createdAtMillis = createdAtMillis
                 )
             }
         } catch (e: Throwable) {
             Log.e("RevLensFirestore", "getWorkspace error", e)
         }
-        return localFallback.getWorkspace(id)
+        return null
     }
 
     override suspend fun createWorkspace(workspace: Workspace) {
-        // Single workspace rule: replace any existing workspace locally
-        val previousIds = _workspaces.value.map { it.id }
-            .filter { it != workspace.id }
+        val previousIds = _workspaces.value.map { it.id }.filter { it != workspace.id }
         _workspaces.value = listOf(workspace)
-        previousIds.forEach { oldId -> localFallback.deleteWorkspace(oldId) }
+        previousIds.forEach { oldId ->
+            localFallback.deleteWorkspace(oldId)
+        }
         localFallback.createWorkspace(workspace)
 
         val firestore = db ?: return
-        if (workspace.id.isBlank()) return
+        if (workspace.id.isBlank() || workspace.id == "ws_default") return
+
         val uid = auth?.currentUser?.uid
-        val joinCode = "RL-" + workspace.id.removePrefix("ws_")
-            .uppercase()
-            .take(6)
-            .padEnd(6, '0')
+        val joinCode = "RL-" + workspace.id.removePrefix("ws_").uppercase().take(6).padEnd(6, '0')
         val map = mutableMapOf<String, Any>(
             "id" to workspace.id,
             "name" to workspace.name,
@@ -245,10 +236,10 @@ class AndroidFirestoreWorkspaceRepository(
             "createdAtMillis" to workspace.createdAtMillis,
             "updatedAt" to System.currentTimeMillis()
         )
+
         if (!uid.isNullOrBlank()) {
-            map["userId"] = uid
+            map["ownerId"] = uid
             try {
-                // Remove old user-scoped workspaces so user only has 1 workspace in Firestore
                 val existingDocs = firestore.collection("users")
                     .document(uid)
                     .collection("workspaces")
@@ -256,8 +247,7 @@ class AndroidFirestoreWorkspaceRepository(
                     .await()
                 for (doc in existingDocs.documents) {
                     if (doc.id != workspace.id) {
-                        doc.reference.delete()
-                            .await()
+                        doc.reference.delete().await()
                     }
                 }
                 firestore.collection("users")
@@ -266,41 +256,52 @@ class AndroidFirestoreWorkspaceRepository(
                     .document(workspace.id)
                     .set(map, SetOptions.merge())
                     .await()
+                firestore.collection("users")
+                    .document(uid)
+                    .set(
+                        mapOf(
+                            "id" to uid,
+                            "activeWorkspaceId" to workspace.id,
+                            "updatedAt" to System.currentTimeMillis()
+                        ),
+                        SetOptions.merge()
+                    )
+                    .await()
             } catch (e: Throwable) {
                 Log.e("RevLensFirestore", "Failed to save user-scoped workspace", e)
             }
         }
+
         try {
             firestore.collection("workspaces")
                 .document(workspace.id)
                 .set(map, SetOptions.merge())
                 .await()
 
-            // Ensure creator is registered as Owner in workspaces/{wsId}/members unless they already have a role
             val authUser = auth?.currentUser
             if (authUser != null) {
                 val memberRef = firestore.collection("workspaces")
                     .document(workspace.id)
                     .collection("members")
                     .document(authUser.uid)
-                val existingMember = memberRef.get()
-                    .await()
+                val existingMember = memberRef.get().await()
                 if (!existingMember.exists()) {
+                    val defaultName = authUser.displayName?.ifBlank { null }
+                        ?: authUser.email?.substringBefore("@")
+                        ?: "Owner"
                     val ownerMap = mapOf(
                         "id" to authUser.uid,
-                        "name" to (authUser.displayName?.ifBlank { null }
-                            ?: authUser.email?.substringBefore("@") ?: "Owner"),
-                        "email" to (authUser.email?.trim()
-                            ?.lowercase() ?: ""),
+                        "name" to defaultName,
+                        "email" to (authUser.email?.trim()?.lowercase() ?: ""),
                         "role" to Role.Owner.name,
                         "joinedAt" to "Workspace Owner",
                         "avatarUrl" to authUser.photoUrl?.toString()
                     )
-                    memberRef.set(ownerMap, SetOptions.merge())
-                        .await()
+                    memberRef.set(ownerMap, SetOptions.merge()).await()
                 }
             }
-        } catch (_: Throwable) {
+        } catch (e: Throwable) {
+            Log.e("RevLensFirestore", "Failed to save root workspace", e)
         }
     }
 
@@ -311,6 +312,7 @@ class AndroidFirestoreWorkspaceRepository(
     override suspend fun deleteWorkspace(id: String) {
         _workspaces.value = _workspaces.value.filter { it.id != id }
         localFallback.deleteWorkspace(id)
+
         val firestore = db ?: return
         if (id.isBlank()) return
         try {
@@ -334,8 +336,12 @@ class AndroidFirestoreProfileRepository(
     private val workspaceContext: WorkspaceContext? = null
 ) : ProfileRepository {
 
-    private val db: FirebaseFirestore? get() = safeFirestore
-    private val auth: FirebaseAuth? get() = safeAuth
+    private val db: FirebaseFirestore?
+        get() = safeFirestore
+
+    private val auth: FirebaseAuth?
+        get() = safeAuth
+
     private val json = Json { ignoreUnknownKeys = true }
     private val _profile = MutableStateFlow<BusinessProfile?>(null)
 
@@ -343,113 +349,79 @@ class AndroidFirestoreProfileRepository(
         val firestore = db
         val fbAuth = auth
         var wsProfileListener: ListenerRegistration? = null
-        var userProfileListener: ListenerRegistration? = null
 
         trySend(_profile.value)
 
-        fun attachListeners(uid: String?, wsId: String?) {
-            if (firestore == null) return
+        fun attachWorkspaceProfileListener(wsId: String?) {
             wsProfileListener?.remove()
-            userProfileListener?.remove()
-
             val effectiveWsId = wsId?.takeIf { it.isNotBlank() && it != "ws_default" }
-            if (effectiveWsId != null) {
-                // Primary source of truth: Shared Workspace Profile (/workspaces/{wsId}/profile/current)
-                try {
-                    wsProfileListener = firestore.collection("workspaces")
-                        .document(effectiveWsId)
-                        .collection("profile")
-                        .document("current")
-                        .addSnapshotListener { snapshot, error ->
-                            if (error != null) return@addSnapshotListener
-                            if (snapshot != null && snapshot.exists()) {
-                                val payload = snapshot.getString("payload")
-                                if (payload != null) {
-                                    try {
-                                        val profile =
-                                            json.decodeFromString<BusinessProfile>(payload)
-                                        _profile.value = profile
-                                        CoroutineScope(Dispatchers.IO).launch {
-                                            localFallback.saveProfile(profile)
-                                        }
-                                        trySend(profile)
-                                    } catch (_: Throwable) {
+
+            if (effectiveWsId == null) {
+                if (fbAuth?.currentUser != null) {
+                    _profile.value = null
+                    trySend(null)
+                }
+                return
+            }
+
+            if (firestore == null) return
+
+            try {
+                wsProfileListener = firestore.collection("workspaces")
+                    .document(effectiveWsId)
+                    .collection("profile")
+                    .document("current")
+                    .addSnapshotListener { snapshot, error ->
+                        if (error != null) {
+                            Log.e("RevLensFirestore", "Shared profile listener error", error)
+                            return@addSnapshotListener
+                        }
+                        if (snapshot != null && snapshot.exists()) {
+                            val payload = snapshot.getString("payload")
+                            if (payload != null) {
+                                try {
+                                    val profile = json.decodeFromString<BusinessProfile>(payload)
+                                    _profile.value = profile
+                                    CoroutineScope(Dispatchers.IO).launch {
+                                        localFallback.saveProfile(profile)
                                     }
+                                    trySend(profile)
+                                } catch (e: Throwable) {
+                                    Log.e("RevLensFirestore", "Workspace profile decode error", e)
                                 }
                             }
+                        } else {
+                            _profile.value = null
+                            trySend(null)
                         }
-                } catch (_: Throwable) {
-                }
-            } else if (!uid.isNullOrBlank()) {
-                try {
-                    userProfileListener = firestore.collection("users")
-                        .document(uid)
-                        .collection("profile")
-                        .document("current")
-                        .addSnapshotListener { snapshot, error ->
-                            if (error != null) return@addSnapshotListener
-                            if (snapshot != null && snapshot.exists()) {
-                                val payload = snapshot.getString("payload")
-                                if (payload != null) {
-                                    try {
-                                        val profile =
-                                            json.decodeFromString<BusinessProfile>(payload)
-                                        _profile.value = profile
-                                        CoroutineScope(Dispatchers.IO).launch {
-                                            localFallback.saveProfile(profile)
-                                        }
-                                        trySend(profile)
-                                    } catch (_: Throwable) {
-                                    }
-                                }
-                            }
-                        }
-                } catch (_: Throwable) {
-                }
+                    }
+            } catch (e: Throwable) {
+                Log.e("RevLensFirestore", "Workspace profile listener attach error", e)
             }
         }
 
         val wsJob = CoroutineScope(Dispatchers.IO).launch {
             if (workspaceContext != null) {
                 workspaceContext.activeWorkspaceId.collectLatest { wsId ->
-                    attachListeners(fbAuth?.currentUser?.uid, wsId)
+                    attachWorkspaceProfileListener(wsId)
                 }
             } else {
-                attachListeners(fbAuth?.currentUser?.uid, null)
-            }
-        }
-
-        val authStateListener = if (fbAuth != null) {
-            FirebaseAuth.AuthStateListener { fAuth ->
-                attachListeners(fAuth.currentUser?.uid, workspaceContext?.activeWorkspaceId?.value)
-            }
-        } else null
-
-        if (fbAuth != null && authStateListener != null) {
-            try {
-                fbAuth.addAuthStateListener(authStateListener)
-            } catch (_: Throwable) {
+                attachWorkspaceProfileListener(null)
             }
         }
 
         val localJob = CoroutineScope(Dispatchers.IO).launch {
-            localFallback.profileFlow.collect { localProf ->
-                if (localProf != null || _profile.value == null) {
-                    _profile.value = localProf
-                    trySend(localProf)
+            localFallback.profileFlow.collect { localProfile ->
+                // Only use localFallback when running in pure offline/guest mode
+                if (fbAuth?.currentUser == null) {
+                    _profile.value = localProfile
+                    trySend(localProfile)
                 }
             }
         }
 
         awaitClose {
-            if (fbAuth != null && authStateListener != null) {
-                try {
-                    fbAuth.removeAuthStateListener(authStateListener)
-                } catch (_: Throwable) {
-                }
-            }
             wsProfileListener?.remove()
-            userProfileListener?.remove()
             wsJob.cancel()
             localJob.cancel()
         }
@@ -462,16 +434,24 @@ class AndroidFirestoreProfileRepository(
         localFallback.setHasSeenIntro(seen)
     }
 
+    override suspend fun clearLocalData() {
+        _profile.value = null
+        localFallback.clearLocalData()
+        localFallback.setOnboardingCompleted(false)
+    }
+
     override suspend fun saveProfile(profile: BusinessProfile) {
         _profile.value = profile
         localFallback.saveProfile(profile)
+
         val firestore = db ?: return
         val uid = auth?.currentUser?.uid
         val rawWsId = workspaceContext?.activeWorkspaceId?.value
-        val wsId = if (rawWsId.isNullOrBlank()) "ws_default" else rawWsId
+        val wsId = rawWsId?.takeIf { it.isNotBlank() && it != "ws_default" } ?: return
+
         try {
             val serialized = json.encodeToString(BusinessProfile.serializer(), profile)
-            val map = mutableMapOf(
+            val map = mutableMapOf<String, Any>(
                 "payload" to serialized,
                 "workspaceId" to wsId,
                 "updatedAt" to System.currentTimeMillis(),
@@ -494,60 +474,36 @@ class AndroidFirestoreProfileRepository(
                     )
                 }
             )
-            profile.mrrGoal?.let {
-                map["mrrGoal"] = it.toDouble()
+            profile.mrrGoal?.let { goal ->
+                map["mrrGoal"] = goal.toDouble()
             }
 
-            // Always save to the shared workspace profile document so all team members see the exact same profile
-            try {
-                firestore.collection("workspaces")
-                    .document(wsId)
-                    .collection("profile")
-                    .document("current")
-                    .set(map)
-                    .await()
-                firestore.collection("profiles")
-                    .document(wsId)
-                    .set(map)
-                    .await()
-            } catch (_: Throwable) {
-            }
+            // SINGLE SHARED PROFILE IN FIREBASE: Save ONLY under the workspace, never duplicated per user!
+            firestore.collection("workspaces")
+                .document(wsId)
+                .collection("profile")
+                .document("current")
+                .set(map)
+                .await()
+
+            firestore.collection("profiles")
+                .document(wsId)
+                .set(map)
+                .await()
 
             if (!uid.isNullOrBlank()) {
-                map["userId"] = uid
-                try {
-                    firestore.collection("users")
-                        .document(uid)
-                        .collection("profile")
-                        .document("current")
-                        .set(map)
-                        .await()
-                } catch (_: Throwable) {
-                }
-
-                try {
-                    firestore.collection("users")
-                        .document(uid)
-                        .set(
-                            mapOf(
-                                "id" to uid,
-                                "activeWorkspaceId" to wsId,
-                                "onboardingCompleted" to true,
-                                "updatedAt" to System.currentTimeMillis()
-                            ),
-                            SetOptions.merge()
-                        )
-                        .await()
-                } catch (_: Throwable) {
-                }
-
-                try {
-                    firestore.collection("profiles")
-                        .document(uid)
-                        .set(map)
-                        .await()
-                } catch (_: Throwable) {
-                }
+                firestore.collection("users")
+                    .document(uid)
+                    .set(
+                        mapOf(
+                            "id" to uid,
+                            "activeWorkspaceId" to wsId,
+                            "onboardingCompleted" to true,
+                            "updatedAt" to System.currentTimeMillis()
+                        ),
+                        SetOptions.merge()
+                    )
+                    .await()
             }
         } catch (e: Throwable) {
             Log.e("RevLensFirestore", "saveProfile error", e)
@@ -556,65 +512,121 @@ class AndroidFirestoreProfileRepository(
 
     override suspend fun syncRemoteProfile(): BusinessProfile? {
         val firestore = db ?: return null
-        return try {
-            val uid = auth?.currentUser?.uid
-            val rawWsId = workspaceContext?.activeWorkspaceId?.value
-            val wsId = if (rawWsId.isNullOrBlank()) "ws_default" else rawWsId
+        val authUser = auth?.currentUser ?: return null
+        val uid = authUser.uid
+        val email = authUser.email?.trim()?.lowercase().orEmpty()
 
-            // Priority 1: Check shared workspace profile FIRST so invited/joined members load the team's profile
-            var snapshot = if (wsId != "ws_default") {
-                withTimeoutOrNull(2500L.milliseconds) {
-                    try {
-                        val doc = firestore.collection("workspaces")
-                            .document(wsId)
-                            .collection("profile")
-                            .document("current")
-                            .get()
-                            .await()
-                        if (doc.exists()) doc else {
-                            firestore.collection("profiles")
-                                .document(wsId)
-                                .get()
-                                .await()
-                        }
+        return try {
+            // 1. Discover the user's active workspace from /users/{uid}/workspaces
+            val userWorkspacesSnap = withTimeoutOrNull(3000L) {
+                try {
+                    firestore.collection("users")
+                        .document(uid)
+                        .collection("workspaces")
+                        .get()
+                        .await()
+                } catch (_: Throwable) {
+                    null
+                }
+            }
+
+            var validWsId: String? = null
+            if (userWorkspacesSnap != null && !userWorkspacesSnap.isEmpty) {
+                for (doc in userWorkspacesSnap.documents) {
+                    val candidateId = doc.getString("id") ?: doc.id
+                    if (candidateId.isBlank() || candidateId == "ws_default") continue
+
+                    // Verify workspace still exists in root /workspaces/{wsId}
+                    val rootWs = try {
+                        firestore.collection("workspaces").document(candidateId).get().await()
                     } catch (_: Throwable) {
                         null
                     }
-                }
-            } else null
+                    if (rootWs == null || !rootWs.exists()) {
+                        try {
+                            doc.reference.delete().await()
+                        } catch (_: Throwable) {
+                        }
+                        continue
+                    }
 
-            // Priority 2: Check user's profile doc
-            if ((snapshot == null || !snapshot.exists()) && !uid.isNullOrBlank()) {
-                snapshot = withTimeoutOrNull(2500L.milliseconds) {
-                    try {
-                        val userDoc = firestore.collection("users")
-                            .document(uid)
-                            .collection("profile")
-                            .document("current")
+                    // Verify user is still in /workspaces/{wsId}/members
+                    val membersSnap = try {
+                        firestore.collection("workspaces")
+                            .document(candidateId)
+                            .collection("members")
                             .get()
                             .await()
-                        if (userDoc.exists()) userDoc else {
-                            firestore.collection("profiles")
-                                .document(uid)
-                                .get()
-                                .await()
-                        }
                     } catch (_: Throwable) {
                         null
+                    }
+
+                    val isStillMember = if (membersSnap == null || membersSnap.isEmpty) {
+                        rootWs.getString("ownerId") == uid || rootWs.getString("userId") == uid
+                    } else {
+                        membersSnap.documents.any { mDoc ->
+                            val mId = mDoc.getString("id") ?: mDoc.id
+                            val mEmail = mDoc.getString("email")?.trim()?.lowercase().orEmpty()
+                            mId == uid || mDoc.id == uid || (email.isNotBlank() && mEmail == email)
+                        }
+                    }
+
+                    if (isStillMember) {
+                        validWsId = candidateId
+                        break
+                    } else {
+                        try {
+                            doc.reference.delete().await()
+                        } catch (_: Throwable) {
+                        }
                     }
                 }
             }
 
-            if (snapshot != null && snapshot.exists()) {
-                val payload = snapshot.getString("payload")
+            // If user has no valid workspace in Firebase, wipe local cache and return null
+            if (validWsId == null) {
+                workspaceContext?.switchTo("")
+                clearLocalData()
+                return null
+            }
+
+            workspaceContext?.switchTo(validWsId)
+
+            // 2. Fetch the single shared workspace profile from /workspaces/{validWsId}/profile/current
+            val profileSnap = withTimeoutOrNull(3000L) {
+                try {
+                    val doc = firestore.collection("workspaces")
+                        .document(validWsId)
+                        .collection("profile")
+                        .document("current")
+                        .get()
+                        .await()
+                    if (doc.exists()) {
+                        doc
+                    } else {
+                        firestore.collection("profiles")
+                            .document(validWsId)
+                            .get()
+                            .await()
+                    }
+                } catch (_: Throwable) {
+                    null
+                }
+            }
+
+            if (profileSnap != null && profileSnap.exists()) {
+                val payload = profileSnap.getString("payload")
                 if (payload != null) {
                     val profile = json.decodeFromString<BusinessProfile>(payload)
                     _profile.value = profile
                     localFallback.saveProfile(profile)
                     localFallback.setOnboardingCompleted(true)
-                    profile
-                } else null
-            } else null
+                    return profile
+                }
+            }
+
+            clearLocalData()
+            null
         } catch (e: Throwable) {
             Log.e("RevLensFirestore", "syncRemoteProfile failed", e)
             null
@@ -649,99 +661,73 @@ class AndroidFirestoreScenarioRepository(
     private val workspaceContext: WorkspaceContext? = null
 ) : ScenarioRepository {
 
-    private val db: FirebaseFirestore? get() = safeFirestore
-    private val auth: FirebaseAuth? get() = safeAuth
+    private val db: FirebaseFirestore?
+        get() = safeFirestore
+
+    private val auth: FirebaseAuth?
+        get() = safeAuth
+
     private val json = Json { ignoreUnknownKeys = true }
     private val _scenarios = MutableStateFlow<List<Scenario>>(emptyList())
 
     override val scenariosFlow: Flow<List<Scenario>> = callbackFlow {
         val firestore = db
-        val fbAuth = auth
         var firestoreListener: ListenerRegistration? = null
 
         trySend(_scenarios.value)
 
-        fun attachListener(uid: String?, wsId: String?) {
-            if (firestore == null) return
+        fun attachListener(wsId: String?) {
             firestoreListener?.remove()
             val effectiveWsId = wsId?.takeIf { it.isNotBlank() && it != "ws_default" }
-            try {
-                val targetCollection = if (effectiveWsId != null) {
-                    firestore.collection("workspaces")
-                        .document(effectiveWsId)
-                        .collection("scenarios")
-                } else if (!uid.isNullOrBlank()) {
-                    firestore.collection("users")
-                        .document(uid)
-                        .collection("scenarios")
-                } else null
+            if (effectiveWsId == null || firestore == null) {
+                _scenarios.value = emptyList()
+                trySend(emptyList())
+                return
+            }
 
-                if (targetCollection != null) {
-                    firestoreListener = targetCollection.addSnapshotListener { snapshot, error ->
+            try {
+                firestoreListener = firestore.collection("workspaces")
+                    .document(effectiveWsId)
+                    .collection("scenarios")
+                    .addSnapshotListener { snapshot, error ->
                         if (error != null) return@addSnapshotListener
                         if (snapshot != null) {
                             val list = snapshot.documents.mapNotNull { doc ->
-                                val payload = doc.getString("payload")
-                                if (payload != null) {
-                                    try {
-                                        json.decodeFromString<Scenario>(payload)
-                                    } catch (_: Throwable) {
-                                        null
-                                    }
-                                } else null
+                                val payload = doc.getString("payload") ?: return@mapNotNull null
+                                try {
+                                    json.decodeFromString<Scenario>(payload)
+                                } catch (_: Throwable) {
+                                    null
+                                }
                             }
                             _scenarios.value = list
                             trySend(list)
                         }
                     }
-                }
-            } catch (_: Throwable) {
+            } catch (e: Throwable) {
+                Log.e("RevLensFirestore", "Scenarios listener error", e)
             }
         }
 
         val wsJob = CoroutineScope(Dispatchers.IO).launch {
             if (workspaceContext != null) {
                 workspaceContext.activeWorkspaceId.collectLatest { wsId ->
-                    attachListener(fbAuth?.currentUser?.uid, wsId)
+                    attachListener(wsId)
                 }
             } else {
-                attachListener(fbAuth?.currentUser?.uid, null)
-            }
-        }
-
-        val authStateListener = if (fbAuth != null) {
-            FirebaseAuth.AuthStateListener { fAuth ->
-                attachListener(fAuth.currentUser?.uid, workspaceContext?.activeWorkspaceId?.value)
-            }
-        } else null
-
-        if (fbAuth != null && authStateListener != null) {
-            try {
-                fbAuth.addAuthStateListener(authStateListener)
-            } catch (_: Throwable) {
-            }
-        }
-
-        val localJob = CoroutineScope(Dispatchers.IO).launch {
-            localFallback.scenariosFlow.collect { localList ->
-                if (_scenarios.value.isEmpty()) {
-                    _scenarios.value = localList
-                    trySend(localList)
-                }
+                attachListener(null)
             }
         }
 
         awaitClose {
-            if (fbAuth != null && authStateListener != null) {
-                try {
-                    fbAuth.removeAuthStateListener(authStateListener)
-                } catch (_: Throwable) {
-                }
-            }
             firestoreListener?.remove()
             wsJob.cancel()
-            localJob.cancel()
         }
+    }
+
+    override suspend fun clearLocalData() {
+        _scenarios.value = emptyList()
+        localFallback.clearLocalData()
     }
 
     override suspend fun saveScenario(scenario: Scenario) {
@@ -757,17 +743,19 @@ class AndroidFirestoreScenarioRepository(
 
         val firestore = db ?: return
         if (scenario.id.isBlank()) return
-        val uid = auth?.currentUser?.uid
-        val wsId =
-            workspaceContext?.activeWorkspaceId?.value?.takeIf { it.isNotBlank() } ?: "ws_default"
+        val wsId = workspaceContext?.activeWorkspaceId?.value?.takeIf {
+            it.isNotBlank() && it != "ws_default"
+        } ?: return
+
         val serialized = json.encodeToString(Scenario.serializer(), scenario)
-        val map = mutableMapOf<String, Any>(
+        val map = mapOf(
             "id" to scenario.id,
             "name" to scenario.name,
             "workspaceId" to wsId,
             "payload" to serialized,
             "updatedAt" to System.currentTimeMillis()
         )
+
         try {
             firestore.collection("workspaces")
                 .document(wsId)
@@ -775,30 +763,21 @@ class AndroidFirestoreScenarioRepository(
                 .document(scenario.id)
                 .set(map)
                 .await()
-        } catch (_: Throwable) {
-        }
-
-        if (!uid.isNullOrBlank()) {
-            map["userId"] = uid
-            try {
-                firestore.collection("users")
-                    .document(uid)
-                    .collection("scenarios")
-                    .document(scenario.id)
-                    .set(map)
-                    .await()
-            } catch (_: Throwable) {
-            }
+        } catch (e: Throwable) {
+            Log.e("RevLensFirestore", "Failed saving workspace scenario", e)
         }
     }
 
     override suspend fun deleteScenario(scenarioId: String) {
         _scenarios.value = _scenarios.value.filter { it.id != scenarioId }
         localFallback.deleteScenario(scenarioId)
+
         val firestore = db ?: return
         if (scenarioId.isBlank()) return
-        val wsId =
-            workspaceContext?.activeWorkspaceId?.value?.takeIf { it.isNotBlank() } ?: "ws_default"
+        val wsId = workspaceContext?.activeWorkspaceId?.value?.takeIf {
+            it.isNotBlank() && it != "ws_default"
+        } ?: return
+
         try {
             firestore.collection("workspaces")
                 .document(wsId)
@@ -808,171 +787,185 @@ class AndroidFirestoreScenarioRepository(
                 .await()
         } catch (_: Throwable) {
         }
-        try {
-            val uid = auth?.currentUser?.uid
-            if (!uid.isNullOrBlank()) {
-                firestore.collection("users")
-                    .document(uid)
-                    .collection("scenarios")
-                    .document(scenarioId)
-                    .delete()
-                    .await()
-            }
-        } catch (_: Throwable) {
-        }
     }
 }
 
 class AndroidFirestoreTeamRepository(
     private val localFallback: FakeTeamRepository = FakeTeamRepository(),
+    private val workspaceContext: WorkspaceContext? = null,
     private val profileRepository: ProfileRepository? = null
 ) : TeamRepository {
 
-    private val db: FirebaseFirestore? get() = safeFirestore
-    private val auth: FirebaseAuth? get() = safeAuth
+    private val db: FirebaseFirestore?
+        get() = safeFirestore
+
+    private val auth: FirebaseAuth?
+        get() = safeAuth
+
     private val json = Json { ignoreUnknownKeys = true }
 
     override fun getMembers(workspaceId: String): Flow<List<Member>> = callbackFlow {
-        val cleanWsId = workspaceId.ifBlank { "ws_default" }
-        var listener: ListenerRegistration? = null
-        var hasRemoteEmission = false
-
-        fun attach(wsId: String) {
-            val firestore = db ?: return
-            if (wsId.isBlank()) return
-            listener?.remove()
-            try {
-                listener = firestore.collection("workspaces")
-                    .document(wsId)
-                    .collection("members")
-                    .addSnapshotListener { snapshot, error ->
-                        if (error != null) {
-                            Log.e("RevLensFirestore", "Team members snapshot error", error)
-                            return@addSnapshotListener
-                        }
-                        if (snapshot != null) {
-                            val members = snapshot.documents.mapNotNull { doc ->
-                                val id = doc.getString("id") ?: doc.id
-                                val name = doc.getString("name") ?: "Member"
-                                val email = doc.getString("email") ?: ""
-                                val roleStr = doc.getString("role") ?: "Viewer"
-                                val role = try {
-                                    Role.valueOf(roleStr)
-                                } catch (_: Throwable) {
-                                    Role.Viewer
-                                }
-                                val joinedAt = doc.getString("joinedAt") ?: "Member"
-                                val avatarUrl = doc.getString("avatarUrl")
-                                Member(
-                                    id = id, name = name, email = email, role = role,
-                                    avatarUrl = avatarUrl, joinedAt = joinedAt
-                                )
-                            }
-                            if (members.isNotEmpty() || hasRemoteEmission) {
-                                hasRemoteEmission = true
-                                trySend(members)
-                            }
-                        }
-                    }
-            } catch (e: Throwable) {
-                Log.e("RevLensFirestore", "Team members attach error", e)
-            }
+        val cleanWsId = workspaceId.trim()
+        if (cleanWsId.isBlank() || cleanWsId == "ws_default") {
+            trySend(emptyList())
+            awaitClose {}
+            return@callbackFlow
         }
 
-        attach(cleanWsId)
+        val firestore = db
+        if (firestore == null) {
+            val job = CoroutineScope(Dispatchers.IO).launch {
+                localFallback.getMembers(cleanWsId).collect { trySend(it) }
+            }
+            awaitClose { job.cancel() }
+            return@callbackFlow
+        }
 
-        val localJob = CoroutineScope(Dispatchers.IO).launch {
-            localFallback.getMembers(cleanWsId)
-                .collect { localList ->
-                    if (!hasRemoteEmission) {
-                        trySend(localList)
+        var listener: ListenerRegistration? = null
+        try {
+            listener = firestore.collection("workspaces")
+                .document(cleanWsId)
+                .collection("members")
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        Log.e("RevLensFirestore", "Team members snapshot error", error)
+                        return@addSnapshotListener
+                    }
+                    if (snapshot != null) {
+                        val members = snapshot.documents.mapNotNull { doc ->
+                            val id = doc.getString("id") ?: doc.id
+                            val name = doc.getString("name") ?: "Member"
+                            val email = doc.getString("email") ?: ""
+                            if (email.isBlank() && id.isBlank()) return@mapNotNull null
+                            val role = parseRole(doc.getString("role"))
+                            val joinedAt = doc.getString("joinedAt") ?: "Member"
+                            val avatarUrl = doc.getString("avatarUrl")
+                            Member(
+                                id = id,
+                                name = name,
+                                email = email,
+                                role = role,
+                                avatarUrl = avatarUrl,
+                                joinedAt = joinedAt
+                            )
+                        }
+                        trySend(members)
                     }
                 }
+        } catch (e: Throwable) {
+            Log.e("RevLensFirestore", "Team members attach error", e)
         }
 
         awaitClose {
             listener?.remove()
-            localJob.cancel()
         }
     }
 
     override fun getInvites(workspaceId: String): Flow<List<TeamInvite>> = callbackFlow {
-        val cleanWsId = workspaceId.ifBlank { "ws_default" }
-        var listener: ListenerRegistration? = null
-        var hasRemoteInvites = false
-
-        fun attach(wsId: String) {
-            val firestore = db ?: return
-            if (wsId.isBlank()) return
-            listener?.remove()
-            try {
-                listener = firestore.collection("workspaces")
-                    .document(wsId)
-                    .collection("invites")
-                    .addSnapshotListener { snapshot, error ->
-                        if (error != null) return@addSnapshotListener
-                        if (snapshot != null) {
-                            hasRemoteInvites = true
-                            val invites = snapshot.documents.mapNotNull { doc ->
-                                val id = doc.getString("id") ?: doc.id
-                                val email = doc.getString("email") ?: return@mapNotNull null
-                                val roleStr = doc.getString("role") ?: "Viewer"
-                                val role = try {
-                                    Role.valueOf(roleStr)
-                                } catch (_: Throwable) {
-                                    Role.Viewer
-                                }
-                                val sentAt = doc.getString("sentAt") ?: "Just now"
-                                val invitedBy = doc.getString("invitedBy") ?: "Admin"
-                                TeamInvite(
-                                    id = id, email = email, role = role, sentAt = sentAt,
-                                    invitedBy = invitedBy
-                                )
-                            }
-                            trySend(invites)
-                        }
-                    }
-            } catch (_: Throwable) {
-            }
+        val cleanWsId = workspaceId.trim()
+        if (cleanWsId.isBlank() || cleanWsId == "ws_default") {
+            trySend(emptyList())
+            awaitClose {}
+            return@callbackFlow
         }
 
-        attach(cleanWsId)
+        val firestore = db
+        if (firestore == null) {
+            val job = CoroutineScope(Dispatchers.IO).launch {
+                localFallback.getInvites(cleanWsId).collect { trySend(it) }
+            }
+            awaitClose { job.cancel() }
+            return@callbackFlow
+        }
 
-        val localJob = CoroutineScope(Dispatchers.IO).launch {
-            localFallback.getInvites(cleanWsId)
-                .collect { localList ->
-                    if (!hasRemoteInvites) {
-                        trySend(localList)
+        var listener: ListenerRegistration? = null
+        try {
+            listener = firestore.collection("workspaces")
+                .document(cleanWsId)
+                .collection("invites")
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) return@addSnapshotListener
+                    if (snapshot != null) {
+                        val invites = snapshot.documents.mapNotNull { doc ->
+                            val id = doc.getString("id") ?: doc.id
+                            val email = doc.getString("email") ?: return@mapNotNull null
+                            val role = parseRole(doc.getString("role"))
+                            val sentAt = doc.getString("sentAt") ?: "Just now"
+                            val invitedBy = doc.getString("invitedBy") ?: "Owner"
+                            TeamInvite(
+                                id = id,
+                                email = email,
+                                role = role,
+                                sentAt = sentAt,
+                                invitedBy = invitedBy
+                            )
+                        }
+                        trySend(invites)
                     }
                 }
+        } catch (e: Throwable) {
+            Log.e("RevLensFirestore", "Invites listener error", e)
         }
 
         awaitClose {
             listener?.remove()
-            localJob.cancel()
         }
     }
 
     override suspend fun inviteMember(
-        workspaceId: String, email: String, role: Role, inviterName: String
+        workspaceId: String,
+        email: String,
+        role: Role,
+        inviterName: String
     ): Result<TeamInvite> {
-        val cleanWsId = workspaceId.ifBlank { "ws_default" }
-        val fallbackResult = localFallback.inviteMember(cleanWsId, email, role, inviterName)
-        if (fallbackResult.isFailure) return fallbackResult
+        val cleanWsId = workspaceId.trim()
+        val normalizedEmail = email.trim().lowercase()
+        if (normalizedEmail.isBlank() || !normalizedEmail.contains("@")) {
+            return Result.failure(IllegalArgumentException("Please enter a valid email address"))
+        }
 
-        val invite = fallbackResult.getOrThrow()
-        val firestore = db ?: return Result.success(invite)
-        try {
+        val firestore = db
+        if (firestore == null || cleanWsId.isBlank() || cleanWsId == "ws_default") {
+            return localFallback.inviteMember(cleanWsId, normalizedEmail, role, inviterName)
+        }
+
+        return try {
+            // 1. Check live Firestore members collection so deleted/left users are never blocked!
+            val membersSnap = firestore.collection("workspaces")
+                .document(cleanWsId)
+                .collection("members")
+                .get()
+                .await()
+
+            val alreadyInTeam = membersSnap.documents.any { doc ->
+                doc.getString("email")?.trim()?.lowercase() == normalizedEmail
+            }
+            if (alreadyInTeam) {
+                return Result.failure(
+                    IllegalArgumentException("$normalizedEmail is already an active member of this team.")
+                )
+            }
+
+            // 2. Create or update invite in Firestore
+            val inviteId = "inv_${cleanWsId}_${normalizedEmail.hashCode()}"
+            val invite = TeamInvite(
+                id = inviteId,
+                email = normalizedEmail,
+                role = role,
+                sentAt = "Just now",
+                invitedBy = inviterName
+            )
+
             val map = mapOf(
                 "id" to invite.id,
-                "email" to invite.email.trim()
-                    .lowercase(),
+                "email" to normalizedEmail,
                 "role" to invite.role.name,
                 "sentAt" to invite.sentAt,
                 "invitedBy" to invite.invitedBy,
                 "workspaceId" to cleanWsId,
                 "createdAt" to System.currentTimeMillis()
             )
+
             firestore.collection("workspaces")
                 .document(cleanWsId)
                 .collection("invites")
@@ -985,54 +978,53 @@ class AndroidFirestoreTeamRepository(
                 .set(map)
                 .await()
 
-            // Ensure currentworkspace joinCode is stored on workspace document
-            val joinCode = "RL-" + cleanWsId.removePrefix("ws_")
-                .uppercase()
-                .take(6)
-                .padEnd(6, '0')
+            val joinCode = "RL-" + cleanWsId.removePrefix("ws_").uppercase().take(6).padEnd(6, '0')
             firestore.collection("workspaces")
                 .document(cleanWsId)
                 .set(mapOf("joinCode" to joinCode), SetOptions.merge())
                 .await()
 
+            // Ensure the inviter/owner is present in /workspaces/{wsId}/members
             val authUser = auth?.currentUser
             if (authUser != null) {
                 val memberRef = firestore.collection("workspaces")
                     .document(cleanWsId)
                     .collection("members")
                     .document(authUser.uid)
-                val snap = memberRef.get()
-                    .await()
+                val snap = memberRef.get().await()
                 if (!snap.exists()) {
                     val ownerMap = mapOf(
                         "id" to authUser.uid,
                         "name" to (authUser.displayName ?: inviterName),
-                        "email" to (authUser.email?.trim()
-                            ?.lowercase() ?: ""),
+                        "email" to (authUser.email?.trim()?.lowercase() ?: ""),
                         "role" to Role.Owner.name,
-                        "joinedAt" to "Workspace Founder",
+                        "joinedAt" to "Workspace Owner",
                         "avatarUrl" to authUser.photoUrl?.toString()
                     )
-                    memberRef.set(ownerMap, SetOptions.merge())
-                        .await()
+                    memberRef.set(ownerMap, SetOptions.merge()).await()
                 }
             }
+
+            Result.success(invite)
         } catch (e: Throwable) {
             Log.e("RevLensFirestore", "inviteMember firestore error", e)
+            Result.failure(e)
         }
-        return Result.success(invite)
     }
 
     override suspend fun updateMemberRole(
-        workspaceId: String, memberId: String, newRole: Role
+        workspaceId: String,
+        memberId: String,
+        newRole: Role
     ): Result<Unit> {
         if (newRole == Role.Owner) {
             return Result.failure(
                 IllegalArgumentException("Use Transfer Ownership to assign an Owner.")
             )
         }
-        val cleanWsId = workspaceId.ifBlank { "ws_default" }
+        val cleanWsId = workspaceId.trim()
         localFallback.updateMemberRole(cleanWsId, memberId, newRole)
+
         val firestore = db ?: return Result.success(Unit)
         if (cleanWsId.isBlank() || memberId.isBlank()) return Result.success(Unit)
         try {
@@ -1048,8 +1040,11 @@ class AndroidFirestoreTeamRepository(
         return Result.success(Unit)
     }
 
-    override suspend fun removeMember(workspaceId: String, memberId: String): Result<Unit> {
-        val cleanWsId = workspaceId.ifBlank { "ws_default" }
+    override suspend fun removeMember(
+        workspaceId: String,
+        memberId: String
+    ): Result<Unit> {
+        val cleanWsId = workspaceId.trim()
         val currentUid = auth?.currentUser?.uid.orEmpty()
         if (currentUid.isNotBlank() && memberId == currentUid) {
             return Result.failure(
@@ -1057,6 +1052,7 @@ class AndroidFirestoreTeamRepository(
             )
         }
         localFallback.removeMember(cleanWsId, memberId)
+
         val firestore = db ?: return Result.success(Unit)
         if (cleanWsId.isBlank() || memberId.isBlank()) return Result.success(Unit)
         try {
@@ -1073,11 +1069,8 @@ class AndroidFirestoreTeamRepository(
                 )
             }
 
-            val targetEmail = memberDoc.getString("email")
-                ?.trim()
-                ?.lowercase()
+            val targetEmail = memberDoc.getString("email")?.trim()?.lowercase()
 
-            // Delete by document ID
             firestore.collection("workspaces")
                 .document(cleanWsId)
                 .collection("members")
@@ -1085,8 +1078,8 @@ class AndroidFirestoreTeamRepository(
                 .delete()
                 .await()
 
-            // Also delete any duplicate member docs matching email
             if (!targetEmail.isNullOrBlank()) {
+                localFallback.removeMember(cleanWsId, targetEmail)
                 val emailMatches = firestore.collection("workspaces")
                     .document(cleanWsId)
                     .collection("members")
@@ -1094,18 +1087,27 @@ class AndroidFirestoreTeamRepository(
                     .get()
                     .await()
                 for (doc in emailMatches.documents) {
-                    doc.reference.delete()
-                        .await()
+                    doc.reference.delete().await()
                 }
             }
 
-            // Remove the workspace from the removed user's /users/{memberId}/workspaces subcollection
             try {
                 firestore.collection("users")
                     .document(memberId)
                     .collection("workspaces")
                     .document(cleanWsId)
                     .delete()
+                    .await()
+                firestore.collection("users")
+                    .document(memberId)
+                    .set(
+                        mapOf(
+                            "activeWorkspaceId" to "",
+                            "onboardingCompleted" to false,
+                            "updatedAt" to System.currentTimeMillis()
+                        ),
+                        SetOptions.merge()
+                    )
                     .await()
             } catch (_: Throwable) {
             }
@@ -1119,24 +1121,21 @@ class AndroidFirestoreTeamRepository(
         workspaceId: String,
         newOwnerMemberId: String
     ): Result<Unit> {
-        val cleanWsId = workspaceId.ifBlank { "ws_default" }
+        val cleanWsId = workspaceId.trim()
         localFallback.transferOwnership(cleanWsId, newOwnerMemberId)
         val firestore = db ?: return Result.success(Unit)
         try {
             val membersCol = firestore.collection("workspaces")
                 .document(cleanWsId)
                 .collection("members")
-            val snap = membersCol.get()
-                .await()
+            val snap = membersCol.get().await()
             for (doc in snap.documents) {
                 val docId = doc.getString("id") ?: doc.id
                 val roleStr = doc.getString("role") ?: "Viewer"
                 if (docId == newOwnerMemberId || doc.id == newOwnerMemberId) {
-                    doc.reference.update("role", Role.Owner.name)
-                        .await()
+                    doc.reference.update("role", Role.Owner.name).await()
                 } else if (roleStr == Role.Owner.name) {
-                    doc.reference.update("role", Role.Admin.name)
-                        .await()
+                    doc.reference.update("role", Role.Admin.name).await()
                 }
             }
         } catch (e: Throwable) {
@@ -1145,8 +1144,11 @@ class AndroidFirestoreTeamRepository(
         return Result.success(Unit)
     }
 
-    override suspend fun revokeInvite(workspaceId: String, inviteId: String): Result<Unit> {
-        val cleanWsId = workspaceId.ifBlank { "ws_default" }
+    override suspend fun revokeInvite(
+        workspaceId: String,
+        inviteId: String
+    ): Result<Unit> {
+        val cleanWsId = workspaceId.trim()
         localFallback.revokeInvite(cleanWsId, inviteId)
         val firestore = db ?: return Result.success(Unit)
         if (cleanWsId.isBlank() || inviteId.isBlank()) return Result.success(Unit)
@@ -1167,8 +1169,11 @@ class AndroidFirestoreTeamRepository(
         return Result.success(Unit)
     }
 
-    override suspend fun resendInvite(workspaceId: String, inviteId: String): Result<Unit> {
-        val cleanWsId = workspaceId.ifBlank { "ws_default" }
+    override suspend fun resendInvite(
+        workspaceId: String,
+        inviteId: String
+    ): Result<Unit> {
+        val cleanWsId = workspaceId.trim()
         localFallback.resendInvite(cleanWsId, inviteId)
         val firestore = db ?: return Result.success(Unit)
         if (cleanWsId.isBlank() || inviteId.isBlank()) return Result.success(Unit)
@@ -1190,8 +1195,7 @@ class AndroidFirestoreTeamRepository(
     }
 
     override suspend fun getPendingInvitesForEmail(email: String): List<TeamInviteDetail> {
-        val normalized = email.trim()
-            .lowercase()
+        val normalized = email.trim().lowercase()
         val results = mutableListOf<TeamInviteDetail>()
         val firestore = db
         if (firestore != null && normalized.isNotBlank()) {
@@ -1202,25 +1206,26 @@ class AndroidFirestoreTeamRepository(
                     .await()
                 for (doc in query.documents) {
                     val id = doc.getString("id") ?: doc.id
-                    val wsId = doc.getString("workspaceId")
-                        ?.ifBlank { "ws_default" } ?: "ws_default"
-                    val roleStr = doc.getString("role") ?: "Viewer"
-                    val role = try {
-                        Role.valueOf(roleStr)
-                    } catch (_: Throwable) {
-                        Role.Viewer
-                    }
-                    val sentAt = doc.getString("sentAt") ?: "Just now"
-                    val invitedBy = doc.getString("invitedBy") ?: "Admin"
+                    val wsId = doc.getString("workspaceId").orEmpty()
+                    if (wsId.isBlank() || wsId == "ws_default") continue
+
                     val wsDoc = try {
-                        firestore.collection("workspaces")
-                            .document(wsId)
-                            .get()
-                            .await()
+                        firestore.collection("workspaces").document(wsId).get().await()
                     } catch (_: Throwable) {
                         null
                     }
-                    val wsName = wsDoc?.getString("name") ?: "RevLens Workspace"
+                    if (wsDoc == null || !wsDoc.exists()) {
+                        try {
+                            doc.reference.delete().await()
+                        } catch (_: Throwable) {
+                        }
+                        continue
+                    }
+
+                    val role = parseRole(doc.getString("role"))
+                    val sentAt = doc.getString("sentAt") ?: "Just now"
+                    val invitedBy = doc.getString("invitedBy") ?: "Owner"
+                    val wsName = wsDoc.getString("name") ?: "RevLens Workspace"
 
                     results.add(
                         TeamInviteDetail(
@@ -1238,73 +1243,42 @@ class AndroidFirestoreTeamRepository(
                 Log.e("RevLensFirestore", "getPendingInvitesForEmail error", e)
             }
         }
-
-        val localList = localFallback.getPendingInvitesForEmail(email)
-        localList.forEach { local ->
-            if (results.none { it.inviteId == local.inviteId }) {
-                results.add(local)
-            }
-        }
         return results
     }
 
-    override suspend fun acceptInvite(inviteId: String, user: UserAccount): Result<String> {
-        val fallbackResult = localFallback.acceptInvite(inviteId, user)
+    override suspend fun acceptInvite(
+        inviteId: String,
+        user: UserAccount
+    ): Result<String> {
         val firestore = db
-        val targetWsId = fallbackResult.getOrNull() ?: run {
-            if (firestore != null) {
-                try {
-                    val doc = firestore.collection("team_invites")
-                        .document(inviteId)
-                        .get()
-                        .await()
-                    doc.getString("workspaceId")
-                        ?.ifBlank { "ws_default" }
-                } catch (_: Throwable) {
-                    null
-                }
-            } else null
-        } ?: return Result.failure(NoSuchElementException("Invitation not found."))
+            ?: return localFallback.acceptInvite(inviteId, user)
 
-        if (firestore != null) {
-            try {
-                val inviteDoc = try {
-                    firestore.collection("team_invites")
-                        .document(inviteId)
-                        .get()
-                        .await()
-                } catch (_: Throwable) {
-                    null
-                }
+        return try {
+            val inviteDoc = firestore.collection("team_invites")
+                .document(inviteId)
+                .get()
+                .await()
 
-                val roleStr = inviteDoc?.getString("role") ?: "Viewer"
-                val role = try {
-                    Role.valueOf(roleStr)
-                } catch (_: Throwable) {
-                    Role.Viewer
-                }
+            val targetWsId = inviteDoc.getString("workspaceId")
+                ?.takeIf { it.isNotBlank() && it != "ws_default" }
+                ?: return Result.failure(NoSuchElementException("Invitation is no longer valid."))
 
-                linkUserToSharedWorkspace(firestore, targetWsId, user, role, inviteId)
-            } catch (e: Throwable) {
-                Log.e("RevLensFirestore", "acceptInvite firestore error", e)
-            }
+            val role = parseRole(inviteDoc.getString("role"))
+            linkUserToSharedWorkspace(firestore, targetWsId, user, role, inviteId)
+            Result.success(targetWsId)
+        } catch (e: Throwable) {
+            Log.e("RevLensFirestore", "acceptInvite firestore error", e)
+            Result.failure(e)
         }
-
-        return Result.success(targetWsId)
     }
 
     override suspend fun getWorkspaceJoinCode(workspaceId: String): String {
         val cleanWsId = workspaceId.ifBlank { "ws_default" }
-        val defaultCode = "RL-" + cleanWsId.removePrefix("ws_")
-            .uppercase()
-            .take(6)
-            .padEnd(6, '0')
+        val defaultCode = "RL-" + cleanWsId.removePrefix("ws_").uppercase().take(6).padEnd(6, '0')
         val firestore = db ?: return defaultCode
+        if (cleanWsId == "ws_default") return defaultCode
         return try {
-            val doc = firestore.collection("workspaces")
-                .document(cleanWsId)
-                .get()
-                .await()
+            val doc = firestore.collection("workspaces").document(cleanWsId).get().await()
             val savedCode = doc.getString("joinCode")
             if (!savedCode.isNullOrBlank()) {
                 savedCode
@@ -1320,22 +1294,19 @@ class AndroidFirestoreTeamRepository(
         }
     }
 
-    override suspend fun joinWorkspaceByCode(code: String, user: UserAccount): Result<String> {
+    override suspend fun joinWorkspaceByCode(
+        code: String,
+        user: UserAccount
+    ): Result<String> {
         val trimmed = code.trim()
         if (trimmed.isBlank()) {
-            return Result.failure(
-                IllegalArgumentException("Please enter a valid team invite code.")
-            )
+            return Result.failure(IllegalArgumentException("Please enter a valid team invite code."))
         }
         val firestore = db ?: return localFallback.joinWorkspaceByCode(trimmed, user)
 
         return try {
-            // 1. Check if code matches a direct inviteId in team_invites
             val directInvite = try {
-                firestore.collection("team_invites")
-                    .document(trimmed)
-                    .get()
-                    .await()
+                firestore.collection("team_invites").document(trimmed).get().await()
             } catch (_: Throwable) {
                 null
             }
@@ -1343,7 +1314,6 @@ class AndroidFirestoreTeamRepository(
                 return acceptInvite(directInvite.id, user)
             }
 
-            // 2. Search workspaces by joinCode or workspaceId
             var targetWsId: String? = null
             val byJoinCode = firestore.collection("workspaces")
                 .whereEqualTo("joinCode", trimmed.uppercase())
@@ -1353,19 +1323,11 @@ class AndroidFirestoreTeamRepository(
             if (!byJoinCode.isEmpty) {
                 targetWsId = byJoinCode.documents.first().id
             } else {
-                val allWs = firestore.collection("workspaces")
-                    .get()
-                    .await()
+                val allWs = firestore.collection("workspaces").get().await()
                 for (doc in allWs.documents) {
                     val wsId = doc.id
-                    val derivedCode = "RL-" + wsId.removePrefix("ws_")
-                        .uppercase()
-                        .take(6)
-                        .padEnd(6, '0')
-                    if (wsId.equals(trimmed, ignoreCase = true) || derivedCode.equals(
-                            trimmed, ignoreCase = true
-                        )
-                    ) {
+                    val derivedCode = "RL-" + wsId.removePrefix("ws_").uppercase().take(6).padEnd(6, '0')
+                    if (wsId.equals(trimmed, ignoreCase = true) || derivedCode.equals(trimmed, ignoreCase = true)) {
                         targetWsId = wsId
                         break
                     }
@@ -1373,13 +1335,11 @@ class AndroidFirestoreTeamRepository(
             }
 
             val resolvedWsId = targetWsId
-                ?: return localFallback.joinWorkspaceByCode(trimmed, user)
+                ?: return Result.failure(IllegalArgumentException("No business found for code $trimmed"))
 
-            // Check if this user had a pending invite for this workspace to honor their invited role
             var assignedRole = Role.Viewer
             var matchedInviteId: String? = null
-            val cleanEmail = user.email.trim()
-                .lowercase()
+            val cleanEmail = user.email.trim().lowercase()
             if (cleanEmail.isNotBlank()) {
                 val inviteQuery = firestore.collection("workspaces")
                     .document(resolvedWsId)
@@ -1390,17 +1350,11 @@ class AndroidFirestoreTeamRepository(
                 if (!inviteQuery.isEmpty) {
                     val invDoc = inviteQuery.documents.first()
                     matchedInviteId = invDoc.id
-                    val rStr = invDoc.getString("role") ?: "Viewer"
-                    assignedRole = try {
-                        Role.valueOf(rStr)
-                    } catch (_: Throwable) {
-                        Role.Viewer
-                    }
+                    assignedRole = parseRole(invDoc.getString("role"))
                 }
             }
 
             linkUserToSharedWorkspace(firestore, resolvedWsId, user, assignedRole, matchedInviteId)
-            localFallback.joinWorkspaceByCode(trimmed, user)
             Result.success(resolvedWsId)
         } catch (e: Throwable) {
             Result.failure(e)
@@ -1415,11 +1369,30 @@ class AndroidFirestoreTeamRepository(
         consumedInviteId: String?
     ) {
         val memberDocId = user.id.ifBlank { "mem_${user.email.hashCode()}" }
+        val normalizedEmail = user.email.trim().lowercase()
+
+        // Remove any duplicate member docs for the same email before writing
+        if (normalizedEmail.isNotBlank()) {
+            try {
+                val existingMatches = firestore.collection("workspaces")
+                    .document(targetWsId)
+                    .collection("members")
+                    .whereEqualTo("email", normalizedEmail)
+                    .get()
+                    .await()
+                for (doc in existingMatches.documents) {
+                    if (doc.id != memberDocId) {
+                        doc.reference.delete().await()
+                    }
+                }
+            } catch (_: Throwable) {
+            }
+        }
+
         val memberMap = mapOf(
             "id" to memberDocId,
-            "name" to user.name.ifBlank { user.email.substringBefore("@") },
-            "email" to user.email.trim()
-                .lowercase(),
+            "name" to user.name.ifBlank { normalizedEmail.substringBefore("@") },
+            "email" to normalizedEmail,
             "role" to role.name,
             "joinedAt" to "Joined team",
             "avatarUrl" to user.avatarUrl
@@ -1448,97 +1421,70 @@ class AndroidFirestoreTeamRepository(
             }
         }
 
-        // Single workspace rule: remove any old workspaces in /users/{uid}/workspaces and set targetWsId
         if (user.id.isNotBlank()) {
-            val userWsCol = firestore.collection("users")
-                .document(user.id)
-                .collection("workspaces")
+            val userWsCol = firestore.collection("users").document(user.id).collection("workspaces")
             val oldDocs = try {
-                userWsCol.get()
-                    .await()
+                userWsCol.get().await()
             } catch (_: Throwable) {
                 null
             }
             oldDocs?.documents?.forEach { doc ->
                 if (doc.id != targetWsId) {
                     try {
-                        doc.reference.delete()
-                            .await()
+                        doc.reference.delete().await()
                     } catch (_: Throwable) {
                     }
                 }
             }
 
             val wsDoc = try {
-                firestore.collection("workspaces")
-                    .document(targetWsId)
-                    .get()
-                    .await()
+                firestore.collection("workspaces").document(targetWsId).get().await()
             } catch (_: Throwable) {
                 null
             }
-            val wsData: MutableMap<String, Any?> =
-                wsDoc?.data?.toMutableMap() ?: mutableMapOf(
-                    "id" to targetWsId,
-                    "name" to "Team Workspace",
-                    "currency" to "USD"
-                )
-            wsData["id"] = targetWsId
-            wsData["role"] = role.name
-            userWsCol.document(targetWsId)
-                .set(wsData, SetOptions.merge())
-                .await()
-        }
-
-        // Pull the shared BusinessProfile from the workspace and save it so this member accesses the SAME profile
-        val profDoc = try {
-            val doc = firestore.collection("workspaces")
-                .document(targetWsId)
-                .collection("profile")
-                .document("current")
-                .get()
-                .await()
-            if (doc.exists()) doc else firestore.collection("profiles")
-                .document(targetWsId)
-                .get()
-                .await()
-        } catch (_: Throwable) {
-            null
-        }
-
-        if (profDoc != null && profDoc.exists()) {
-            val payload = profDoc.getString("payload")
-            if (payload != null) {
-                try {
-                    val profile = json.decodeFromString<BusinessProfile>(payload)
-                    profileRepository?.saveProfile(profile)
-                    localFallback.saveWorkspaceProfile(targetWsId, profile)
-                } catch (_: Throwable) {
+            val wsData = mutableMapOf<String, Any>(
+                "id" to targetWsId,
+                "name" to "Team Workspace",
+                "currency" to "USD"
+            )
+            wsDoc?.data?.forEach { (key, value) ->
+                if (value != null) {
+                    wsData[key] = value
                 }
             }
+            wsData["id"] = targetWsId
+            wsData["role"] = role.name
+            userWsCol.document(targetWsId).set(wsData, SetOptions.merge()).await()
+
+            firestore.collection("users")
+                .document(user.id)
+                .set(
+                    mapOf(
+                        "id" to user.id,
+                        "email" to normalizedEmail,
+                        "activeWorkspaceId" to targetWsId,
+                        "onboardingCompleted" to true,
+                        "updatedAt" to System.currentTimeMillis()
+                    ),
+                    SetOptions.merge()
+                )
+                .await()
         }
+
+        workspaceContext?.switchTo(targetWsId)
     }
 
     override suspend fun getRemoteWorkspace(workspaceId: String): Workspace? {
         val firestore = db ?: return null
-        if (workspaceId.isBlank()) return null
+        if (workspaceId.isBlank() || workspaceId == "ws_default") return null
         return try {
-            val snapshot = firestore.collection("workspaces")
-                .document(workspaceId)
-                .get()
-                .await()
+            val snapshot = firestore.collection("workspaces").document(workspaceId).get().await()
             if (!snapshot.exists()) return null
             val name = snapshot.getString("name") ?: "Team Workspace"
             val currency = snapshot.getString("currency") ?: "USD"
             val timeZoneId = snapshot.getString("timeZoneId") ?: "UTC"
-            val fiscalYearStartMonth = snapshot.getLong("fiscalYearStartMonth")
-                ?.toInt() ?: 1
-            val bmStr = snapshot.getString("businessModel") ?: "B2bSaas"
-            val bm = try {
-                BusinessModel.valueOf(bmStr)
-            } catch (_: Throwable) {
-                BusinessModel.B2bSaas
-            }
+            val fiscalYearStartMonth = snapshot.getLong("fiscalYearStartMonth")?.toInt() ?: 1
+            val businessModel = parseBusinessModel(snapshot.getString("businessModel"))
             val createdAtMillis = snapshot.getLong("createdAtMillis") ?: System.currentTimeMillis()
             Workspace(
                 id = workspaceId,
@@ -1546,7 +1492,7 @@ class AndroidFirestoreTeamRepository(
                 currency = currency,
                 timeZoneId = timeZoneId,
                 fiscalYearStartMonth = fiscalYearStartMonth,
-                businessModel = bm,
+                businessModel = businessModel,
                 createdAtMillis = createdAtMillis
             )
         } catch (_: Throwable) {
@@ -1559,17 +1505,13 @@ class AndroidFirestoreTeamRepository(
         userId: String,
         userEmail: String
     ): MembershipCheckResult {
-        val cleanWsId = workspaceId.ifBlank { "ws_default" }
-        if (cleanWsId == "ws_default" || (userId.isBlank() && userEmail.isBlank())) {
+        val cleanWsId = workspaceId.trim()
+        if (cleanWsId.isBlank() || cleanWsId == "ws_default" || (userId.isBlank() && userEmail.isBlank())) {
             return MembershipCheckResult.UNKNOWN
         }
-        val firestore =
-            db ?: return localFallback.checkMembershipStatus(cleanWsId, userId, userEmail)
+        val firestore = db ?: return localFallback.checkMembershipStatus(cleanWsId, userId, userEmail)
         return try {
-            val wsDoc = firestore.collection("workspaces")
-                .document(cleanWsId)
-                .get()
-                .await()
+            val wsDoc = firestore.collection("workspaces").document(cleanWsId).get().await()
             if (!wsDoc.exists()) return MembershipCheckResult.REVOKED
 
             val membersSnap = firestore.collection("workspaces")
@@ -1580,16 +1522,12 @@ class AndroidFirestoreTeamRepository(
 
             if (membersSnap.isEmpty) return MembershipCheckResult.UNKNOWN
 
-            val normalizedEmail = userEmail.trim()
-                .lowercase()
+            val normalizedEmail = userEmail.trim().lowercase()
             val isPresent = membersSnap.documents.any { doc ->
                 val docUserId = doc.getString("id") ?: doc.id
-                val docEmail = doc.getString("email")
-                    ?.trim()
-                    ?.lowercase()
-                    .orEmpty()
+                val docEmail = doc.getString("email")?.trim()?.lowercase().orEmpty()
                 (userId.isNotBlank() && (docUserId == userId || doc.id == userId)) ||
-                        (normalizedEmail.isNotBlank() && docEmail == normalizedEmail)
+                    (normalizedEmail.isNotBlank() && docEmail == normalizedEmail)
             }
             if (isPresent) MembershipCheckResult.ACTIVE else MembershipCheckResult.REVOKED
         } catch (_: Throwable) {
@@ -1597,15 +1535,15 @@ class AndroidFirestoreTeamRepository(
         }
     }
 
-    override suspend fun declineInvite(inviteId: String, email: String): Result<Unit> {
+    override suspend fun declineInvite(
+        inviteId: String,
+        email: String
+    ): Result<Unit> {
         localFallback.declineInvite(inviteId, email)
         val firestore = db ?: return Result.success(Unit)
         if (inviteId.isBlank()) return Result.success(Unit)
         try {
-            val invDoc = firestore.collection("team_invites")
-                .document(inviteId)
-                .get()
-                .await()
+            val invDoc = firestore.collection("team_invites").document(inviteId).get().await()
             val wsId = invDoc.getString("workspaceId")
             if (!wsId.isNullOrBlank()) {
                 firestore.collection("workspaces")
@@ -1615,10 +1553,7 @@ class AndroidFirestoreTeamRepository(
                     .delete()
                     .await()
             }
-            firestore.collection("team_invites")
-                .document(inviteId)
-                .delete()
-                .await()
+            firestore.collection("team_invites").document(inviteId).delete().await()
         } catch (e: Throwable) {
             Log.e("RevLensFirestore", "declineInvite error", e)
         }
@@ -1626,17 +1561,20 @@ class AndroidFirestoreTeamRepository(
     }
 
     override suspend fun isUserAssociatedWithAnotherBusiness(
-        email: String, currentWorkspaceId: String?
+        email: String,
+        currentWorkspaceId: String?
     ): Boolean {
-        return localFallback.isUserAssociatedWithAnotherBusiness(email, currentWorkspaceId)
+        return false
     }
 
-    override suspend fun getUserRoleInWorkspace(workspaceId: String, userEmail: String): Role? {
-        val cleanWsId = workspaceId.ifBlank { "ws_default" }
-        val normalized = userEmail.trim()
-            .lowercase()
+    override suspend fun getUserRoleInWorkspace(
+        workspaceId: String,
+        userEmail: String
+    ): Role? {
+        val cleanWsId = workspaceId.trim()
+        val normalized = userEmail.trim().lowercase()
         val firestore = db
-        if (firestore != null && cleanWsId.isNotBlank() && normalized.isNotBlank()) {
+        if (firestore != null && cleanWsId.isNotBlank() && cleanWsId != "ws_default" && normalized.isNotBlank()) {
             try {
                 val snapshot = firestore.collection("workspaces")
                     .document(cleanWsId)
@@ -1645,15 +1583,7 @@ class AndroidFirestoreTeamRepository(
                     .get()
                     .await()
                 if (!snapshot.isEmpty) {
-                    val roleStr = snapshot.documents.first()
-                        .getString("role")
-                    if (roleStr != null) {
-                        return try {
-                            Role.valueOf(roleStr)
-                        } catch (_: Throwable) {
-                            Role.Viewer
-                        }
-                    }
+                    return parseRole(snapshot.documents.first().getString("role"))
                 }
             } catch (_: Throwable) {
             }
@@ -1661,43 +1591,98 @@ class AndroidFirestoreTeamRepository(
         return localFallback.getUserRoleInWorkspace(cleanWsId, userEmail)
     }
 
-    override suspend fun leaveWorkspace(workspaceId: String, userEmail: String): Result<Unit> {
-        val cleanWsId = workspaceId.ifBlank { "ws_default" }
-        val res = localFallback.leaveWorkspace(cleanWsId, userEmail)
-        if (res.isFailure) return res
+    override suspend fun leaveWorkspace(
+        workspaceId: String,
+        userEmail: String
+    ): Result<Unit> {
+        val cleanWsId = workspaceId.trim()
+        localFallback.leaveWorkspace(cleanWsId, userEmail)
+        profileRepository?.clearLocalData()
+        workspaceContext?.switchTo("")
+
         val firestore = db ?: return Result.success(Unit)
         if (cleanWsId.isBlank()) return Result.success(Unit)
         try {
-            val normalized = userEmail.trim()
-                .lowercase()
-            val snapshot = firestore.collection("workspaces")
-                .document(cleanWsId)
-                .collection("members")
-                .whereEqualTo("email", normalized)
-                .get()
-                .await()
-            for (doc in snapshot.documents) {
-                doc.reference.delete()
-                    .await()
+            val normalized = userEmail.trim().lowercase()
+            val uid = auth?.currentUser?.uid.orEmpty()
+
+            // 1. Remove member document by UID and by Email from /workspaces/{wsId}/members
+            if (uid.isNotBlank()) {
+                try {
+                    firestore.collection("workspaces")
+                        .document(cleanWsId)
+                        .collection("members")
+                        .document(uid)
+                        .delete()
+                        .await()
+                } catch (_: Throwable) {
+                }
             }
-            val uid = auth?.currentUser?.uid
-            if (!uid.isNullOrBlank()) {
-                firestore.collection("users")
+
+            if (normalized.isNotBlank()) {
+                val snapshot = firestore.collection("workspaces")
+                    .document(cleanWsId)
+                    .collection("members")
+                    .whereEqualTo("email", normalized)
+                    .get()
+                    .await()
+                for (doc in snapshot.documents) {
+                    doc.reference.delete().await()
+                }
+            }
+
+            // 2. Delete workspace from /users/{uid}/workspaces and reset user's activeWorkspaceId
+            if (uid.isNotBlank()) {
+                val userWsDocs = firestore.collection("users")
                     .document(uid)
                     .collection("workspaces")
-                    .document(cleanWsId)
-                    .delete()
+                    .get()
+                    .await()
+                for (doc in userWsDocs.documents) {
+                    doc.reference.delete().await()
+                }
+
+                // Also clean up any legacy per-user profile copies so old business data never comes back
+                try {
+                    firestore.collection("users")
+                        .document(uid)
+                        .collection("profile")
+                        .document("current")
+                        .delete()
+                        .await()
+                } catch (_: Throwable) {
+                }
+                try {
+                    firestore.collection("profiles")
+                        .document(uid)
+                        .delete()
+                        .await()
+                } catch (_: Throwable) {
+                }
+
+                firestore.collection("users")
+                    .document(uid)
+                    .set(
+                        mapOf(
+                            "activeWorkspaceId" to "",
+                            "onboardingCompleted" to false,
+                            "updatedAt" to System.currentTimeMillis()
+                        ),
+                        SetOptions.merge()
+                    )
                     .await()
             }
-        } catch (_: Throwable) {
+        } catch (e: Throwable) {
+            Log.e("RevLensFirestore", "leaveWorkspace error", e)
         }
         return Result.success(Unit)
     }
 
     override suspend fun getWorkspaceProfile(workspaceId: String): BusinessProfile? {
-        val cleanWsId = workspaceId.ifBlank { "ws_default" }
+        val cleanWsId = workspaceId.trim()
+        if (cleanWsId.isBlank() || cleanWsId == "ws_default") return null
         val firestore = db
-        if (firestore != null && cleanWsId.isNotBlank()) {
+        if (firestore != null) {
             try {
                 val doc = firestore.collection("workspaces")
                     .document(cleanWsId)
@@ -1711,10 +1696,7 @@ class AndroidFirestoreTeamRepository(
                         return json.decodeFromString<BusinessProfile>(payload)
                     }
                 }
-                val rootDoc = firestore.collection("profiles")
-                    .document(cleanWsId)
-                    .get()
-                    .await()
+                val rootDoc = firestore.collection("profiles").document(cleanWsId).get().await()
                 if (rootDoc.exists()) {
                     val payload = rootDoc.getString("payload")
                     if (payload != null) {
@@ -1727,11 +1709,14 @@ class AndroidFirestoreTeamRepository(
         return localFallback.getWorkspaceProfile(cleanWsId)
     }
 
-    override suspend fun saveWorkspaceProfile(workspaceId: String, profile: BusinessProfile) {
-        val cleanWsId = workspaceId.ifBlank { "ws_default" }
+    override suspend fun saveWorkspaceProfile(
+        workspaceId: String,
+        profile: BusinessProfile
+    ) {
+        val cleanWsId = workspaceId.trim()
+        if (cleanWsId.isBlank() || cleanWsId == "ws_default") return
         localFallback.saveWorkspaceProfile(cleanWsId, profile)
         val firestore = db ?: return
-        if (cleanWsId.isBlank()) return
         try {
             val serialized = json.encodeToString(BusinessProfile.serializer(), profile)
             val map = mapOf(
