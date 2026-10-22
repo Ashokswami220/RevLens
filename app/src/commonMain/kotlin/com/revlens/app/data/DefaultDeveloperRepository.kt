@@ -1,4 +1,4 @@
-package com.revlens.app.data.fake
+package com.revlens.app.data
 
 import com.revlens.app.domain.model.ApiKey
 import com.revlens.app.domain.model.ApiKeyScope
@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-class FakeDeveloperRepository : DeveloperRepository {
+class DefaultDeveloperRepository : DeveloperRepository {
 
     private val keysByWs = mutableMapOf<String, MutableStateFlow<List<ApiKey>>>()
     private val webhooksByWs = mutableMapOf<String, MutableStateFlow<List<WebhookEndpoint>>>()
@@ -150,7 +150,7 @@ class FakeDeveloperRepository : DeveloperRepository {
             url = url.trim(),
             description = description.trim()
                 .ifBlank { "Endpoint $id" },
-            events = if (events.isEmpty()) listOf("scenario.created") else events,
+            events = events.ifEmpty { listOf("scenario.created") },
             secret = secret,
             isActive = true,
             createdAt = "Just now"

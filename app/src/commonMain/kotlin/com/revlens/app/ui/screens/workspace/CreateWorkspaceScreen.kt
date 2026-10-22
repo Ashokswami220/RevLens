@@ -7,18 +7,23 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.GroupAdd
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -50,6 +55,7 @@ fun CreateWorkspaceScreen(
     onNavigateToOnboarding: () -> Unit,
     onNavigateToDashboard: () -> Unit = onNavigateToOnboarding,
     onBackClick: (() -> Unit)? = null,
+    onLogout: (() -> Unit)? = null,
     viewModel: CreateWorkspaceViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -73,12 +79,21 @@ fun CreateWorkspaceScreen(
 
     Scaffold(
         topBar = {
-            if (onBackClick != null) {
-                RevLensTopAppBar(
-                    title = "Workspace Setup",
-                    onBackClick = onBackClick
-                )
-            }
+            RevLensTopAppBar(
+                title = "Workspace Setup",
+                onBackClick = onBackClick,
+                actions = {
+                    if (onLogout != null) {
+                        IconButton(onClick = onLogout) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Logout,
+                                contentDescription = "Log Out",
+                                tint = RevLensTheme.colors.textSecondary
+                            )
+                        }
+                    }
+                }
+            )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = RevLensTheme.colors.background
@@ -240,6 +255,32 @@ fun CreateWorkspaceScreen(
                     enabled = state.canJoinByCode,
                     isLoading = state.isLoading
                 )
+            }
+
+            if (onLogout != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { onLogout() }
+                        .padding(vertical = 12.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Logout,
+                        contentDescription = "Log Out",
+                        tint = RevLensTheme.colors.textSecondary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Log Out / Switch Account",
+                        style = RevLensTypography.labelLarge,
+                        color = RevLensTheme.colors.textSecondary
+                    )
+                }
             }
         }
     }

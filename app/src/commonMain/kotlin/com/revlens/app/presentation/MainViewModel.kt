@@ -18,12 +18,11 @@ import com.revlens.app.domain.repository.TeamRepository
 import com.revlens.app.domain.repository.WorkspaceRepository
 import com.revlens.app.domain.session.DefaultSessionManager
 import com.revlens.app.domain.session.SessionManager
-import com.revlens.app.domain.usecase.ResolveGateUseCase
 import com.revlens.app.model.BusinessProfile
 import com.revlens.app.model.Scenario
-import com.revlens.app.ui.navigation.Gate
 import com.revlens.app.utils.getCurrentTimeMillis
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -38,6 +37,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.milliseconds
 
 class MainViewModel(
     private val repository: ProfileRepository,
@@ -45,7 +46,6 @@ class MainViewModel(
     private val workspaceRepository: WorkspaceRepository = DefaultWorkspaceRepository(emptyList()),
     private val workspaceContext: WorkspaceContext = DefaultWorkspaceContext(null),
     private val sessionManager: SessionManager = DefaultSessionManager(),
-    private val resolveGateUseCase: ResolveGateUseCase = ResolveGateUseCase(),
     private val authRepository: AuthRepository? = null,
     private val teamRepository: TeamRepository? = null
 ) : ViewModel() {
@@ -71,15 +71,18 @@ class MainViewModel(
             initialValue = null
         )
 
-    val hasSeenIntro: StateFlow<Boolean> = repository.hasSeenIntroFlow
+    val hasSeenIntro: StateFlow<Boolean?> = repository.hasSeenIntroFlow
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
-            initialValue = false
+            initialValue = null
         )
 
     private val _accessRevokedMessage = MutableStateFlow<String?>(null)
     val accessRevokedMessage: StateFlow<String?> = _accessRevokedMessage.asStateFlow()
+
+    private val _isReady = MutableStateFlow(false)
+    val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
 
     fun setIntroSeen() {
         viewModelScope.launch {
@@ -99,24 +102,6 @@ class MainViewModel(
     )
 
     val session: StateFlow<SessionState> = sessionManager.state
-
-    val gate: StateFlow<Gate> = combine(
-        sessionManager.state,
-        activeWorkspace,
-        profile
-    ) { currentSession, ws, prof ->
-        resolveGateUseCase(
-            session = currentSession,
-            workspace = ws,
-            baseline = prof,
-            isWeb = false,
-            introSeen = true
-        )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = Gate.Main
-    )
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val currentUserRole: StateFlow<Role> = combine(
@@ -153,13 +138,22 @@ class MainViewModel(
 
     init {
         viewModelScope.launch {
-            runCatching {
+            try {
                 val user = authRepository?.getCurrentUser()
                 if (user != null) {
                     sessionManager.onLoggedIn(user)
-                    // Verify remote workspace & shared profile on startup
-                    repository.syncRemoteProfile()
+                    val remoteProfile = runCatching { repository.syncRemoteProfile() }.getOrNull()
+                    if (remoteProfile == null) {
+                        // Do not aggressively wipe the workspace. Just set onboarding to false.
+                        repository.setOnboardingCompleted(false)
+                    }
+                } else {
+                    // Do not aggressively wipe local data here. Firebase might just be slow to wake up.
+                    sessionManager.signOut(wipeLocalSyncedData = false)
                 }
+            } catch (_: Exception) {
+            } finally {
+                _isReady.value = true
             }
         }
         viewModelScope.launch {
@@ -213,7 +207,7 @@ class MainViewModel(
         val teamRepo = teamRepository ?: return
         viewModelScope.launch {
             while (isActive) {
-                delay(6_000L)
+                delay(6_000L.milliseconds)
                 val ws = activeWorkspace.value
                 val user = (sessionManager.state.value as? SessionState.Authenticated)?.user
                     ?: authRepository?.getCurrentUser()
@@ -243,12 +237,15 @@ class MainViewModel(
     }
 
     private suspend fun wipeWorkspaceAndProfileLocally() {
-        val allWs = workspaceRepository.workspacesFlow.firstOrNull().orEmpty()
-        allWs.forEach { ws -> workspaceRepository.deleteWorkspace(ws.id) }
+        // Cache the intro state before clearing local data
+        val wasIntroSeen = hasSeenIntro.value ?: false
+
         workspaceContext.switchTo("")
-        repository.clearLocalData()
-        scenarioRepository.clearLocalData()
         repository.setOnboardingCompleted(false)
+
+        if (wasIntroSeen) {
+            repository.setHasSeenIntro(true)
+        }
     }
 
     fun leaveBusiness(onSuccess: () -> Unit, onError: (String) -> Unit) {
@@ -302,31 +299,31 @@ class MainViewModel(
         }
     }
 
-    fun resetOnboarding() {
+    fun logout(onComplete: (() -> Unit)? = null) {
         viewModelScope.launch {
-            repository.setOnboardingCompleted(false)
+            withContext(NonCancellable) {
+                try {
+                    authRepository?.logout()
+                } catch (_: Exception) {
+                }
+                wipeWorkspaceAndProfileLocally()
+                sessionManager.signOut(wipeLocalSyncedData = true)
+            }
+            onComplete?.invoke()
         }
     }
 
-    fun logout() {
+    fun deleteAccount(onComplete: (() -> Unit)? = null) {
         viewModelScope.launch {
-            try {
-                authRepository?.logout()
-            } catch (_: Exception) {
+            withContext(NonCancellable) {
+                try {
+                    authRepository?.deleteAccount()
+                } catch (_: Exception) {
+                }
+                wipeWorkspaceAndProfileLocally()
+                sessionManager.signOut(wipeLocalSyncedData = true)
             }
-            wipeWorkspaceAndProfileLocally()
-            sessionManager.signOut(wipeLocalSyncedData = true)
-        }
-    }
-
-    fun deleteAccount() {
-        viewModelScope.launch {
-            try {
-                authRepository?.deleteAccount()
-            } catch (_: Exception) {
-            }
-            wipeWorkspaceAndProfileLocally()
-            sessionManager.signOut(wipeLocalSyncedData = true)
+            onComplete?.invoke()
         }
     }
 
@@ -341,12 +338,6 @@ class MainViewModel(
         if (!RolePermissions.canEditBaselinesAndScenarios(currentUserRole.value)) return
         viewModelScope.launch {
             scenarioRepository.deleteScenario(scenarioId)
-        }
-    }
-
-    fun switchWorkspace(workspaceId: String) {
-        viewModelScope.launch {
-            workspaceContext.switchTo(workspaceId)
         }
     }
 

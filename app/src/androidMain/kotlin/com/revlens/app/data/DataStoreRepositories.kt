@@ -49,7 +49,11 @@ class DataStoreProfileRepository(
 
     override suspend fun clearLocalData() {
         dataStore.edit { preferences ->
+            val introSeen = preferences[INTRO_SEEN_KEY] ?: false
             preferences.clear()
+            if (introSeen) {
+                preferences[INTRO_SEEN_KEY] = true
+            }
         }
     }
 
@@ -136,6 +140,12 @@ class DataStoreScenarioRepository(
                     e.printStackTrace()
                 }
             }
+        }
+    }
+
+    override suspend fun clearLocalData() {
+        dataStore.edit { preferences ->
+            preferences.remove(SCENARIOS_KEY)
         }
     }
 }

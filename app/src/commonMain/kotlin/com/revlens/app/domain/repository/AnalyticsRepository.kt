@@ -8,4 +8,5 @@ interface AnalyticsRepository {
     suspend fun getDataset(workspaceId: String): Dataset?
     suspend fun saveDataset(dataset: Dataset)
     suspend fun deleteDataset(workspaceId: String)
+    suspend fun clearLocalData() {}
 }

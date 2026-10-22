@@ -54,7 +54,6 @@ import com.revlens.app.domain.policy.RolePermissions
 import com.revlens.app.domain.repository.AuthRepository
 import com.revlens.app.domain.repository.TeamRepository
 import com.revlens.app.presentation.MainViewModel
-import com.revlens.app.ui.components.DestructiveButton
 import com.revlens.app.ui.components.RevLensTopAppBar
 import com.revlens.app.ui.components.SectionCard
 import com.revlens.app.ui.components.display.RoleChip
@@ -81,7 +80,6 @@ fun SettingsScreen(
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToMore: () -> Unit = {},
     onNavigateToSignUp: () -> Unit = {},
-    onLogout: () -> Unit = {},
     viewModel: MainViewModel = koinViewModel()
 ) {
     val activeWorkspace by viewModel.activeWorkspace.collectAsState()
@@ -413,16 +411,6 @@ fun SettingsScreen(
                             text = "1.0.0 (KMP)",
                             style = RevLensTypography.bodyMedium,
                             color = RevLensTheme.colors.textSecondary
-                        )
-                    }
-
-                    if (!isGuest) {
-                        DestructiveButton(
-                            text = "Log Out",
-                            onClick = {
-                                viewModel.logout()
-                                onLogout()
-                            }
                         )
                     }
                 }

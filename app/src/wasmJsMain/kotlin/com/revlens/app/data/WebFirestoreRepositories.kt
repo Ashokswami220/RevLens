@@ -19,7 +19,7 @@ import kotlin.time.Duration.Companion.milliseconds
 private external fun jsTriggerSaveDoc(collection: String, docId: String, jsonStr: String)
 
 @JsFun(
-    "(collection, docId) => { if (window.revlensFirebase) { window.revlensFirebase.triggerGetDoc(collection, docId); } }"
+    "(collection, docId) => { if (window.revlensFirebase) { window.revlensFiarebase.triggerGetDoc(collection, docId); } }"
 )
 private external fun jsTriggerGetDoc(collection: String, docId: String)
 
@@ -95,6 +95,11 @@ class WebFirestoreWorkspaceRepository(
         } catch (_: Exception) {
         }
     }
+
+    override suspend fun clearLocalData() {
+        _workspaces.value = emptyList()
+        localFallback.clearLocalData()
+    }
 }
 
 class WebFirestoreProfileRepository(
@@ -152,6 +157,10 @@ class WebFirestoreProfileRepository(
     override suspend fun setOnboardingCompleted(completed: Boolean) {
         localFallback.setOnboardingCompleted(completed)
     }
+
+    override suspend fun clearLocalData() {
+        localFallback.clearLocalData()
+    }
 }
 
 class WebFirestoreScenarioRepository(
@@ -187,5 +196,10 @@ class WebFirestoreScenarioRepository(
             jsTriggerDeleteDoc("scenarios", scenarioId)
         } catch (_: Exception) {
         }
+    }
+
+    override suspend fun clearLocalData() {
+        _scenarios.value = emptyList()
+        localFallback.clearLocalData()
     }
 }

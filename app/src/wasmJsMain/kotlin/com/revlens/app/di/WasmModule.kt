@@ -1,5 +1,10 @@
 package com.revlens.app.di
 
+import com.revlens.app.domain.model.SessionState
+import com.revlens.app.data.DefaultTeamRepository
+import com.revlens.app.data.DefaultIntegrationRepository
+import com.revlens.app.data.DefaultDeveloperRepository
+import com.revlens.app.data.DefaultBillingRepository
 import com.revlens.app.data.ProfileRepository
 import com.revlens.app.data.ScenarioRepository
 import com.revlens.app.domain.repository.WorkspaceRepository
@@ -44,10 +49,6 @@ import com.revlens.app.data.WebFirebaseAuthRepository
 import com.revlens.app.data.WebFirestoreProfileRepository
 import com.revlens.app.data.WebFirestoreScenarioRepository
 import com.revlens.app.data.WebFirestoreWorkspaceRepository
-import com.revlens.app.data.fake.FakeBillingRepository
-import com.revlens.app.data.fake.FakeDeveloperRepository
-import com.revlens.app.data.fake.FakeIntegrationRepository
-import com.revlens.app.data.fake.FakeTeamRepository
 import com.revlens.app.domain.context.DefaultWorkspaceContext
 import com.revlens.app.domain.context.WorkspaceContext
 import com.revlens.app.domain.repository.AnalyticsRepository
@@ -161,6 +162,41 @@ class WasmProfileRepository : ProfileRepository {
         } catch (_: Exception) {
         }
     }
+
+    private val _introFlow = MutableStateFlow(loadIntroSeen())
+    override val hasSeenIntroFlow: Flow<Boolean> = _introFlow.asStateFlow()
+
+    private fun loadIntroSeen(): Boolean {
+        return try {
+            val item = window.localStorage.getItem("revlens_intro_seen")
+            item == "true"
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    override suspend fun setHasSeenIntro(seen: Boolean) {
+        _introFlow.value = seen
+        try {
+            if (seen) {
+                window.localStorage.setItem("revlens_intro_seen", "true")
+            } else {
+                window.localStorage.removeItem("revlens_intro_seen")
+            }
+        } catch (_: Exception) {
+        }
+    }
+
+    override suspend fun clearLocalData() {
+        try {
+            window.localStorage.removeItem("revlens_onboarding_completed")
+            window.localStorage.removeItem("revlens_profile")
+            _flow.value = null
+            _onboardingFlow.value = false
+            // Note: revlens_intro_seen is intentionally preserved
+        } catch (_: Exception) {
+        }
+    }
 }
 
 class WasmScenarioRepository : ScenarioRepository {
@@ -215,7 +251,7 @@ val wasmModule = module {
         )
     }
     single<WorkspaceContext> { DefaultWorkspaceContext() }
-    single<SessionManager> { DefaultSessionManager() }
+    single<SessionManager> { DefaultSessionManager(SessionState.Unknown) }
     single { ResolveGateUseCase() }
     single<IdGenerator> { DefaultIdGenerator() }
     single<FilePicker> { DefaultFilePicker() }
@@ -234,11 +270,11 @@ val wasmModule = module {
         )
     }
     single<TeamRepository> {
-        FakeTeamRepository()
+        DefaultTeamRepository()
     }
-    single<BillingRepository> { FakeBillingRepository() }
-    single<IntegrationRepository> { FakeIntegrationRepository() }
-    single<DeveloperRepository> { FakeDeveloperRepository() }
+    single<BillingRepository> { DefaultBillingRepository() }
+    single<IntegrationRepository> { DefaultIntegrationRepository() }
+    single<DeveloperRepository> { DefaultDeveloperRepository() }
     single { MigrateGuestDataUseCase(get(), get(), get(), get()) }
     single { LoginUseCase(get(), get(), get()) }
     single { SignUpUseCase(get(), get(), get()) }
@@ -250,7 +286,11 @@ val wasmModule = module {
         MainViewModel(
             repository = get(),
             scenarioRepository = get(),
-            workspaceRepository = get()
+            workspaceRepository = get(),
+            workspaceContext = get(),
+            sessionManager = get(),
+            authRepository = get(),
+            teamRepository = get()
         )
     }
     viewModel { BusinessSetupViewModel() }

@@ -70,4 +70,6 @@ interface TeamRepository {
         workspaceId: String,
         newOwnerMemberId: String
     ): Result<Unit> = Result.success(Unit)
+
+    suspend fun clearLocalData() {}
 }

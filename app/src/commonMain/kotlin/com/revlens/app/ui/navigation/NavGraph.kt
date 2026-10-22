@@ -25,6 +25,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
@@ -34,8 +35,16 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.revlens.app.core.platform.BiometricAuthenticator
+import com.revlens.app.domain.model.SessionState
 import com.revlens.app.domain.repository.AppLockRepository
+import com.revlens.app.presentation.MainViewModel
+import com.revlens.app.ui.components.BottomNavItem
+import com.revlens.app.ui.components.LocalAppNavigator
+import com.revlens.app.ui.components.LocalCurrentTab
 import com.revlens.app.ui.components.PrimaryButton
+import com.revlens.app.ui.components.RevLensBottomBar
+import com.revlens.app.ui.onboarding.IntroScreen
+import com.revlens.app.ui.onboarding.OnboardingDataScreen
 import com.revlens.app.ui.screens.analytics.CacAnalyticsScreen
 import com.revlens.app.ui.screens.analytics.CacAnalyticsViewModel
 import com.revlens.app.ui.screens.analytics.CohortAnalysisScreen
@@ -54,6 +63,10 @@ import com.revlens.app.ui.screens.billing.BillingScreen
 import com.revlens.app.ui.screens.billing.BillingViewModel
 import com.revlens.app.ui.screens.data.DataImportScreen
 import com.revlens.app.ui.screens.data.DataImportViewModel
+import com.revlens.app.ui.screens.detailscreens.BusinessSetupScreen
+import com.revlens.app.ui.screens.detailscreens.GoalPlannerScreen
+import com.revlens.app.ui.screens.detailscreens.SaaSMetricsScreen
+import com.revlens.app.ui.screens.detailscreens.ScenarioComparisonScreen
 import com.revlens.app.ui.screens.developer.ApiWebhooksScreen
 import com.revlens.app.ui.screens.developer.ApiWebhooksViewModel
 import com.revlens.app.ui.screens.experiments.ExperimentDetailsScreen
@@ -66,6 +79,11 @@ import com.revlens.app.ui.screens.marketing.LandingScreen
 import com.revlens.app.ui.screens.marketing.LandingViewModel
 import com.revlens.app.ui.screens.marketing.PublicPricingScreen
 import com.revlens.app.ui.screens.marketing.PublicPricingViewModel
+import com.revlens.app.ui.screens.navbarscreens.DashboardScreen
+import com.revlens.app.ui.screens.navbarscreens.ForecastScreen
+import com.revlens.app.ui.screens.navbarscreens.ScenarioBuilderScreen
+import com.revlens.app.ui.screens.navbarscreens.SettingsScreen
+import com.revlens.app.ui.screens.navbarscreens.SimulatorScreen
 import com.revlens.app.ui.screens.notifications.NotificationSettingsScreen
 import com.revlens.app.ui.screens.notifications.NotificationSettingsViewModel
 import com.revlens.app.ui.screens.profile.ProfileScreen
@@ -77,26 +95,10 @@ import com.revlens.app.ui.screens.security.SecuritySettingsScreen
 import com.revlens.app.ui.screens.security.SecuritySettingsViewModel
 import com.revlens.app.ui.screens.team.TeamScreen
 import com.revlens.app.ui.screens.team.TeamViewModel
-import com.revlens.app.ui.theme.RevLensTypography
-import com.revlens.app.presentation.MainViewModel
-import com.revlens.app.ui.components.BottomNavItem
-import com.revlens.app.ui.components.LocalAppNavigator
-import com.revlens.app.ui.components.LocalCurrentTab
-import com.revlens.app.ui.components.RevLensBottomBar
-import com.revlens.app.ui.onboarding.IntroScreen
-import com.revlens.app.ui.onboarding.OnboardingDataScreen
-import com.revlens.app.ui.screens.detailscreens.BusinessSetupScreen
-import com.revlens.app.ui.screens.detailscreens.GoalPlannerScreen
-import com.revlens.app.ui.screens.detailscreens.SaaSMetricsScreen
-import com.revlens.app.ui.screens.detailscreens.ScenarioComparisonScreen
-import com.revlens.app.ui.screens.navbarscreens.DashboardScreen
-import com.revlens.app.ui.screens.navbarscreens.ForecastScreen
-import com.revlens.app.ui.screens.navbarscreens.ScenarioBuilderScreen
-import com.revlens.app.ui.screens.navbarscreens.SettingsScreen
-import com.revlens.app.ui.screens.navbarscreens.SimulatorScreen
 import com.revlens.app.ui.screens.workspace.CreateWorkspaceScreen
 import com.revlens.app.ui.screens.workspace.WorkspaceManagementScreen
 import com.revlens.app.ui.theme.RevLensTheme
+import com.revlens.app.ui.theme.RevLensTypography
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -122,7 +124,10 @@ fun RevLensNavGraph(
 ) {
     val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsState()
     val hasSeenIntro by viewModel.hasSeenIntro.collectAsState()
+    val session by viewModel.session.collectAsState()
     val accessRevokedMessage by viewModel.accessRevokedMessage.collectAsState()
+    val isReady by viewModel.isReady.collectAsState()
+    val activeWorkspace by viewModel.activeWorkspace.collectAsState()
 
     if (accessRevokedMessage != null) {
         AlertDialog(
@@ -158,10 +163,9 @@ fun RevLensNavGraph(
         )
     }
 
-    if (isOnboardingCompleted == null) {
+    if (!isReady || hasSeenIntro == null || (hasSeenIntro == true && session is SessionState.Authenticated && isOnboardingCompleted == null)) {
         Box(
-            modifier = modifier
-                .fillMaxSize()
+            modifier = modifier.fillMaxSize()
                 .background(RevLensTheme.colors.background)
         )
         return
@@ -233,6 +237,7 @@ fun RevLensNavGraph(
         }
     }
 
+    // URL Update Effect
     LaunchedEffect(currentRoute) {
         val slug = when {
             currentDestination?.hasRoute<IntroRoute>() == true -> "intro"
@@ -324,25 +329,7 @@ fun RevLensNavGraph(
         }
     }
 
-    LaunchedEffect(isOnboardingCompleted) {
-        if (isOnboardingCompleted == false) {
-            val routeStr = navController.currentDestination?.route.orEmpty()
-            val isInAuthOrOnboardingFlow =
-                routeStr.contains("Intro") ||
-                    routeStr.contains("Login") ||
-                    routeStr.contains("InviteAcceptance") ||
-                    routeStr.contains("CreateWorkspace") ||
-                    routeStr.contains("Onboarding")
-            if (!isInAuthOrOnboardingFlow) {
-                val target: Any = if (hasSeenIntro) LoginRoute else IntroRoute
-                navController.navigate(target) {
-                    popUpTo(0) { inclusive = true }
-                    launchSingleTop = true
-                }
-            }
-        }
-    }
-
+    // Deep Links Initialization
     LaunchedEffect(Unit) {
         val initial = BrowserRouter.getInitialRoute()
         if (initial != null && isOnboardingCompleted == true) {
@@ -358,7 +345,6 @@ fun RevLensNavGraph(
                 "forecast" -> navController.navigate(ForecastRoute) { launchSingleTop = true }
                 "settings" -> navController.navigate(SettingsRoute) { launchSingleTop = true }
                 "profile" -> navController.navigate(ProfileRoute) { launchSingleTop = true }
-
                 "metrics" -> navController.navigate(MetricsRoute) { launchSingleTop = true }
                 "goals", "goalplanner" -> navController.navigate(
                     GoalPlannerRoute
@@ -408,7 +394,6 @@ fun RevLensNavGraph(
                     "forecast" -> navController.navigate(ForecastRoute) { launchSingleTop = true }
                     "settings" -> navController.navigate(SettingsRoute) { launchSingleTop = true }
                     "profile" -> navController.navigate(ProfileRoute) { launchSingleTop = true }
-
                     "metrics" -> navController.navigate(MetricsRoute) { launchSingleTop = true }
                     "goals", "goalplanner" -> navController.navigate(
                         GoalPlannerRoute
@@ -449,10 +434,8 @@ fun RevLensNavGraph(
         }
     }
 
-    val appLockRepository: AppLockRepository =
-        koinInject()
-    val biometricAuthenticator: BiometricAuthenticator =
-        koinInject()
+    val appLockRepository: AppLockRepository = koinInject()
+    val biometricAuthenticator: BiometricAuthenticator = koinInject()
 
     AppLockGate(
         appLockRepository = appLockRepository,
@@ -479,19 +462,61 @@ fun RevLensNavGraph(
 
                 PlatformBackHandler(enabled = isNonDashboardTab) {
                     navController.navigate(DashboardRoute) {
-                        popUpTo(DashboardRoute) {
-                            inclusive = false
-                        }
+                        popUpTo(DashboardRoute) { inclusive = false }
                         launchSingleTop = true
                     }
                 }
-                val initialStartDestination = androidx.compose.runtime.remember {
-                    when {
-                        isOnboardingCompleted == true -> DashboardRoute
-                        hasSeenIntro -> LoginRoute
-                        else -> IntroRoute
+
+                // Strictly acts as a fallback Auth Guard, leaves forward routing to the ViewModels
+                LaunchedEffect(session, hasSeenIntro) {
+                    // If user hasn't seen intro yet, let them view the intro screen uninterrupted
+                    if (hasSeenIntro == false) return@LaunchedEffect
+
+                    val currentRouteStr = navController.currentDestination?.route ?: ""
+                    if (currentRouteStr.isEmpty()) return@LaunchedEffect
+
+                    val isAuthScreen =
+                        currentRouteStr.contains("IntroRoute") || currentRouteStr.contains(
+                            "LoginRoute"
+                        )
+
+                    when (session) {
+                        is SessionState.SignedOut -> {
+                            // Once intro is seen, SignedOut ALWAYS routes to LoginRoute (never Intro!)
+                            if (!currentRouteStr.contains("LoginRoute")) {
+                                navController.navigate(LoginRoute) {
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            }
+                        }
+
+                        is SessionState.Authenticated -> {
+                            // If they restart the app or authenticate and are on Auth screens,
+                            // push them to Dashboard or CreateWorkspace.
+                            if (isAuthScreen) {
+                                val target: Any =
+                                    if (activeWorkspace != null && isOnboardingCompleted == true) DashboardRoute else CreateWorkspaceRoute
+                                navController.navigate(target) {
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            }
+                        }
+
+                        else -> {}
                     }
                 }
+
+                val initialStartDestination = remember {
+                    when {
+                        hasSeenIntro == false -> IntroRoute
+                        session !is SessionState.Authenticated -> LoginRoute
+                        activeWorkspace != null && isOnboardingCompleted == true -> DashboardRoute
+                        else -> CreateWorkspaceRoute
+                    }
+                }
+
                 NavHost(
                     navController = navController,
                     startDestination = initialStartDestination,
@@ -559,8 +584,7 @@ fun RevLensNavGraph(
                     }
 
                     composable<LoginRoute> {
-                        val loginViewModel: LoginViewModel =
-                            koinViewModel()
+                        val loginViewModel: LoginViewModel = koinViewModel()
                         LoginScreen(
                             viewModel = loginViewModel,
                             onNavigateToDashboard = {
@@ -577,15 +601,17 @@ fun RevLensNavGraph(
                                 }
                             },
                             onNavigateToInviteAcceptance = {
-                                navController.navigate(InviteAcceptanceRoute)
+                                navController.navigate(InviteAcceptanceRoute) {
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
+                                }
                             },
                             onNavigateBack = null
                         )
                     }
 
                     composable<InviteAcceptanceRoute> {
-                        val inviteViewModel: InviteAcceptanceViewModel =
-                            koinViewModel()
+                        val inviteViewModel: InviteAcceptanceViewModel = koinViewModel()
                         InviteAcceptanceScreen(
                             viewModel = inviteViewModel,
                             onNavigateToDashboard = {
@@ -607,7 +633,9 @@ fun RevLensNavGraph(
                     composable<CreateWorkspaceRoute> {
                         CreateWorkspaceScreen(
                             onNavigateToOnboarding = {
-                                navController.navigate(OnboardingRoute)
+                                navController.navigate(OnboardingRoute) {
+                                    launchSingleTop = true
+                                }
                             },
                             onNavigateToDashboard = {
                                 navController.navigate(DashboardRoute) {
@@ -616,7 +644,16 @@ fun RevLensNavGraph(
                                 }
                                 BrowserRouter.updateUrl("dashboard")
                             },
-                            onBackClick = null
+                            onBackClick = null,
+                            onLogout = {
+                                viewModel.logout {
+                                    navController.navigate(LoginRoute) {
+                                        popUpTo(0) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                    BrowserRouter.updateUrl("login")
+                                }
+                            }
                         )
                     }
 
@@ -692,9 +729,7 @@ fun RevLensNavGraph(
                                 }
                             },
                             onNavigateToCompare = {
-                                navController.navigate(
-                                    ScenarioComparisonRoute
-                                )
+                                navController.navigate(ScenarioComparisonRoute)
                             },
                             onNavigateToMetrics = { navController.navigate(MetricsRoute) },
                             onNavigateToExperiments = { navController.navigate(ExperimentsRoute) }
@@ -766,23 +801,14 @@ fun RevLensNavGraph(
                                     NotificationsRoute
                                 )
                             },
-                            onNavigateToMore = {
-                                navController.navigate(AccountActionsRoute)
-                            },
+                            onNavigateToMore = { navController.navigate(AccountActionsRoute) },
                             onNavigateToBilling = { navController.navigate(BillingRoute) },
                             onNavigateToIntegrations = {
                                 navController.navigate(
                                     IntegrationsRoute
                                 )
                             },
-                            onNavigateToApiWebhooks = { navController.navigate(ApiWebhooksRoute) },
-                            onLogout = {
-                                navController.navigate(LoginRoute) {
-                                    popUpTo(0) { inclusive = true }
-                                    launchSingleTop = true
-                                }
-                                BrowserRouter.updateUrl("login")
-                            }
+                            onNavigateToApiWebhooks = { navController.navigate(ApiWebhooksRoute) }
                         )
                     }
 
@@ -820,8 +846,7 @@ fun RevLensNavGraph(
                     }
 
                     composable<DataImportRoute> {
-                        val importViewModel: DataImportViewModel =
-                            koinViewModel()
+                        val importViewModel: DataImportViewModel = koinViewModel()
                         DataImportScreen(
                             viewModel = importViewModel,
                             onNavigateBack = { navController.popBackStack() },
@@ -834,8 +859,7 @@ fun RevLensNavGraph(
                     }
 
                     composable<RevenueBreakdownRoute> {
-                        val breakdownViewModel: RevenueBreakdownViewModel =
-                            koinViewModel()
+                        val breakdownViewModel: RevenueBreakdownViewModel = koinViewModel()
                         RevenueBreakdownScreen(
                             viewModel = breakdownViewModel,
                             onNavigateBack = { navController.popBackStack() },
@@ -849,21 +873,21 @@ fun RevLensNavGraph(
                     }
 
                     composable<LtvAnalysisRoute> {
-                        val ltvViewModel: LtvAnalysisViewModel =
-                            koinViewModel()
+                        val ltvViewModel: LtvAnalysisViewModel = koinViewModel()
                         LtvAnalysisScreen(
                             viewModel = ltvViewModel,
                             onNavigateBack = { navController.popBackStack() },
                             onNavigateToWhatIf = {
-                                navController.navigate(PricingSimulatorRoute(1))
+                                navController.navigate(
+                                    PricingSimulatorRoute(1)
+                                )
                             },
                             onNavigateToBaseline = { navController.navigate(InputDataRoute) }
                         )
                     }
 
                     composable<CacAnalyticsRoute> {
-                        val cacViewModel: CacAnalyticsViewModel =
-                            koinViewModel()
+                        val cacViewModel: CacAnalyticsViewModel = koinViewModel()
                         CacAnalyticsScreen(
                             viewModel = cacViewModel,
                             onNavigateBack = { navController.popBackStack() },
@@ -876,8 +900,7 @@ fun RevLensNavGraph(
                     }
 
                     composable<CustomerAnalyticsRoute> {
-                        val customerViewModel: CustomerAnalyticsViewModel =
-                            koinViewModel()
+                        val customerViewModel: CustomerAnalyticsViewModel = koinViewModel()
                         CustomerAnalyticsScreen(
                             viewModel = customerViewModel,
                             onNavigateBack = { navController.popBackStack() },
@@ -886,8 +909,7 @@ fun RevLensNavGraph(
                     }
 
                     composable<CohortAnalysisRoute> {
-                        val cohortViewModel: CohortAnalysisViewModel =
-                            koinViewModel()
+                        val cohortViewModel: CohortAnalysisViewModel = koinViewModel()
                         CohortAnalysisScreen(
                             viewModel = cohortViewModel,
                             onNavigateBack = { navController.popBackStack() },
@@ -896,23 +918,19 @@ fun RevLensNavGraph(
                     }
 
                     composable<ExperimentsRoute> {
-                        val expViewModel: ExperimentsViewModel =
-                            koinViewModel()
+                        val expViewModel: ExperimentsViewModel = koinViewModel()
                         ExperimentsScreen(
                             viewModel = expViewModel,
                             onNavigateBack = { navController.popBackStack() },
                             onNavigateToDetails = { id ->
-                                navController.navigate(
-                                    ExperimentDetailsRoute(id)
-                                )
+                                navController.navigate(ExperimentDetailsRoute(id))
                             }
                         )
                     }
 
                     composable<ExperimentDetailsRoute> { backStackEntry ->
                         val route = backStackEntry.toRoute<ExperimentDetailsRoute>()
-                        val detailsViewModel: ExperimentDetailsViewModel =
-                            koinViewModel()
+                        val detailsViewModel: ExperimentDetailsViewModel = koinViewModel()
                         ExperimentDetailsScreen(
                             experimentId = route.id,
                             viewModel = detailsViewModel,
@@ -921,8 +939,7 @@ fun RevLensNavGraph(
                     }
 
                     composable<ReportsRoute> {
-                        val reportsViewModel: ReportsViewModel =
-                            koinViewModel()
+                        val reportsViewModel: ReportsViewModel = koinViewModel()
                         ReportsScreen(
                             viewModel = reportsViewModel,
                             onNavigateBack = { navController.popBackStack() }
@@ -930,8 +947,7 @@ fun RevLensNavGraph(
                     }
 
                     composable<SecurityRoute> {
-                        val securityViewModel: SecuritySettingsViewModel =
-                            koinViewModel()
+                        val securityViewModel: SecuritySettingsViewModel = koinViewModel()
                         SecuritySettingsScreen(
                             viewModel = securityViewModel,
                             onNavigateBack = { navController.popBackStack() },
@@ -940,8 +956,7 @@ fun RevLensNavGraph(
                     }
 
                     composable<NotificationsRoute> {
-                        val notifViewModel: NotificationSettingsViewModel =
-                            koinViewModel()
+                        val notifViewModel: NotificationSettingsViewModel = koinViewModel()
                         NotificationSettingsScreen(
                             viewModel = notifViewModel,
                             onNavigateBack = { navController.popBackStack() }
@@ -949,25 +964,24 @@ fun RevLensNavGraph(
                     }
 
                     composable<ProfileRoute> {
-                        val profileViewModel: ProfileViewModel =
-                            koinViewModel()
+                        val profileViewModel: ProfileViewModel = koinViewModel()
                         ProfileScreen(
                             viewModel = profileViewModel,
                             onNavigateBack = { navController.popBackStack() },
                             onNavigateToLogin = {
-                                viewModel.logout()
-                                navController.navigate(LoginRoute) {
-                                    popUpTo(0) { inclusive = true }
-                                    launchSingleTop = true
+                                viewModel.logout {
+                                    navController.navigate(LoginRoute) {
+                                        popUpTo(0) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                    BrowserRouter.updateUrl("login")
                                 }
-                                BrowserRouter.updateUrl("login")
                             }
                         )
                     }
 
                     composable<TeamRoute> {
-                        val teamViewModel: TeamViewModel =
-                            koinViewModel()
+                        val teamViewModel: TeamViewModel = koinViewModel()
                         TeamScreen(
                             viewModel = teamViewModel,
                             onNavigateBack = { navController.popBackStack() }
@@ -975,8 +989,7 @@ fun RevLensNavGraph(
                     }
 
                     composable<BillingRoute> {
-                        val billingViewModel: BillingViewModel =
-                            koinViewModel()
+                        val billingViewModel: BillingViewModel = koinViewModel()
                         BillingScreen(
                             viewModel = billingViewModel,
                             onNavigateBack = { navController.popBackStack() }
@@ -984,8 +997,7 @@ fun RevLensNavGraph(
                     }
 
                     composable<IntegrationsRoute> {
-                        val integrationsViewModel: IntegrationsViewModel =
-                            koinViewModel()
+                        val integrationsViewModel: IntegrationsViewModel = koinViewModel()
                         IntegrationsScreen(
                             viewModel = integrationsViewModel,
                             onNavigateBack = { navController.popBackStack() }
@@ -993,8 +1005,7 @@ fun RevLensNavGraph(
                     }
 
                     composable<ApiWebhooksRoute> {
-                        val developerViewModel: ApiWebhooksViewModel =
-                            koinViewModel()
+                        val developerViewModel: ApiWebhooksViewModel = koinViewModel()
                         ApiWebhooksScreen(
                             viewModel = developerViewModel,
                             onNavigateBack = { navController.popBackStack() }
@@ -1002,8 +1013,7 @@ fun RevLensNavGraph(
                     }
 
                     composable<LandingRoute> {
-                        val landingViewModel: LandingViewModel =
-                            koinViewModel()
+                        val landingViewModel: LandingViewModel = koinViewModel()
                         LandingScreen(
                             viewModel = landingViewModel,
                             onNavigateToAuth = { navController.navigate(LoginRoute) },
@@ -1013,8 +1023,7 @@ fun RevLensNavGraph(
                     }
 
                     composable<PublicPricingRoute> {
-                        val pricingViewModel: PublicPricingViewModel =
-                            koinViewModel()
+                        val pricingViewModel: PublicPricingViewModel = koinViewModel()
                         PublicPricingScreen(
                             viewModel = pricingViewModel,
                             onNavigateToAuth = { navController.navigate(LoginRoute) },

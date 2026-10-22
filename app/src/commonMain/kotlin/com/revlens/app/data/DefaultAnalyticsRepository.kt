@@ -24,4 +24,9 @@ class DefaultAnalyticsRepository : AnalyticsRepository {
         datasets.remove(workspaceId)
         _datasetFlow.value = null
     }
+
+    override suspend fun clearLocalData() {
+        datasets.clear()
+        _datasetFlow.value = null
+    }
 }

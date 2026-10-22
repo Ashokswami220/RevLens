@@ -9,4 +9,5 @@ interface WorkspaceRepository {
     suspend fun createWorkspace(workspace: Workspace)
     suspend fun updateWorkspace(workspace: Workspace)
     suspend fun deleteWorkspace(id: String)
+    suspend fun clearLocalData() {}
 }

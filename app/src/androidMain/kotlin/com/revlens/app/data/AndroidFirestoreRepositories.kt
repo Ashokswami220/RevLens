@@ -97,7 +97,8 @@ class AndroidFirestoreWorkspaceRepository(
 
         fun attachListener(uid: String) {
             if (uid.isBlank() || firestore == null) {
-                trySend(_workspaces.value)
+                _workspaces.value = emptyList()
+                trySend(emptyList())
                 return
             }
             firestoreListener?.remove()
@@ -137,7 +138,8 @@ class AndroidFirestoreWorkspaceRepository(
                                 _workspaces.value = singleList
                                 trySend(singleList)
                             } else {
-                                trySend(_workspaces.value)
+                                _workspaces.value = emptyList()
+                                trySend(emptyList())
                             }
                         }
                     }
@@ -150,6 +152,9 @@ class AndroidFirestoreWorkspaceRepository(
             val uid = resolveUserId()
             if (!uid.isNullOrBlank()) {
                 attachListener(uid)
+            } else {
+                _workspaces.value = emptyList()
+                trySend(emptyList())
             }
         }
 
@@ -158,6 +163,10 @@ class AndroidFirestoreWorkspaceRepository(
                 val uid = firebaseAuth.currentUser?.uid
                 if (!uid.isNullOrBlank()) {
                     attachListener(uid)
+                } else {
+                    firestoreListener?.remove()
+                    _workspaces.value = emptyList()
+                    trySend(emptyList())
                 }
             }
         } else {
@@ -343,6 +352,11 @@ class AndroidFirestoreWorkspaceRepository(
             Log.e("RevLensFirestore", "deleteWorkspace error", e)
         }
     }
+
+    override suspend fun clearLocalData() = withContext(NonCancellable) {
+        _workspaces.value = emptyList()
+        localFallback.clearLocalData()
+    }
 }
 
 class AndroidFirestoreProfileRepository(
@@ -418,8 +432,12 @@ class AndroidFirestoreProfileRepository(
         fun attachWorkspaceProfileListeners(wsId: String?) {
             rootProfileListener?.remove()
             subProfileListener?.remove()
-            val effectiveWsId = wsId?.takeIf { it.isNotBlank() && it != "ws_default" } ?: return
-            if (firestore == null) return
+            val effectiveWsId = wsId?.takeIf { it.isNotBlank() && it != "ws_default" }
+            if (effectiveWsId == null || firestore == null) {
+                _profile.value = null
+                trySend(null)
+                return
+            }
 
             try {
                 // Listen to /profiles/{wsId} (Always permitted by root /profiles/{id} rule)
@@ -456,6 +474,25 @@ class AndroidFirestoreProfileRepository(
             }
         }
 
+        val fbAuth = auth
+        val authStateListener = if (fbAuth != null) {
+            FirebaseAuth.AuthStateListener { firebaseAuth ->
+                if (firebaseAuth.currentUser == null) {
+                    _profile.value = null
+                    trySend(null)
+                }
+            }
+        } else {
+            null
+        }
+
+        if (fbAuth != null && authStateListener != null) {
+            try {
+                fbAuth.addAuthStateListener(authStateListener)
+            } catch (_: Throwable) {
+            }
+        }
+
         val localJob = ioScope.launch {
             localFallback.profileFlow.collect { localProfile ->
                 if (localProfile != null && _profile.value == null) {
@@ -466,6 +503,12 @@ class AndroidFirestoreProfileRepository(
         }
 
         awaitClose {
+            if (fbAuth != null && authStateListener != null) {
+                try {
+                    fbAuth.removeAuthStateListener(authStateListener)
+                } catch (_: Throwable) {
+                }
+            }
             rootProfileListener?.remove()
             subProfileListener?.remove()
             wsJob.cancel()
@@ -1852,6 +1895,8 @@ class AndroidFirestoreTeamRepository(
             Log.e("RevLensFirestore", "saveWorkspaceProfile error", e)
         }
     }
+
+    override suspend fun clearLocalData() {}
 }
 
 private suspend fun <T> Task<T>.await(): T = suspendCancellableCoroutine { cont ->

@@ -7,6 +7,7 @@ import com.revlens.app.data.ProfileRepository
 import com.revlens.app.domain.repository.TeamRepository
 import com.revlens.app.domain.usecase.LoginUseCase
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration.Companion.milliseconds
@@ -39,21 +40,17 @@ class LoginViewModel(
                     }
 
                     val remoteProf = runCatching {
-                        withTimeoutOrNull(2500L.milliseconds) {
+                        withTimeoutOrNull(4000L.milliseconds) {
                             profileRepository?.syncRemoteProfile()
                         }
                     }.getOrNull()
 
-                    val localProf = runCatching {
-                        withTimeoutOrNull(1500L.milliseconds) {
-                            profileRepository?.profileFlow?.first()
-                        }
-                    }.getOrNull()
-
+                    val localProf = profileRepository?.profileFlow?.firstOrNull()
                     if (remoteProf != null || localProf != null) {
                         profileRepository?.setOnboardingCompleted(true)
                         emit(LoginEffect.NavigateToDashboard)
                     } else {
+                        // DO NOT wipe local data here! If Firestore is slow, wiping data creates a permanent setup loop.
                         emit(LoginEffect.NavigateToCreateWorkspace)
                     }
                 }

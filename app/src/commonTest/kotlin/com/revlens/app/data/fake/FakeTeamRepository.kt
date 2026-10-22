@@ -1,8 +1,5 @@
 package com.revlens.app.data.fake
 
-import com.revlens.app.core.util.DefaultIdGenerator
-import com.revlens.app.core.util.IdGenerator
-
 import com.revlens.app.domain.model.Member
 import com.revlens.app.domain.model.Role
 import com.revlens.app.domain.model.TeamInvite
@@ -16,9 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-class FakeTeamRepository(
-    private val idGenerator: IdGenerator = DefaultIdGenerator()
-) : TeamRepository {
+class FakeTeamRepository : TeamRepository {
 
     private val membersByWs = mutableMapOf<String, MutableStateFlow<List<Member>>>()
     private val invitesByWs = mutableMapOf<String, MutableStateFlow<List<TeamInvite>>>()

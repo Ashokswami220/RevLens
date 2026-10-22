@@ -1,5 +1,10 @@
 package com.revlens.app.di
 
+import com.revlens.app.data.DefaultTeamRepository
+import com.revlens.app.domain.model.SessionState
+import com.revlens.app.data.DefaultIntegrationRepository
+import com.revlens.app.data.DefaultDeveloperRepository
+import com.revlens.app.data.DefaultBillingRepository
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
@@ -31,9 +36,6 @@ import com.revlens.app.data.DefaultReportRepository
 import com.revlens.app.data.DefaultWorkspaceRepository
 import com.revlens.app.data.ProfileRepository
 import com.revlens.app.data.ScenarioRepository
-import com.revlens.app.data.fake.FakeBillingRepository
-import com.revlens.app.data.fake.FakeDeveloperRepository
-import com.revlens.app.data.fake.FakeIntegrationRepository
 import com.revlens.app.domain.context.DefaultWorkspaceContext
 import com.revlens.app.domain.context.WorkspaceContext
 import com.revlens.app.domain.repository.AnalyticsRepository
@@ -99,7 +101,8 @@ val appModule = module {
     }
     single<ScenarioRepository> {
         AndroidFirestoreScenarioRepository(
-            DataStoreScenarioRepository(get())
+            localFallback = DataStoreScenarioRepository(get()),
+            workspaceContext = get()
         )
     }
     single<WorkspaceRepository> {
@@ -109,7 +112,7 @@ val appModule = module {
         )
     }
     single<WorkspaceContext> { DefaultWorkspaceContext() }
-    single<SessionManager> { DefaultSessionManager() }
+    single<SessionManager> { DefaultSessionManager(SessionState.Unknown) }
     single { ResolveGateUseCase() }
     single<IdGenerator> { DefaultIdGenerator() }
     single<FilePicker> { DefaultFilePicker() }
@@ -135,9 +138,9 @@ val appModule = module {
             authRepository = get()
         )
     }
-    single<BillingRepository> { FakeBillingRepository() }
-    single<IntegrationRepository> { FakeIntegrationRepository() }
-    single<DeveloperRepository> { FakeDeveloperRepository() }
+    single<BillingRepository> { DefaultBillingRepository() }
+    single<IntegrationRepository> { DefaultIntegrationRepository() }
+    single<DeveloperRepository> { DefaultDeveloperRepository() }
     single { MigrateGuestDataUseCase(get(), get(), get(), get()) }
     single { LoginUseCase(get(), get(), getOrNull()) }
     single { SignUpUseCase(get(), get(), getOrNull()) }
@@ -149,7 +152,11 @@ val appModule = module {
         MainViewModel(
             repository = get(),
             scenarioRepository = get(),
-            workspaceRepository = get()
+            workspaceRepository = get(),
+            workspaceContext = get(),
+            sessionManager = get(),
+            authRepository = get(),
+            teamRepository = get()
         )
     }
     viewModel { BusinessSetupViewModel() }

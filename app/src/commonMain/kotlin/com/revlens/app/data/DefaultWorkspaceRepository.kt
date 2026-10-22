@@ -7,13 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class DefaultWorkspaceRepository(
-    initialWorkspaces: List<Workspace> = listOf(
-        Workspace(
-            id = "ws_default",
-            name = "My Workspace",
-            currency = "USD"
-        )
-    )
+    initialWorkspaces: List<Workspace> = emptyList()
 ) : WorkspaceRepository {
     private val _workspaces = MutableStateFlow(initialWorkspaces)
     override val workspacesFlow: Flow<List<Workspace>> = _workspaces.asStateFlow()
@@ -39,5 +33,9 @@ class DefaultWorkspaceRepository(
 
     override suspend fun deleteWorkspace(id: String) {
         _workspaces.value = _workspaces.value.filter { it.id != id }
+    }
+
+    override suspend fun clearLocalData() {
+        _workspaces.value = emptyList()
     }
 }
