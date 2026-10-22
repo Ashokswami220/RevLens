@@ -6,21 +6,14 @@ import com.revlens.app.core.ui.UiText
 import com.revlens.app.data.ProfileRepository
 import com.revlens.app.domain.context.WorkspaceContext
 import com.revlens.app.domain.model.Role
-import com.revlens.app.domain.model.SessionState
-import com.revlens.app.domain.repository.AuthRepository
-import com.revlens.app.domain.repository.TeamRepository
 import com.revlens.app.domain.repository.WorkspaceRepository
-import com.revlens.app.domain.session.SessionManager
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class WorkspaceManagementViewModel(
     private val workspaceRepository: WorkspaceRepository,
     private val workspaceContext: WorkspaceContext,
-    private val profileRepository: ProfileRepository,
-    private val teamRepository: TeamRepository? = null,
-    private val authRepository: AuthRepository? = null,
-    private val sessionManager: SessionManager? = null
+    private val profileRepository: ProfileRepository
 ) : MviViewModel<WorkspaceManagementUiState, WorkspaceManagementEvent, WorkspaceManagementEffect>(
     WorkspaceManagementUiState()
 ) {
@@ -38,28 +31,15 @@ class WorkspaceManagementViewModel(
                 if (active != null && workspaceContext.activeWorkspaceId.value != active.id) {
                     workspaceContext.switchTo(active.id)
                 }
-                val role = resolveRole(active?.id)
                 update {
                     copy(
-                        activeWorkspace = active, allWorkspaces = all, currentUserRole = role
+                        activeWorkspace = active,
+                        allWorkspaces = all,
+                        currentUserRole = Role.Owner
                     )
                 }
             }
         }
-    }
-
-    private suspend fun resolveRole(workspaceId: String?): Role {
-        val repo = teamRepository
-        if (workspaceId.isNullOrBlank() || repo == null) return Role.Owner
-        val email = getCurrentUserEmail() ?: return Role.Owner
-        return runCatching { repo.getUserRoleInWorkspace(workspaceId, email) }.getOrNull()
-            ?: Role.Owner
-    }
-
-    private suspend fun getCurrentUserEmail(): String? {
-        val sessionUser = (sessionManager?.state?.value as? SessionState.Authenticated)?.user
-        if (sessionUser != null && sessionUser.email.isNotBlank()) return sessionUser.email
-        return authRepository?.getCurrentUser()?.email
     }
 
     override fun onEvent(event: WorkspaceManagementEvent) {
@@ -117,98 +97,9 @@ class WorkspaceManagementViewModel(
             }
 
             WorkspaceManagementEvent.ShowSwitchSheet -> update { copy(isSwitchSheetVisible = true) }
-            WorkspaceManagementEvent.HideSwitchSheet -> update {
-                copy(
-                    isSwitchSheetVisible = false
-                )
-            }
-
-            WorkspaceManagementEvent.ShowEditNameDialog -> update {
-                copy(
-                    isEditNameDialogVisible = true
-                )
-            }
-
-            WorkspaceManagementEvent.HideEditNameDialog -> update {
-                copy(
-                    isEditNameDialogVisible = false
-                )
-            }
-
-            WorkspaceManagementEvent.ShowDeleteDialog -> update {
-                copy(
-                    isDeleteDialogVisible = true
-                )
-            }
-
-            WorkspaceManagementEvent.HideDeleteDialog -> update {
-                copy(
-                    isDeleteDialogVisible = false
-                )
-            }
-
-            WorkspaceManagementEvent.ConfirmDeleteWorkspace -> {
-                val current = state.value.activeWorkspace ?: return
-                viewModelScope.launch {
-                    workspaceRepository.deleteWorkspace(current.id)
-                    val remaining = state.value.allWorkspaces.filter { it.id != current.id }
-                    if (remaining.isNotEmpty()) {
-                        workspaceContext.switchTo(remaining.first().id)
-                    }
-                    update { copy(isDeleteDialogVisible = false) }
-                    emit(
-                        WorkspaceManagementEffect.ShowMessage(
-                            UiText.DynamicString("Workspace deleted")
-                        )
-                    )
-                }
-            }
-
-            WorkspaceManagementEvent.ShowLeaveDialog -> update {
-                copy(isLeaveDialogVisible = true)
-            }
-
-            WorkspaceManagementEvent.HideLeaveDialog -> update {
-                copy(isLeaveDialogVisible = false)
-            }
-
-            WorkspaceManagementEvent.ConfirmLeaveWorkspace -> {
-                val current = state.value.activeWorkspace ?: return
-                viewModelScope.launch {
-                    val email = getCurrentUserEmail()
-                    if (email == null || teamRepository == null) {
-                        update { copy(isLeaveDialogVisible = false) }
-                        emit(
-                            WorkspaceManagementEffect.ShowMessage(
-                                UiText.DynamicString("Could not identify current user.")
-                            )
-                        )
-                        return@launch
-                    }
-                    val result = teamRepository.leaveWorkspace(current.id, email)
-                    result.onSuccess {
-                        update { copy(isLeaveDialogVisible = false) }
-                        workspaceContext.switchTo("")
-                        profileRepository.setOnboardingCompleted(false)
-                        emit(
-                            WorkspaceManagementEffect.ShowMessage(
-                                UiText.DynamicString("You left ${current.name}.")
-                            )
-                        )
-                        emit(WorkspaceManagementEffect.NavigateToCreateWorkspace.also { viewModelScope.launch { profileRepository.clearLocalData() } })
-                    }
-                        .onFailure { err ->
-                            update { copy(isLeaveDialogVisible = false) }
-                            emit(
-                                WorkspaceManagementEffect.ShowMessage(
-                                    UiText.DynamicString(
-                                        err.message ?: "Could not leave workspace."
-                                    )
-                                )
-                            )
-                        }
-                }
-            }
+            WorkspaceManagementEvent.HideSwitchSheet -> update { copy(isSwitchSheetVisible = false) }
+            WorkspaceManagementEvent.ShowEditNameDialog -> update { copy(isEditNameDialogVisible = true) }
+            WorkspaceManagementEvent.HideEditNameDialog -> update { copy(isEditNameDialogVisible = false) }
         }
     }
 }

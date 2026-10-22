@@ -11,8 +11,6 @@ data class WorkspaceManagementUiState(
     val currentUserRole: Role = Role.Owner,
     val isSwitchSheetVisible: Boolean = false,
     val isEditNameDialogVisible: Boolean = false,
-    val isDeleteDialogVisible: Boolean = false,
-    val isLeaveDialogVisible: Boolean = false,
     val error: UiText? = null
 )
 
@@ -24,12 +22,6 @@ sealed interface WorkspaceManagementEvent {
     data object HideSwitchSheet : WorkspaceManagementEvent
     data object ShowEditNameDialog : WorkspaceManagementEvent
     data object HideEditNameDialog : WorkspaceManagementEvent
-    data object ShowDeleteDialog : WorkspaceManagementEvent
-    data object HideDeleteDialog : WorkspaceManagementEvent
-    data object ConfirmDeleteWorkspace : WorkspaceManagementEvent
-    data object ShowLeaveDialog : WorkspaceManagementEvent
-    data object HideLeaveDialog : WorkspaceManagementEvent
-    data object ConfirmLeaveWorkspace : WorkspaceManagementEvent
 }
 
 sealed interface WorkspaceManagementEffect {

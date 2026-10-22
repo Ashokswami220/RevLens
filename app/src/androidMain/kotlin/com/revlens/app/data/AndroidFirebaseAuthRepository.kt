@@ -12,7 +12,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.revlens.app.core.ui.AppError
 import com.revlens.app.core.ui.AppException
-import com.revlens.app.domain.model.AuthTokens
 import com.revlens.app.domain.model.UserAccount
 import com.revlens.app.domain.repository.AuthRepository
 import com.revlens.app.domain.session.SessionManager
@@ -157,81 +156,6 @@ class AndroidFirebaseAuthRepository(
         return Result.success(fallbackUser)
     }
 
-    override suspend fun login(email: String, password: String): Result<UserAccount> {
-        val firebaseAuth = auth
-            ?: return Result.failure(AppException(AppError.Server))
-        return try {
-            val result = firebaseAuth.signInWithEmailAndPassword(email.trim(), password).await()
-            val user = result.user?.toUserAccount(fallbackEmail = email.trim())
-                ?: return Result.failure(AppException(AppError.InvalidCredentials))
-            cachedUser = user
-            saveUserToPrefs(user)
-            sessionManager?.onLoggedIn(user)
-            saveUserToFirestore(user)
-            Result.success(user)
-        } catch (_: Throwable) {
-            Result.failure(AppException(AppError.InvalidCredentials))
-        }
-    }
-
-    override suspend fun signUp(
-        name: String,
-        email: String,
-        password: String
-    ): Result<UserAccount> {
-        val firebaseAuth = auth
-            ?: return Result.failure(AppException(AppError.Server))
-        return try {
-            val result = firebaseAuth.createUserWithEmailAndPassword(email.trim(), password).await()
-            val fbUser = result.user
-                ?: return Result.failure(AppException(AppError.Server))
-            val profileUpdates = UserProfileChangeRequest.Builder()
-                .setDisplayName(name.trim())
-                .build()
-            fbUser.updateProfile(profileUpdates).await()
-
-            val account = fbUser.toUserAccount(
-                fallbackName = name.trim(),
-                fallbackEmail = email.trim()
-            )
-            cachedUser = account
-            saveUserToPrefs(account)
-            sessionManager?.onLoggedIn(account)
-            saveUserToFirestore(account)
-            Result.success(account)
-        } catch (e: Throwable) {
-            Result.failure(
-                AppException(
-                    AppError.Conflict(e.message ?: "Failed to create account.")
-                )
-            )
-        }
-    }
-
-    override suspend fun requestPasswordReset(email: String): Result<Unit> {
-        val firebaseAuth = auth ?: return Result.success(Unit)
-        return try {
-            firebaseAuth.sendPasswordResetEmail(email.trim()).await()
-            Result.success(Unit)
-        } catch (e: Throwable) {
-            Result.failure(AppException(AppError.Unknown(e)))
-        }
-    }
-
-    override suspend fun validateResetToken(token: String): Result<Boolean> {
-        return Result.success(token.isNotBlank())
-    }
-
-    override suspend fun resetPassword(token: String, newPassword: String): Result<Unit> {
-        val firebaseAuth = auth ?: return Result.success(Unit)
-        return try {
-            firebaseAuth.confirmPasswordReset(token, newPassword).await()
-            Result.success(Unit)
-        } catch (e: Throwable) {
-            Result.failure(AppException(AppError.Unknown(e)))
-        }
-    }
-
     override suspend fun logout(): Result<Unit> {
         try {
             auth?.signOut()
@@ -245,33 +169,12 @@ class AndroidFirebaseAuthRepository(
         return Result.success(Unit)
     }
 
-    override suspend fun refreshToken(): Result<AuthTokens> {
-        val fbUser = auth?.currentUser
-        if (fbUser != null) {
-            return try {
-                val tokenResult = fbUser.getIdToken(true).await()
-                val token = tokenResult.token ?: ""
-                Result.success(AuthTokens(accessToken = token, refreshToken = fbUser.uid))
-            } catch (_: Throwable) {
-                Result.failure(AppException(AppError.Unauthorized))
-            }
-        }
-        val local = resolveCurrentUserSync()
-            ?: return Result.failure(AppException(AppError.Unauthorized))
-        return Result.success(AuthTokens(accessToken = "session_${local.id}", refreshToken = local.id))
-    }
-
     override suspend fun getCurrentUser(): UserAccount? {
         val user = resolveCurrentUserSync()
         if (user != null) {
             sessionManager?.onLoggedIn(user)
         }
         return user
-    }
-
-    override suspend fun getTokens(): AuthTokens? {
-        val user = resolveCurrentUserSync() ?: return null
-        return AuthTokens(accessToken = "token_${user.id}", refreshToken = user.id)
     }
 
     override suspend fun updateProfile(name: String, jobTitle: String?): Result<UserAccount> {

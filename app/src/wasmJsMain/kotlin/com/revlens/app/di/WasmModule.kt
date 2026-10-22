@@ -1,7 +1,6 @@
 package com.revlens.app.di
 
 import com.revlens.app.domain.model.SessionState
-import com.revlens.app.data.DefaultTeamRepository
 import com.revlens.app.data.ProfileRepository
 import com.revlens.app.data.ScenarioRepository
 import com.revlens.app.domain.repository.WorkspaceRepository
@@ -28,7 +27,6 @@ import com.revlens.app.core.platform.InMemorySecureStorage
 import com.revlens.app.core.platform.SecureStorage
 import com.revlens.app.core.util.DefaultIdGenerator
 import com.revlens.app.core.util.IdGenerator
-import com.revlens.app.data.DefaultAnalyticsRepository
 import com.revlens.app.data.DefaultExperimentRepository
 import com.revlens.app.data.DefaultWorkspaceRepository
 import com.revlens.app.data.WebFirebaseAuthRepository
@@ -37,20 +35,13 @@ import com.revlens.app.data.WebFirestoreScenarioRepository
 import com.revlens.app.data.WebFirestoreWorkspaceRepository
 import com.revlens.app.domain.context.DefaultWorkspaceContext
 import com.revlens.app.domain.context.WorkspaceContext
-import com.revlens.app.domain.repository.AnalyticsRepository
 import com.revlens.app.domain.repository.AuthRepository
 import com.revlens.app.domain.repository.ExperimentRepository
-import com.revlens.app.domain.repository.TeamRepository
 import com.revlens.app.domain.session.DefaultSessionManager
 import com.revlens.app.domain.session.SessionManager
 import com.revlens.app.domain.usecase.CreateWorkspaceUseCase
 import com.revlens.app.domain.usecase.LoginUseCase
-import com.revlens.app.domain.usecase.MigrateGuestDataUseCase
-import com.revlens.app.domain.usecase.RequestPasswordResetUseCase
-import com.revlens.app.domain.usecase.ResetPasswordUseCase
 import com.revlens.app.domain.usecase.ResolveGateUseCase
-import com.revlens.app.domain.usecase.SignUpUseCase
-import com.revlens.app.domain.usecase.ValidateResetTokenUseCase
 import com.revlens.app.ui.screens.marketing.LandingViewModel
 import com.revlens.app.ui.screens.marketing.PublicPricingViewModel
 import com.revlens.app.ui.screens.notifications.NotificationSettingsViewModel
@@ -234,22 +225,13 @@ val wasmModule = module {
     single { ResolveGateUseCase() }
     single<IdGenerator> { DefaultIdGenerator() }
     single<SecureStorage> { InMemorySecureStorage() }
-    single<AnalyticsRepository> { DefaultAnalyticsRepository() }
     single<ExperimentRepository> { DefaultExperimentRepository() }
     single<AuthRepository> {
         WebFirebaseAuthRepository(
             get()
         )
     }
-    single<TeamRepository> {
-        DefaultTeamRepository()
-    }
-    single { MigrateGuestDataUseCase(get(), get(), get(), get()) }
-    single { LoginUseCase(get(), get(), get()) }
-    single { SignUpUseCase(get(), get(), get()) }
-    single { RequestPasswordResetUseCase(get()) }
-    single { ValidateResetTokenUseCase(get()) }
-    single { ResetPasswordUseCase(get()) }
+    single { LoginUseCase(get(), get()) }
     single { CreateWorkspaceUseCase(get(), get(), get()) }
     viewModel {
         MainViewModel(
@@ -258,8 +240,7 @@ val wasmModule = module {
             workspaceRepository = get(),
             workspaceContext = get(),
             sessionManager = get(),
-            authRepository = get(),
-            teamRepository = get()
+            authRepository = get()
         )
     }
     viewModel { BusinessSetupViewModel() }
@@ -267,16 +248,12 @@ val wasmModule = module {
         WorkspaceManagementViewModel(
             workspaceRepository = get(),
             workspaceContext = get(),
-            profileRepository = get(),
-            teamRepository = get(),
-            authRepository = get(),
-            sessionManager = get()
+            profileRepository = get()
         )
     }
     viewModel {
         CreateWorkspaceViewModel(
             createWorkspaceUseCase = get(),
-            teamRepository = get(),
             workspaceRepository = get(),
             workspaceContext = get(),
             profileRepository = get(),
@@ -312,19 +289,11 @@ val wasmModule = module {
     viewModel {
         LoginViewModel(
             loginUseCase = get(),
-            profileRepository = get(),
-            teamRepository = get()
+            profileRepository = get()
         )
     }
     viewModel {
-        InviteAcceptanceViewModel(
-            teamRepository = get(),
-            workspaceContext = get(),
-            profileRepository = get(),
-            sessionManager = get(),
-            authRepository = get(),
-            workspaceRepository = get()
-        )
+        InviteAcceptanceViewModel()
     }
     viewModel {
         ProfileViewModel(

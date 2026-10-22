@@ -10,9 +10,9 @@ import kotlin.test.assertTrue
 class SessionManagerTest {
 
     @Test
-    fun testDefaultStateIsGuest() {
+    fun testDefaultStateIsUnknown() {
         val sessionManager = DefaultSessionManager()
-        assertEquals(SessionState.Guest, sessionManager.state.value)
+        assertEquals(SessionState.Unknown, sessionManager.state.value)
     }
 
     @Test
@@ -37,13 +37,6 @@ class SessionManagerTest {
         assertTrue(state is SessionState.Authenticated)
         assertEquals(user, state.user)
         assertEquals("user@revlens.com", state.user.email)
-    }
-
-    @Test
-    fun testContinueAsGuestTransitionsToGuest() = runTest {
-        val sessionManager = DefaultSessionManager(SessionState.SignedOut)
-        sessionManager.continueAsGuest()
-        assertEquals(SessionState.Guest, sessionManager.state.value)
     }
 
     @Test

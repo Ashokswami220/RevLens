@@ -42,7 +42,6 @@ import androidx.compose.ui.unit.dp
 import com.revlens.app.domain.model.BusinessModel
 import com.revlens.app.domain.model.Role
 import com.revlens.app.domain.policy.RolePermissions
-import com.revlens.app.domain.repository.TeamRepository
 import com.revlens.app.ui.components.ChoiceChip
 import com.revlens.app.ui.components.PrimaryButton
 import com.revlens.app.ui.components.RevLensTextField
@@ -50,11 +49,9 @@ import com.revlens.app.ui.components.RevLensTopAppBar
 import com.revlens.app.ui.components.SectionCard
 import com.revlens.app.ui.components.TextLinkButton
 import com.revlens.app.ui.components.display.RoleChip
-import com.revlens.app.ui.components.feedback.TypedConfirmDialog
 import com.revlens.app.ui.theme.RevLensTheme
 import com.revlens.app.ui.theme.RevLensTypography
 import kotlinx.coroutines.launch
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,7 +65,8 @@ fun WorkspaceManagementScreen(
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    val teamRepository: TeamRepository = koinInject()
+    val workspace = state.activeWorkspace
+    val wsId = workspace?.id ?: "ws_default"
 
     LaunchedEffect(Unit) {
         viewModel.effects.collect { effect ->
@@ -83,18 +81,9 @@ fun WorkspaceManagementScreen(
         }
     }
 
-    val workspace = state.activeWorkspace
-    val wsId = workspace?.id ?: "ws_default"
-    val members by remember(wsId) { teamRepository.getMembers(wsId) }.collectAsState(
-        initial = emptyList()
-    )
-    var showTransferOwnershipDialog by remember { mutableStateOf(false) }
-
     val canManageSettings =
         state.currentUserRole == Role.Owner || state.currentUserRole == Role.Admin
     val canEditBaseline = RolePermissions.canEditBaselinesAndScenarios(state.currentUserRole)
-    val canTransferOwnership = RolePermissions.canTransferOwnership(state.currentUserRole)
-    val canDeleteWorkspace = RolePermissions.canDeleteWorkspace(state.currentUserRole)
 
     Scaffold(
         topBar = {
@@ -251,128 +240,9 @@ fun WorkspaceManagementScreen(
                         }
                         RoleChip(role = state.currentUserRole)
                     }
-
-                    if (canTransferOwnership) {
-                        WorkspaceSettingRow(
-                            title = "Transfer Workspace Ownership",
-                            value = "Pass Owner role to another team member",
-                            valueColor = RevLensTheme.colors.textSecondary,
-                            onClick = { showTransferOwnershipDialog = true }
-                        )
-                    }
-                }
-            }
-
-            // Danger Zone (Owner: Delete Workspace | Non-Owner: Leave Workspace)
-            if (canDeleteWorkspace) {
-                SectionCard(title = "Danger Zone") {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        WorkspaceSettingRow(
-                            title = "Delete Workspace",
-                            value = "Permanently delete this workspace and return to onboarding",
-                            valueColor = RevLensTheme.colors.error,
-                            onClick = {
-                                viewModel.onEvent(WorkspaceManagementEvent.ShowDeleteDialog)
-                            }
-                        )
-                    }
-                }
-            } else {
-                SectionCard(title = "Leave Business") {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        WorkspaceSettingRow(
-                            title = "Leave Workspace",
-                            value = "Relinquish your ${state.currentUserRole.name} access and return to workspace onboarding",
-                            valueColor = RevLensTheme.colors.error,
-                            onClick = {
-                                viewModel.onEvent(WorkspaceManagementEvent.ShowLeaveDialog)
-                            }
-                        )
-                    }
                 }
             }
         }
-    }
-
-    // Transfer Ownership Dialog (Owner Only)
-    if (showTransferOwnershipDialog) {
-        val eligibleMembers = members.filter { it.role != Role.Owner }
-        AlertDialog(
-            onDismissRequest = { showTransferOwnershipDialog = false },
-            title = {
-                Text(
-                    text = "Transfer Workspace Ownership",
-                    style = RevLensTypography.titleLarge,
-                    color = RevLensTheme.colors.textPrimary
-                )
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    if (eligibleMembers.isEmpty()) {
-                        Text(
-                            text = "Invite at least one team member in Team & Permissions before transferring ownership.",
-                            style = RevLensTypography.bodyMedium,
-                            color = RevLensTheme.colors.textSecondary
-                        )
-                    } else {
-                        Text(
-                            text = "Select a team member to become the new Workspace Owner. Your role will be updated to Admin.",
-                            style = RevLensTypography.bodyMedium,
-                            color = RevLensTheme.colors.textSecondary
-                        )
-                        eligibleMembers.forEach { candidate ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(RevLensTheme.colors.surfaceElevated)
-                                    .clickable {
-                                        showTransferOwnershipDialog = false
-                                        scope.launch {
-                                            teamRepository.transferOwnership(wsId, candidate.id)
-                                                .onSuccess {
-                                                    snackbarHostState.showSnackbar(
-                                                        "Transferred ownership to ${candidate.name}"
-                                                    )
-                                                }
-                                                .onFailure { err ->
-                                                    snackbarHostState.showSnackbar(
-                                                        err.message ?: "Transfer failed"
-                                                    )
-                                                }
-                                        }
-                                    }
-                                    .padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column {
-                                    Text(
-                                        text = candidate.name,
-                                        style = RevLensTypography.bodyMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = RevLensTheme.colors.textPrimary
-                                    )
-                                    Text(
-                                        text = candidate.email,
-                                        style = RevLensTypography.bodySmall,
-                                        color = RevLensTheme.colors.textSecondary
-                                    )
-                                }
-                                RoleChip(role = candidate.role)
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextLinkButton(
-                    text = "Close",
-                    onClick = { showTransferOwnershipDialog = false }
-                )
-            },
-            containerColor = RevLensTheme.colors.surface
-        )
     }
 
     // Edit Name Dialog
@@ -411,32 +281,6 @@ fun WorkspaceManagementScreen(
                 )
             },
             containerColor = RevLensTheme.colors.surface
-        )
-    }
-
-    // Delete Workspace Confirmation Dialog
-    if (state.isDeleteDialogVisible && workspace != null) {
-        TypedConfirmDialog(
-            title = "Delete ${workspace.name}",
-            body = "This will permanently remove this workspace and its associated revenue models.",
-            requiredWord = workspace.name,
-            confirmText = "Delete",
-            onConfirm = { viewModel.onEvent(WorkspaceManagementEvent.ConfirmDeleteWorkspace) },
-            onDismiss = { viewModel.onEvent(WorkspaceManagementEvent.HideDeleteDialog) },
-            isDestructive = true
-        )
-    }
-
-    // Leave Workspace Confirmation Dialog
-    if (state.isLeaveDialogVisible && workspace != null) {
-        TypedConfirmDialog(
-            title = "Leave ${workspace.name}",
-            body = "Are you sure you want to leave this business? You will lose access to its metrics and can create your own business or join another team.",
-            requiredWord = "LEAVE",
-            confirmText = "Leave Business",
-            onConfirm = { viewModel.onEvent(WorkspaceManagementEvent.ConfirmLeaveWorkspace) },
-            onDismiss = { viewModel.onEvent(WorkspaceManagementEvent.HideLeaveDialog) },
-            isDestructive = true
         )
     }
 }

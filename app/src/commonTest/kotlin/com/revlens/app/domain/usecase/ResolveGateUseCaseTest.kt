@@ -60,29 +60,6 @@ class ResolveGateUseCaseTest {
         assertEquals(Gate.Public(PublicStart.Login), loginGate)
     }
 
-    @Test
-    fun testGuestFlow() {
-        val noWs = useCase(
-            session = SessionState.Guest,
-            workspace = null,
-            baseline = null
-        )
-        assertEquals(Gate.CreateWorkspace, noWs)
-
-        val noBaseline = useCase(
-            session = SessionState.Guest,
-            workspace = sampleWorkspace,
-            baseline = null
-        )
-        assertEquals(Gate.Onboarding, noBaseline)
-
-        val complete = useCase(
-            session = SessionState.Guest,
-            workspace = sampleWorkspace,
-            baseline = sampleProfile
-        )
-        assertEquals(Gate.Main, complete)
-    }
 
     @Test
     fun testAuthenticatedFlow() {

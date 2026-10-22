@@ -4,7 +4,6 @@ import androidx.lifecycle.viewModelScope
 import com.revlens.app.core.ui.MviViewModel
 import com.revlens.app.core.ui.toUiText
 import com.revlens.app.data.ProfileRepository
-import com.revlens.app.domain.repository.TeamRepository
 import com.revlens.app.domain.usecase.LoginUseCase
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
@@ -14,8 +13,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class LoginViewModel(
     private val loginUseCase: LoginUseCase,
-    private val profileRepository: ProfileRepository? = null,
-    private val teamRepository: TeamRepository? = null
+    private val profileRepository: ProfileRepository? = null
 ) : MviViewModel<LoginUiState, LoginEvent, LoginEffect>(LoginUiState()) {
 
     override fun onEvent(event: LoginEvent) = when (event) {
@@ -32,12 +30,6 @@ class LoginViewModel(
             try {
                 val result = loginUseCase.loginWithGoogle(idToken, email, displayName)
                 result.onSuccess { userAccount ->
-                    val pending =
-                        teamRepository?.getPendingInvitesForEmail(userAccount.email) ?: emptyList()
-                    if (pending.isNotEmpty()) {
-                        emit(LoginEffect.NavigateToInviteAcceptance)
-                        return@onSuccess
-                    }
 
                     val remoteProf = runCatching {
                         withTimeoutOrNull(4000L.milliseconds) {

@@ -42,8 +42,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,11 +64,9 @@ import com.revlens.app.domain.model.AlertSeverity
 import com.revlens.app.domain.model.NotificationPrefs
 import com.revlens.app.domain.model.Role
 import com.revlens.app.domain.model.TriggeredAlert
-import com.revlens.app.domain.repository.NotificationPreferencesRepository
 import com.revlens.app.model.BigDecimal
 import com.revlens.app.model.BusinessProfile
 import com.revlens.app.presentation.MainViewModel
-import com.revlens.app.ui.components.ActionCardButton
 import com.revlens.app.ui.components.ProgressRing
 import com.revlens.app.ui.components.RevLensTopAppBar
 import com.revlens.app.ui.theme.RevLensTheme
@@ -75,8 +74,6 @@ import com.revlens.app.ui.theme.RevLensTypography
 import com.revlens.app.utils.CurrencyUtils
 import com.revlens.app.utils.DateUtils
 import com.revlens.app.utils.RevLensFormatter
-import kotlinx.coroutines.launch
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.pow
 
@@ -108,16 +105,15 @@ fun DashboardScreen(
 ) {
     val profile by viewModel.profile.collectAsState()
     val userRole by viewModel.currentUserRole.collectAsState()
-    val notifPrefsRepo: NotificationPreferencesRepository = koinInject()
-    val notifPrefs by notifPrefsRepo.preferencesFlow.collectAsState(initial = NotificationPrefs())
-    val dismissedAlertIds by notifPrefsRepo.dismissedAlertIdsFlow.collectAsState(
-        initial = emptySet()
-    )
-    val coroutineScope = rememberCoroutineScope()
+    val notifPrefs = remember { NotificationPrefs() }
+    var dismissedAlertIds by remember { mutableStateOf(emptySet<String>()) }
 
     val activeAlerts = remember(notifPrefs, profile, dismissedAlertIds) {
-        AlertRuleEvaluator.evaluate(notifPrefs, profile)
-            .filterNot { it.id in dismissedAlertIds }
+        profile?.let {
+            AlertRuleEvaluator.evaluate(notifPrefs, it)
+                .filterNot { it.id in dismissedAlertIds }
+        }
+            ?: emptyList()
     }
 
     Scaffold(
@@ -181,9 +177,7 @@ fun DashboardScreen(
                 AlertBannerCard(
                     alert = alert,
                     onDismiss = {
-                        coroutineScope.launch {
-                            notifPrefsRepo.dismissAlert(alert.id)
-                        }
+                        dismissedAlertIds = dismissedAlertIds + alert.id
                     }
                 )
             }

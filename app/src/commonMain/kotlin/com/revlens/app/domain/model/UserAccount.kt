@@ -23,6 +23,5 @@ data class UserAccount(
 sealed interface SessionState {
     data object Unknown : SessionState
     data object SignedOut : SessionState
-    data object Guest : SessionState
     data class Authenticated(val user: UserAccount) : SessionState
 }

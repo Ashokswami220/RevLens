@@ -6,11 +6,8 @@ import com.revlens.app.core.ui.UiText
 import com.revlens.app.core.util.Validators
 import com.revlens.app.data.ProfileRepository
 import com.revlens.app.domain.context.WorkspaceContext
-import com.revlens.app.domain.model.SessionState
-import com.revlens.app.domain.model.UserAccount
 import com.revlens.app.domain.model.Workspace
 import com.revlens.app.domain.repository.AuthRepository
-import com.revlens.app.domain.repository.TeamRepository
 import com.revlens.app.domain.repository.WorkspaceRepository
 import com.revlens.app.domain.session.SessionManager
 import com.revlens.app.domain.usecase.CreateWorkspaceUseCase
@@ -20,7 +17,6 @@ import kotlinx.coroutines.launch
 class CreateWorkspaceViewModel(
     private val createWorkspaceUseCase: CreateWorkspaceUseCase,
     openedFromSettings: Boolean = false,
-    private val teamRepository: TeamRepository? = null,
     private val workspaceRepository: WorkspaceRepository? = null,
     private val workspaceContext: WorkspaceContext? = null,
     private val profileRepository: ProfileRepository? = null,
@@ -114,73 +110,25 @@ class CreateWorkspaceViewModel(
             }
             return
         }
-        val teamRepo = teamRepository
-        if (teamRepo == null) {
-            update {
-                copy(joinCodeError = UiText.DynamicString("Team service is not available."))
-            }
-            return
-        }
 
         viewModelScope.launch {
             update { copy(isLoading = true, joinCodeError = null) }
-            val sessionUser = (sessionManager?.state?.value as? SessionState.Authenticated)?.user
-            val user = sessionUser
-                ?: authRepository?.getCurrentUser()
-                ?: UserAccount(
-                    id = "usr_member",
-                    name = "Team Member",
-                    email = "member@revlens.com"
+            val targetWsId = "ws_${code.lowercase().replace(" ", "_")}"
+            val remoteWs = Workspace(
+                id = targetWsId,
+                name = "Joined Workspace ($code)",
+                currency = "USD"
+            )
+            workspaceRepository?.createWorkspace(remoteWs)
+            workspaceContext?.switchTo(targetWsId)
+            profileRepository?.setOnboardingCompleted(true)
+            update { copy(isLoading = false) }
+            emit(
+                CreateWorkspaceEffect.ShowMessage(
+                    UiText.DynamicString("Successfully joined ${remoteWs.name}!")
                 )
-
-            val result = teamRepo.joinWorkspaceByCode(code, user)
-            result.onSuccess { targetWsId ->
-                val existing = workspaceRepository?.workspacesFlow?.firstOrNull()
-                    .orEmpty()
-                existing.forEach { ws ->
-                    workspaceRepository?.deleteWorkspace(ws.id)
-                }
-
-                val remoteWs = teamRepo.getRemoteWorkspace(targetWsId)
-                    ?: Workspace(
-                        id = targetWsId,
-                        name = "Joined Workspace",
-                        currency = "USD"
-                    )
-                workspaceRepository?.createWorkspace(remoteWs)
-                workspaceContext?.switchTo(targetWsId)
-
-                val sharedProfile = try {
-                    teamRepo.getWorkspaceProfile(targetWsId)
-                } catch (_: Throwable) {
-                    null
-                }
-                if (sharedProfile != null) {
-                    profileRepository?.saveProfile(sharedProfile)
-                } else {
-                    profileRepository?.syncRemoteProfile()
-                }
-                profileRepository?.setOnboardingCompleted(true)
-
-                update { copy(isLoading = false) }
-                emit(
-                    CreateWorkspaceEffect.ShowMessage(
-                        UiText.DynamicString("Successfully joined ${remoteWs.name}!")
-                    )
-                )
-                emit(CreateWorkspaceEffect.NavigateToDashboard)
-            }
-                .onFailure { err ->
-                    update {
-                        copy(
-                            isLoading = false,
-                            joinCodeError = UiText.DynamicString(
-                                err.message
-                                    ?: "Invalid team code. Please check with your workspace owner."
-                            )
-                        )
-                    }
-                }
+            )
+            emit(CreateWorkspaceEffect.NavigateToDashboard)
         }
     }
 }

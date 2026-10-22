@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -50,7 +49,6 @@ fun AccountActionsScreen(
     val scope = rememberCoroutineScope()
 
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
-    var showLeaveBusinessDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -86,24 +84,6 @@ fun AccountActionsScreen(
                 }
             }
 
-            if (userRole != Role.Owner && activeWorkspace != null) {
-                SectionCard(title = "Workspace Membership") {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(
-                            text = "Leave ${activeWorkspace?.name ?: "this workspace"} and return to workspace setup to create your own business or join another team.",
-                            style = RevLensTypography.bodyMedium,
-                            color = RevLensTheme.colors.textSecondary
-                        )
-                        ActionCardButton(
-                            text = "Leave Business",
-                            icon = Icons.AutoMirrored.Filled.ExitToApp,
-                            onClick = { showLeaveBusinessDialog = true },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
-            }
-
             SectionCard(title = "Account Management") {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
@@ -120,26 +100,6 @@ fun AccountActionsScreen(
                 }
             }
         }
-    }
-
-    if (showLeaveBusinessDialog) {
-        TypedConfirmDialog(
-            title = "Leave ${activeWorkspace?.name ?: "Business"}",
-            body = "Type LEAVE to confirm leaving this workspace. You will immediately return to workspace onboarding.",
-            requiredWord = "LEAVE",
-            confirmText = "Leave Business",
-            onConfirm = {
-                showLeaveBusinessDialog = false
-                viewModel.leaveBusiness(
-                    onSuccess = { onNavigateToCreateWorkspace() },
-                    onError = { msg ->
-                        scope.launch { snackbarHostState.showSnackbar(msg) }
-                    }
-                )
-            },
-            onDismiss = { showLeaveBusinessDialog = false },
-            isDestructive = true
-        )
     }
 
     if (showDeleteAccountDialog) {

@@ -6,8 +6,7 @@ import com.revlens.app.domain.session.SessionManager
 
 class LoginUseCase(
     private val authRepository: AuthRepository,
-    private val sessionManager: SessionManager,
-    private val migrateGuestDataUseCase: MigrateGuestDataUseCase? = null
+    private val sessionManager: SessionManager
 ) {
     suspend fun loginWithGoogle(
         idToken: String? = null,
@@ -18,21 +17,6 @@ class LoginUseCase(
         return authRepository.loginWithGoogle(idToken, email, name, avatarUrl)
             .onSuccess { user ->
                 sessionManager.onLoggedIn(user)
-                try {
-                    migrateGuestDataUseCase?.invoke(user.id)
-                } catch (_: Exception) {
-                }
-            }
-    }
-
-    suspend operator fun invoke(email: String, password: String): Result<UserAccount> {
-        return authRepository.login(email, password)
-            .onSuccess { user ->
-                sessionManager.onLoggedIn(user)
-                try {
-                    migrateGuestDataUseCase?.invoke(user.id)
-                } catch (_: Exception) {
-                }
             }
     }
 }

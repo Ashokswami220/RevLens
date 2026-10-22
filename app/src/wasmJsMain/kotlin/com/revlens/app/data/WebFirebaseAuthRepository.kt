@@ -3,7 +3,6 @@ package com.revlens.app.data
 import com.revlens.app.core.platform.SecureStorage
 import com.revlens.app.core.ui.AppError
 import com.revlens.app.core.ui.AppException
-import com.revlens.app.domain.model.AuthTokens
 import com.revlens.app.domain.model.UserAccount
 import com.revlens.app.domain.repository.AuthRepository
 import kotlinx.coroutines.delay
@@ -71,7 +70,6 @@ class WebFirebaseAuthRepository(
                 if (jsonStr.isNotBlank()) {
                     val user = json.decodeFromString<UserAccount>(jsonStr)
                     cachedUser = user
-                    saveTokens(user.id)
                     return Result.success(user)
                 }
             }
@@ -84,30 +82,6 @@ class WebFirebaseAuthRepository(
         }
     }
 
-    override suspend fun login(email: String, password: String): Result<UserAccount> {
-        return Result.failure(AppException(AppError.InvalidCredentials))
-    }
-
-    override suspend fun signUp(
-        name: String, email: String, password: String
-    ): Result<UserAccount> {
-        return Result.failure(
-            AppException(AppError.Conflict("Sign up is handled via Google Sign-In"))
-        )
-    }
-
-    override suspend fun requestPasswordReset(email: String): Result<Unit> {
-        return Result.success(Unit)
-    }
-
-    override suspend fun validateResetToken(token: String): Result<Boolean> {
-        return Result.success(false)
-    }
-
-    override suspend fun resetPassword(token: String, newPassword: String): Result<Unit> {
-        return Result.failure(AppException(AppError.Unauthorized))
-    }
-
     override suspend fun logout(): Result<Unit> {
         try {
             jsTriggerSignOut()
@@ -117,17 +91,6 @@ class WebFirebaseAuthRepository(
         } catch (e: Exception) {
             return Result.failure(e)
         }
-    }
-
-    override suspend fun refreshToken(): Result<AuthTokens> {
-        val user = cachedUser ?: getCurrentUser() ?: return Result.failure(
-            AppException(AppError.Unauthorized)
-        )
-        val tokens = AuthTokens(
-            accessToken = "web_fb_acc_${user.id}",
-            refreshToken = "web_fb_ref_${user.id}"
-        )
-        return Result.success(tokens)
     }
 
     override suspend fun getCurrentUser(): UserAccount? {
@@ -142,14 +105,6 @@ class WebFirebaseAuthRepository(
             }
         }
         return null
-    }
-
-    override suspend fun getTokens(): AuthTokens? {
-        val user = cachedUser ?: getCurrentUser() ?: return null
-        return AuthTokens(
-            accessToken = "web_fb_acc_${user.id}",
-            refreshToken = "web_fb_ref_${user.id}"
-        )
     }
 
     override suspend fun updateProfile(name: String, jobTitle: String?): Result<UserAccount> {
@@ -174,17 +129,6 @@ class WebFirebaseAuthRepository(
             return Result.success(Unit)
         } catch (e: Exception) {
             return Result.failure(e)
-        }
-    }
-
-    private suspend fun saveTokens(userId: String) {
-        val tokens = AuthTokens(
-            accessToken = "web_fb_acc_$userId",
-            refreshToken = "web_fb_ref_$userId"
-        )
-        try {
-            secureStorage?.put("auth_tokens", json.encodeToString(AuthTokens.serializer(), tokens))
-        } catch (_: Exception) {
         }
     }
 }

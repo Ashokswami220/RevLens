@@ -12,32 +12,23 @@ import com.revlens.app.core.util.IdGenerator
 import com.revlens.app.data.AndroidFirebaseAuthRepository
 import com.revlens.app.data.AndroidFirestoreProfileRepository
 import com.revlens.app.data.AndroidFirestoreScenarioRepository
-import com.revlens.app.data.AndroidFirestoreTeamRepository
 import com.revlens.app.data.AndroidFirestoreWorkspaceRepository
 import com.revlens.app.data.DataStoreProfileRepository
 import com.revlens.app.data.DataStoreScenarioRepository
-import com.revlens.app.data.DefaultAnalyticsRepository
 import com.revlens.app.data.DefaultExperimentRepository
 import com.revlens.app.data.DefaultWorkspaceRepository
 import com.revlens.app.data.ProfileRepository
 import com.revlens.app.data.ScenarioRepository
 import com.revlens.app.domain.context.DefaultWorkspaceContext
 import com.revlens.app.domain.context.WorkspaceContext
-import com.revlens.app.domain.repository.AnalyticsRepository
 import com.revlens.app.domain.repository.AuthRepository
 import com.revlens.app.domain.repository.ExperimentRepository
-import com.revlens.app.domain.repository.TeamRepository
 import com.revlens.app.domain.repository.WorkspaceRepository
 import com.revlens.app.domain.session.DefaultSessionManager
 import com.revlens.app.domain.session.SessionManager
 import com.revlens.app.domain.usecase.CreateWorkspaceUseCase
 import com.revlens.app.domain.usecase.LoginUseCase
-import com.revlens.app.domain.usecase.MigrateGuestDataUseCase
-import com.revlens.app.domain.usecase.RequestPasswordResetUseCase
-import com.revlens.app.domain.usecase.ResetPasswordUseCase
 import com.revlens.app.domain.usecase.ResolveGateUseCase
-import com.revlens.app.domain.usecase.SignUpUseCase
-import com.revlens.app.domain.usecase.ValidateResetTokenUseCase
 import com.revlens.app.presentation.MainViewModel
 import com.revlens.app.ui.screens.analytics.CacAnalyticsViewModel
 import com.revlens.app.ui.screens.analytics.CohortAnalysisViewModel
@@ -94,7 +85,6 @@ val appModule = module {
     single { ResolveGateUseCase() }
     single<IdGenerator> { DefaultIdGenerator() }
     single<SecureStorage> { InMemorySecureStorage() }
-    single<AnalyticsRepository> { DefaultAnalyticsRepository() }
     single<ExperimentRepository> { DefaultExperimentRepository() }
     single<AuthRepository> {
         AndroidFirebaseAuthRepository(
@@ -102,19 +92,7 @@ val appModule = module {
             sessionManager = get()
         )
     }
-    single<TeamRepository> {
-        AndroidFirestoreTeamRepository(
-            workspaceContext = get(),
-            profileRepository = get(),
-            authRepository = get()
-        )
-    }
-    single { MigrateGuestDataUseCase(get(), get(), get(), get()) }
-    single { LoginUseCase(get(), get(), getOrNull()) }
-    single { SignUpUseCase(get(), get(), getOrNull()) }
-    single { RequestPasswordResetUseCase(get()) }
-    single { ValidateResetTokenUseCase(get()) }
-    single { ResetPasswordUseCase(get()) }
+    single { LoginUseCase(get(), get()) }
     single { CreateWorkspaceUseCase(get(), get(), get()) }
     viewModel {
         MainViewModel(
@@ -123,8 +101,7 @@ val appModule = module {
             workspaceRepository = get(),
             workspaceContext = get(),
             sessionManager = get(),
-            authRepository = get(),
-            teamRepository = get()
+            authRepository = get()
         )
     }
     viewModel { BusinessSetupViewModel() }
@@ -132,16 +109,12 @@ val appModule = module {
         WorkspaceManagementViewModel(
             workspaceRepository = get(),
             workspaceContext = get(),
-            profileRepository = get(),
-            teamRepository = get(),
-            authRepository = get(),
-            sessionManager = get()
+            profileRepository = get()
         )
     }
     viewModel {
         CreateWorkspaceViewModel(
             createWorkspaceUseCase = get(),
-            teamRepository = get(),
             workspaceRepository = get(),
             workspaceContext = get(),
             profileRepository = get(),
@@ -177,19 +150,11 @@ val appModule = module {
     viewModel {
         LoginViewModel(
             loginUseCase = get(),
-            profileRepository = get(),
-            teamRepository = get()
+            profileRepository = get()
         )
     }
     viewModel {
-        InviteAcceptanceViewModel(
-            teamRepository = get(),
-            workspaceContext = get(),
-            profileRepository = get(),
-            sessionManager = get(),
-            authRepository = get(),
-            workspaceRepository = get()
-        )
+        InviteAcceptanceViewModel()
     }
     viewModel {
         ProfileViewModel(

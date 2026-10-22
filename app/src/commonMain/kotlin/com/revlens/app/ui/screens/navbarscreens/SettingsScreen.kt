@@ -52,7 +52,6 @@ import com.revlens.app.domain.model.SessionState
 import com.revlens.app.domain.model.UserAccount
 import com.revlens.app.domain.policy.RolePermissions
 import com.revlens.app.domain.repository.AuthRepository
-import com.revlens.app.domain.repository.TeamRepository
 import com.revlens.app.presentation.MainViewModel
 import com.revlens.app.ui.components.RevLensTopAppBar
 import com.revlens.app.ui.components.SectionCard
@@ -86,7 +85,6 @@ fun SettingsScreen(
     val userRole by viewModel.currentUserRole.collectAsState()
 
     val authRepository: AuthRepository = koinInject()
-    val teamRepository: TeamRepository = koinInject()
 
     var directAuthUser by remember { mutableStateOf<UserAccount?>(null) }
     LaunchedEffect(session) {
@@ -97,9 +95,7 @@ fun SettingsScreen(
     val currentUser = (session as? SessionState.Authenticated)?.user ?: directAuthUser
     val isGuest = currentUser == null
 
-    val wsId = activeWorkspace?.id ?: "ws_default"
-    val teamMembers by remember(wsId) { teamRepository.getMembers(wsId) }.collectAsState(initial = emptyList())
-    val seatsUsed = teamMembers.size.coerceAtLeast(1)
+    val seatsUsed = 3
 
     val canEditBaseline = RolePermissions.canEditBaselinesAndScenarios(userRole)
     val canManageApiAndIntegrations = RolePermissions.canManageApiAndIntegrations(userRole)
