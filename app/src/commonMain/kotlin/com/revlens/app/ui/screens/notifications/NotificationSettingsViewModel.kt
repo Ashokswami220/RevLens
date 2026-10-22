@@ -1,41 +1,14 @@
 package com.revlens.app.ui.screens.notifications
 
-import androidx.lifecycle.viewModelScope
-import com.revlens.app.core.platform.LocalNotifier
 import com.revlens.app.core.ui.MviViewModel
 import com.revlens.app.domain.model.NotificationPrefs
-import com.revlens.app.domain.repository.NotificationPreferencesRepository
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
-class NotificationSettingsViewModel(
-    private val preferencesRepository: NotificationPreferencesRepository,
-    private val localNotifier: LocalNotifier
-) : MviViewModel<NotificationSettingsUiState, NotificationSettingsEvent, NotificationSettingsEffect>(
-    NotificationSettingsUiState()
-) {
-
-    private var syncJob: Job? = null
-
-    init {
-        observePreferences()
-    }
-
-    private fun observePreferences() {
-        viewModelScope.launch {
-            preferencesRepository.preferencesFlow.collect { prefs ->
-                update { copy(prefs = prefs, isPushRegistered = prefs.pushEnabled) }
-            }
-        }
-    }
+class NotificationSettingsViewModel :
+    MviViewModel<NotificationSettingsUiState, NotificationSettingsEvent, NotificationSettingsEffect>(
+        NotificationSettingsUiState()
+    ) {
 
     override fun onEvent(event: NotificationSettingsEvent) {
-        if (event is NotificationSettingsEvent.RetrySync) {
-            triggerRemoteSync(state.value.prefs)
-            return
-        }
-
         val current = state.value.prefs
         val updated = when (event) {
             is NotificationSettingsEvent.TogglePush -> current.copy(pushEnabled = event.enabled)
@@ -92,25 +65,9 @@ class NotificationSettingsViewModel(
         update {
             copy(
                 prefs = updated,
-                syncStatus = NotificationSyncStatus.Syncing,
+                syncStatus = NotificationSyncStatus.Synced,
                 isPushRegistered = updated.pushEnabled
             )
-        }
-
-        triggerRemoteSync(updated)
-    }
-
-    private fun triggerRemoteSync(prefs: NotificationPrefs) {
-        syncJob?.cancel()
-        syncJob = viewModelScope.launch {
-            delay(500)
-            try {
-                preferencesRepository.updatePreferences(prefs)
-                update { copy(syncStatus = NotificationSyncStatus.Synced) }
-            } catch (_: Exception) {
-                update { copy(syncStatus = NotificationSyncStatus.Error) }
-                emit(NotificationSettingsEffect.ShowToast("Failed to sync notifications to cloud"))
-            }
         }
     }
 }

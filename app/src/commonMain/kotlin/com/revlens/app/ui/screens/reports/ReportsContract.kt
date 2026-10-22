@@ -15,7 +15,7 @@ enum class ReportFilter(val label: String) {
 data class ReportsUiState(
     val reports: List<ReportSnapshot> = emptyList(),
     val filter: ReportFilter = ReportFilter.ALL,
-    val isLoading: Boolean = true,
+    val isLoading: Boolean = false,
     val isGenerating: Boolean = false,
     val showGenerateSheet: Boolean = false,
     val previewReport: ReportSnapshot? = null,

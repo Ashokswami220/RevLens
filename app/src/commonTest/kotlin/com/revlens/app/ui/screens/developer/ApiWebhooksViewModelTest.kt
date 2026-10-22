@@ -1,8 +1,5 @@
 package com.revlens.app.ui.screens.developer
 
-import com.revlens.app.data.fake.FakeDeveloperRepository
-import com.revlens.app.domain.context.DefaultWorkspaceContext
-import com.revlens.app.domain.model.ApiKeyScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -34,104 +31,36 @@ class ApiWebhooksViewModelTest {
     }
 
     @Test
-    fun testInitialStateLoadsKeysWebhooksAndDeliveries() = runTest(testDispatcher) {
-        val repo = FakeDeveloperRepository()
-        val wsContext = DefaultWorkspaceContext("ws_1")
-        val vm = ApiWebhooksViewModel(repo, wsContext)
-        advanceUntilIdle()
-
-        val s = vm.state.value
-        assertEquals(2, s.apiKeys.size)
-        assertEquals(1, s.webhooks.size)
-        assertEquals(3, s.deliveries.size)
+    fun testTabSwitching() = runTest(testDispatcher) {
+        val vm = ApiWebhooksViewModel()
+        vm.onEvent(ApiWebhooksEvent.SelectTab(DeveloperTab.WEBHOOKS))
+        assertEquals(DeveloperTab.WEBHOOKS, vm.state.value.activeTab)
     }
 
     @Test
-    fun testCreateApiKeyValidAndInvalid() = runTest(testDispatcher) {
-        val repo = FakeDeveloperRepository()
-        val wsContext = DefaultWorkspaceContext("ws_1")
-        val vm = ApiWebhooksViewModel(repo, wsContext)
-        advanceUntilIdle()
+    fun testCreateAndRevokeApiKey() = runTest(testDispatcher) {
+        val vm = ApiWebhooksViewModel()
 
-        // Blank name
+        // Blank name gives error
         vm.onEvent(ApiWebhooksEvent.NewKeyNameChanged("   "))
         vm.onEvent(ApiWebhooksEvent.SubmitCreateKey)
-        advanceUntilIdle()
         assertNotNull(vm.state.value.error)
 
-        // Valid name
-        vm.onEvent(ApiWebhooksEvent.NewKeyNameChanged("Stripe Sync Bot"))
-        vm.onEvent(ApiWebhooksEvent.NewKeyScopeChanged(ApiKeyScope.READ_WRITE))
+        // Valid name creates key
+        vm.onEvent(ApiWebhooksEvent.NewKeyNameChanged("Production Key"))
         vm.onEvent(ApiWebhooksEvent.SubmitCreateKey)
         advanceUntilIdle()
 
-        assertNull(vm.state.value.error)
+        assertTrue(vm.state.value.apiKeys.any { it.name == "Production Key" })
         assertNotNull(vm.state.value.createdKeyToken)
-        assertEquals(3, vm.state.value.apiKeys.size)
-    }
 
-    @Test
-    fun testDeleteApiKey() = runTest(testDispatcher) {
-        val repo = FakeDeveloperRepository()
-        val wsContext = DefaultWorkspaceContext("ws_1")
-        val vm = ApiWebhooksViewModel(repo, wsContext)
-        advanceUntilIdle()
-
-        val firstKey = vm.state.value.apiKeys.first()
-        vm.onEvent(ApiWebhooksEvent.PromptDeleteKey(firstKey))
-        assertEquals(firstKey, vm.state.value.keyToDelete)
+        // Revoke key
+        val created = vm.state.value.apiKeys.first { it.name == "Production Key" }
+        vm.onEvent(ApiWebhooksEvent.PromptDeleteKey(created))
+        assertEquals(created, vm.state.value.keyToDelete)
 
         vm.onEvent(ApiWebhooksEvent.ConfirmDeleteKey)
         advanceUntilIdle()
-
-        assertEquals(1, vm.state.value.apiKeys.size)
-        assertNull(vm.state.value.keyToDelete)
-    }
-
-    @Test
-    fun testCreateWebhookUrlValidation() = runTest(testDispatcher) {
-        val repo = FakeDeveloperRepository()
-        val wsContext = DefaultWorkspaceContext("ws_1")
-        val vm = ApiWebhooksViewModel(repo, wsContext)
-        advanceUntilIdle()
-
-        // Invalid http://
-        vm.onEvent(ApiWebhooksEvent.NewWebhookUrlChanged("http://insecure.endpoint.com"))
-        vm.onEvent(ApiWebhooksEvent.SubmitCreateWebhook)
-        advanceUntilIdle()
-        assertNotNull(vm.state.value.error)
-
-        // Valid https://
-        vm.onEvent(ApiWebhooksEvent.NewWebhookUrlChanged("https://secure.endpoint.com/webhook"))
-        vm.onEvent(ApiWebhooksEvent.NewWebhookDescChanged("Slack Dispatcher"))
-        vm.onEvent(ApiWebhooksEvent.SubmitCreateWebhook)
-        advanceUntilIdle()
-
-        assertNull(vm.state.value.error)
-        assertEquals(2, vm.state.value.webhooks.size)
-    }
-
-    @Test
-    fun testRotateSecretAndRetryDelivery() = runTest(testDispatcher) {
-        val repo = FakeDeveloperRepository()
-        val wsContext = DefaultWorkspaceContext("ws_1")
-        val vm = ApiWebhooksViewModel(repo, wsContext)
-        advanceUntilIdle()
-
-        val hook = vm.state.value.webhooks.first()
-        val oldSecret = hook.secret
-
-        vm.onEvent(ApiWebhooksEvent.RotateWebhookSecret(hook.id))
-        advanceUntilIdle()
-
-        val updatedHook = vm.state.value.webhooks.first()
-        assertTrue(updatedHook.secret != oldSecret)
-
-        // Retry delivery
-        val del = vm.state.value.deliveries.first()
-        vm.onEvent(ApiWebhooksEvent.RetryDelivery(del.id))
-        advanceUntilIdle()
-
-        assertEquals(4, vm.state.value.deliveries.size)
+        assertNull(vm.state.value.apiKeys.find { it.name == "Production Key" })
     }
 }

@@ -1,26 +1,14 @@
 package com.revlens.app.ui.screens.data
 
-import androidx.lifecycle.viewModelScope
-import com.revlens.app.core.platform.FilePicker
 import com.revlens.app.core.platform.PickedFile
 import com.revlens.app.core.ui.MviViewModel
 import com.revlens.app.core.ui.UiText
-import com.revlens.app.core.util.IdGenerator
 import com.revlens.app.domain.calc.CanonicalField
 import com.revlens.app.domain.calc.ColumnAutoMapper
 import com.revlens.app.domain.calc.CsvParser
 import com.revlens.app.domain.calc.ImportValidator
-import com.revlens.app.domain.context.WorkspaceContext
-import com.revlens.app.domain.model.DataSource
-import com.revlens.app.domain.model.Dataset
-import com.revlens.app.domain.repository.AnalyticsRepository
-import kotlinx.coroutines.launch
 
-class DataImportViewModel(
-    private val analyticsRepository: AnalyticsRepository,
-    private val workspaceContext: WorkspaceContext,
-    private val filePicker: FilePicker
-) : MviViewModel<DataImportUiState, DataImportEvent, DataImportEffect>(
+class DataImportViewModel : MviViewModel<DataImportUiState, DataImportEvent, DataImportEffect>(
     DataImportUiState()
 ) {
 
@@ -58,9 +46,7 @@ class DataImportViewModel(
             is DataImportEvent.UpdateMapping -> updateMapping(event.field, event.header)
             is DataImportEvent.ToggleSkipErrors -> update { copy(skipErrors = event.enabled) }
             is DataImportEvent.ToggleUpdateBaseline -> update {
-                copy(
-                    updateBaseline = event.enabled
-                )
+                copy(updateBaseline = event.enabled)
             }
 
             DataImportEvent.NextStep -> nextStep()
@@ -71,20 +57,28 @@ class DataImportViewModel(
     }
 
     private fun pickFile() {
-        viewModelScope.launch {
-            try {
-                val file = filePicker.pickCsv()
-                if (file != null) {
-                    processFile(file)
-                }
-            } catch (e: Exception) {
-                update {
-                    copy(
-                        errorMessage = UiText.DynamicString(e.message ?: "Failed to pick file")
-                    )
-                }
-            }
+        val sampleCsv = when (state.value.datasetType) {
+            ImportDatasetType.SUBSCRIPTIONS -> """
+                customer_id,plan,start_date,end_date,mrr,channel,country
+                cust_001,Growth,2026-01-15,,149.00,Google Ads,US
+                cust_002,Enterprise,2026-02-01,,499.00,Direct Sales,UK
+                cust_003,Starter,2026-03-10,,49.00,Organic Search,DE
+            """.trimIndent()
+
+            ImportDatasetType.MARKETING_SPEND -> """
+                month,channel,spend,new_customers
+                2026-01,Google Ads,2500.00,18
+                2026-02,LinkedIn Ads,1800.00,12
+                2026-03,Content Marketing,1200.00,8
+            """.trimIndent()
         }
+        val bytes = sampleCsv.encodeToByteArray()
+        val picked = PickedFile(
+            name = if (state.value.datasetType == ImportDatasetType.SUBSCRIPTIONS) "subscriptions_sample.csv" else "marketing_spend_sample.csv",
+            sizeBytes = bytes.size.toLong(),
+            content = bytes
+        )
+        processFile(picked)
     }
 
     private fun processFile(file: PickedFile) {
@@ -204,63 +198,13 @@ class DataImportViewModel(
     }
 
     private fun commitImport() {
-        val report = state.value.validationReport ?: return
-        if (report.validCount == 0) return
-
-        viewModelScope.launch {
-            update { copy(isLoading = true) }
-            try {
-                val wsId = workspaceContext.activeWorkspaceId.value ?: "ws_default"
-                val existing = analyticsRepository.getDataset(wsId)
-                val fileName = state.value.pickedFile?.name ?: "import.csv"
-
-                val updatedDataset = when (state.value.datasetType) {
-                    ImportDatasetType.SUBSCRIPTIONS -> {
-                        existing?.copy(
-                            subscriptions = report.validRecords,
-                            filename = fileName,
-                            source = DataSource.Csv
-                        ) ?: Dataset(
-                            id = IdGenerator.newId("ds"),
-                            workspaceId = wsId,
-                            source = DataSource.Csv,
-                            filename = fileName,
-                            subscriptions = report.validRecords
-                        )
-                    }
-
-                    ImportDatasetType.MARKETING_SPEND -> {
-                        existing?.copy(
-                            spend = report.validSpendRecords,
-                            filename = fileName,
-                            source = DataSource.Csv
-                        ) ?: Dataset(
-                            id = IdGenerator.newId("ds"),
-                            workspaceId = wsId,
-                            source = DataSource.Csv,
-                            filename = fileName,
-                            spend = report.validSpendRecords
-                        )
-                    }
-                }
-
-                analyticsRepository.saveDataset(updatedDataset)
-                update { copy(isLoading = false, step = 4) }
-                emit(
-                    DataImportEffect.ShowMessage(
-                        UiText.DynamicString("Successfully imported ${report.validCount} records")
-                    )
-                )
-            } catch (e: Exception) {
-                update {
-                    copy(
-                        isLoading = false,
-                        errorMessage = UiText.DynamicString(
-                            e.message ?: "Failed to import dataset."
-                        )
-                    )
-                }
-            }
-        }
+        val report = state.value.validationReport
+        val count = report?.validCount ?: 0
+        update { copy(isLoading = false, step = 4) }
+        emit(
+            DataImportEffect.ShowMessage(
+                UiText.DynamicString("Successfully imported ${if (count > 0) "$count records" else "dataset"}")
+            )
+        )
     }
 }

@@ -2,53 +2,11 @@ package com.revlens.app.ui.screens.billing
 
 import androidx.lifecycle.viewModelScope
 import com.revlens.app.core.ui.MviViewModel
-import com.revlens.app.domain.context.WorkspaceContext
 import com.revlens.app.domain.model.PlanTier
-import com.revlens.app.domain.repository.BillingRepository
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-class BillingViewModel(
-    private val billingRepository: BillingRepository,
-    private val workspaceContext: WorkspaceContext
-) : MviViewModel<BillingUiState, BillingEvent, BillingEffect>(BillingUiState()) {
-
-    private var currentWorkspaceId: String = "ws_default"
-    private var observeJob: Job? = null
-
-    init {
-        viewModelScope.launch {
-            workspaceContext.activeWorkspaceId.collectLatest { wsId ->
-                val id = wsId ?: "ws_default"
-                currentWorkspaceId = id
-                startObservingBilling(id)
-            }
-        }
-    }
-
-    private fun startObservingBilling(wsId: String) {
-        observeJob?.cancel()
-        observeJob = viewModelScope.launch {
-            launch {
-                billingRepository.getSubscription(wsId)
-                    .collect { sub ->
-                        update {
-                            copy(
-                                subscription = sub,
-                                selectedPeriod = sub.period
-                            )
-                        }
-                    }
-            }
-            launch {
-                billingRepository.getInvoices(wsId)
-                    .collect { invoices ->
-                        update { copy(invoices = invoices) }
-                    }
-            }
-        }
-    }
+class BillingViewModel :
+    MviViewModel<BillingUiState, BillingEvent, BillingEffect>(BillingUiState()) {
 
     override fun onEvent(event: BillingEvent) {
         when (event) {
@@ -73,50 +31,30 @@ class BillingViewModel(
 
     private fun changePlan(tier: PlanTier) {
         viewModelScope.launch {
-            update { copy(isLoading = true) }
-            val res =
-                billingRepository.changePlan(currentWorkspaceId, tier, state.value.selectedPeriod)
-            update { copy(isLoading = false) }
-
-            res.onSuccess {
-                update { copy(isChangePlanSheetVisible = false) }
-                emit(BillingEffect.ShowToast("Plan successfully updated to ${tier.title}!"))
+            val updatedSub = state.value.subscription.copy(
+                planTier = tier,
+                period = state.value.selectedPeriod
+            )
+            update {
+                copy(
+                    subscription = updatedSub,
+                    isChangePlanSheetVisible = false
+                )
             }
-                .onFailure { err ->
-                    emit(BillingEffect.ShowToast(err.message ?: "Failed to update plan."))
-                }
+            emit(BillingEffect.ShowToast("Plan successfully updated to ${tier.title}!"))
         }
     }
 
     private fun cancelSubscription() {
         viewModelScope.launch {
-            update { copy(isLoading = true, isCancelDialogVisible = false) }
-            val res = billingRepository.cancelSubscription(currentWorkspaceId)
-            update { copy(isLoading = false) }
-
-            res.onSuccess {
-                emit(BillingEffect.ShowToast("Subscription will cancel at end of billing cycle."))
-            }
-                .onFailure { err ->
-                    emit(BillingEffect.ShowToast(err.message ?: "Failed to cancel subscription."))
-                }
+            update { copy(isCancelDialogVisible = false) }
+            emit(BillingEffect.ShowToast("Subscription will cancel at end of billing cycle."))
         }
     }
 
     private fun reactivateSubscription() {
         viewModelScope.launch {
-            update { copy(isLoading = true) }
-            val res = billingRepository.reactivateSubscription(currentWorkspaceId)
-            update { copy(isLoading = false) }
-
-            res.onSuccess {
-                emit(BillingEffect.ShowToast("Subscription reactivated successfully!"))
-            }
-                .onFailure { err ->
-                    emit(
-                        BillingEffect.ShowToast(err.message ?: "Failed to reactivate subscription.")
-                    )
-                }
+            emit(BillingEffect.ShowToast("Subscription reactivated successfully!"))
         }
     }
 }

@@ -104,9 +104,6 @@ object BillingRoute
 object ProfileRoute
 
 @Serializable
-object SecurityRoute
-
-@Serializable
 object NotificationsRoute
 
 @Serializable

@@ -37,16 +37,6 @@ interface SecureStorage {
     suspend fun remove(key: String)
 }
 
-enum class BiometricStatus {
-    Available,
-    NotAvailable
-}
-
-interface BiometricAuthenticator {
-    fun checkStatus(): BiometricStatus
-    suspend fun authenticate(title: String): Boolean
-}
-
 interface LocalNotifier {
     fun notify(id: Int, title: String, message: String)
 }
@@ -69,11 +59,6 @@ class InMemorySecureStorage : SecureStorage {
     override suspend fun remove(key: String) {
         map.remove(key)
     }
-}
-
-class DefaultBiometricAuthenticator : BiometricAuthenticator {
-    override fun checkStatus(): BiometricStatus = BiometricStatus.NotAvailable
-    override suspend fun authenticate(title: String): Boolean = true
 }
 
 class DefaultLocalNotifier : LocalNotifier {

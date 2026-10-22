@@ -76,7 +76,6 @@ fun SettingsScreen(
     onNavigateToApiWebhooks: () -> Unit = {},
     onNavigateToBilling: () -> Unit = {},
     onNavigateToProfile: () -> Unit = {},
-    onNavigateToSecurity: () -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToMore: () -> Unit = {},
     onNavigateToSignUp: () -> Unit = {},
@@ -307,8 +306,8 @@ fun SettingsScreen(
                 }
             }
 
-            // ACCOUNT & SECURITY SECTION
-            SectionCard(title = "Account & Security") {
+            // ACCOUNT & PREFERENCES SECTION
+            SectionCard(title = "Account & Preferences") {
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     SettingsNavigationRow(
                         title = "Billing & Subscription",
@@ -322,11 +321,6 @@ fun SettingsScreen(
                                 onNavigateToBilling()
                             }
                         }
-                    )
-                    SettingsNavigationRow(
-                        title = "Security & App Lock",
-                        subtitle = "Biometric lock, two-factor auth & sessions",
-                        onClick = onNavigateToSecurity
                     )
                     SettingsNavigationRow(
                         title = "Notifications & Alerts",

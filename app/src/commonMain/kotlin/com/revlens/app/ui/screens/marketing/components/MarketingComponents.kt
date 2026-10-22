@@ -393,7 +393,7 @@ fun MarketingFooter(
                             color = RevLensTheme.colors.textSecondary
                         )
                         Text(
-                            text = "Biometric Protection",
+                            text = "Privacy & Data Protection",
                             style = RevLensTypography.bodySmall,
                             color = RevLensTheme.colors.textSecondary
                         )

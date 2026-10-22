@@ -1,4 +1,4 @@
-package com.revlens.app.ui.screens.security
+package com.revlens.app.ui.screens.profile
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -77,7 +77,12 @@ fun AccountActionsScreen(
                         style = RevLensTypography.bodyMedium,
                         color = RevLensTheme.colors.textSecondary
                     )
-                    ActionCardButton(text = "Log Out", icon = Icons.AutoMirrored.Filled.Logout, onClick = { viewModel.logout { onLogout() } }, modifier = Modifier.fillMaxWidth())
+                    ActionCardButton(
+                        text = "Log Out",
+                        icon = Icons.AutoMirrored.Filled.Logout,
+                        onClick = { viewModel.logout { onLogout() } },
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
 
@@ -89,7 +94,12 @@ fun AccountActionsScreen(
                             style = RevLensTypography.bodyMedium,
                             color = RevLensTheme.colors.textSecondary
                         )
-                        ActionCardButton(text = "Leave Business", icon = Icons.AutoMirrored.Filled.ExitToApp, onClick = { showLeaveBusinessDialog = true }, modifier = Modifier.fillMaxWidth())
+                        ActionCardButton(
+                            text = "Leave Business",
+                            icon = Icons.AutoMirrored.Filled.ExitToApp,
+                            onClick = { showLeaveBusinessDialog = true },
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
             }
@@ -101,7 +111,12 @@ fun AccountActionsScreen(
                         style = RevLensTypography.bodyMedium,
                         color = RevLensTheme.colors.textSecondary
                     )
-                    ActionCardButton(text = "Delete Account", icon = Icons.Filled.DeleteForever, onClick = { showDeleteAccountDialog = true }, modifier = Modifier.fillMaxWidth())
+                    ActionCardButton(
+                        text = "Delete Account",
+                        icon = Icons.Filled.DeleteForever,
+                        onClick = { showDeleteAccountDialog = true },
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         }

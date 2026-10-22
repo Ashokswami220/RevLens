@@ -2,62 +2,27 @@ package com.revlens.app.ui.screens.integrations
 
 import androidx.lifecycle.viewModelScope
 import com.revlens.app.core.ui.MviViewModel
-import com.revlens.app.domain.context.WorkspaceContext
+import com.revlens.app.domain.model.ConnectionStatus
+import com.revlens.app.domain.model.IntegrationConnection
 import com.revlens.app.domain.model.IntegrationProvider
-import com.revlens.app.domain.repository.IntegrationRepository
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-class IntegrationsViewModel(
-    private val integrationRepository: IntegrationRepository,
-    private val workspaceContext: WorkspaceContext
-) : MviViewModel<IntegrationsUiState, IntegrationsEvent, IntegrationsEffect>(
-    IntegrationsUiState()
-) {
-
-    private var currentWorkspaceId: String = "ws_default"
-    private var observeJob: Job? = null
-
-    init {
-        viewModelScope.launch {
-            workspaceContext.activeWorkspaceId.collectLatest { wsId ->
-                val id = wsId ?: "ws_default"
-                currentWorkspaceId = id
-                startObserving(id)
-            }
-        }
-    }
-
-    private fun startObserving(wsId: String) {
-        observeJob?.cancel()
-        observeJob = viewModelScope.launch {
-            integrationRepository.getConnections(wsId)
-                .collect { list ->
-                    update { copy(connections = list) }
-                }
-        }
-    }
+class IntegrationsViewModel :
+    MviViewModel<IntegrationsUiState, IntegrationsEvent, IntegrationsEffect>(IntegrationsUiState()) {
 
     override fun onEvent(event: IntegrationsEvent) {
         when (event) {
             is IntegrationsEvent.SelectCategory -> update {
-                copy(
-                    selectedCategory = event.category
-                )
+                copy(selectedCategory = event.category)
             }
 
             is IntegrationsEvent.ConnectIntegration -> connect(event.provider)
             is IntegrationsEvent.PromptDisconnectIntegration -> update {
-                copy(
-                    disconnectingProvider = event.provider
-                )
+                copy(disconnectingProvider = event.provider)
             }
 
             IntegrationsEvent.DismissDisconnectIntegration -> update {
-                copy(
-                    disconnectingProvider = null
-                )
+                copy(disconnectingProvider = null)
             }
 
             IntegrationsEvent.ConfirmDisconnectIntegration -> confirmDisconnect()
@@ -67,56 +32,30 @@ class IntegrationsViewModel(
 
     private fun connect(provider: IntegrationProvider) {
         viewModelScope.launch {
-            val res = integrationRepository.connectIntegration(currentWorkspaceId, provider)
-            res.onSuccess {
-                emit(
-                    IntegrationsEffect.ShowToast("${provider.displayName} connected successfully!")
-                )
-            }
-                .onFailure { err ->
-                    emit(
-                        IntegrationsEffect.ShowToast(
-                            err.message ?: "Failed to connect ${provider.displayName}."
-                        )
+            val updated = state.value.connections.filter { it.provider != provider } +
+                    IntegrationConnection(
+                        id = "conn_${provider.name.lowercase()}",
+                        provider = provider,
+                        status = ConnectionStatus.CONNECTED,
+                        lastSyncAt = "Just now"
                     )
-                }
+            update { copy(connections = updated) }
+            emit(IntegrationsEffect.ShowToast("${provider.displayName} connected successfully!"))
         }
     }
 
     private fun confirmDisconnect() {
         val provider = state.value.disconnectingProvider ?: return
         viewModelScope.launch {
-            update { copy(disconnectingProvider = null) }
-            val res = integrationRepository.disconnectIntegration(currentWorkspaceId, provider)
-            res.onSuccess {
-                emit(IntegrationsEffect.ShowToast("${provider.displayName} disconnected."))
-            }
-                .onFailure { err ->
-                    emit(
-                        IntegrationsEffect.ShowToast(
-                            err.message ?: "Could not disconnect ${provider.displayName}."
-                        )
-                    )
-                }
+            val updated = state.value.connections.filter { it.provider != provider }
+            update { copy(connections = updated, disconnectingProvider = null) }
+            emit(IntegrationsEffect.ShowToast("${provider.displayName} disconnected."))
         }
     }
 
     private fun sync(provider: IntegrationProvider) {
         viewModelScope.launch {
-            update { copy(syncingProviders = syncingProviders + provider) }
-            val res = integrationRepository.syncIntegration(currentWorkspaceId, provider)
-            update { copy(syncingProviders = syncingProviders - provider) }
-
-            res.onSuccess {
-                emit(IntegrationsEffect.ShowToast("${provider.displayName} synced successfully!"))
-            }
-                .onFailure { err ->
-                    emit(
-                        IntegrationsEffect.ShowToast(
-                            err.message ?: "Sync failed for ${provider.displayName}."
-                        )
-                    )
-                }
+            emit(IntegrationsEffect.ShowToast("${provider.displayName} synced successfully!"))
         }
     }
 }

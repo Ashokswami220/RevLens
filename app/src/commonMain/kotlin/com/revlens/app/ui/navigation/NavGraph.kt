@@ -34,9 +34,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.revlens.app.core.platform.BiometricAuthenticator
 import com.revlens.app.domain.model.SessionState
-import com.revlens.app.domain.repository.AppLockRepository
 import com.revlens.app.presentation.MainViewModel
 import com.revlens.app.ui.components.BottomNavItem
 import com.revlens.app.ui.components.LocalAppNavigator
@@ -90,16 +88,13 @@ import com.revlens.app.ui.screens.profile.ProfileScreen
 import com.revlens.app.ui.screens.profile.ProfileViewModel
 import com.revlens.app.ui.screens.reports.ReportsScreen
 import com.revlens.app.ui.screens.reports.ReportsViewModel
-import com.revlens.app.ui.screens.security.AccountActionsScreen
-import com.revlens.app.ui.screens.security.SecuritySettingsScreen
-import com.revlens.app.ui.screens.security.SecuritySettingsViewModel
+import com.revlens.app.ui.screens.profile.AccountActionsScreen
 import com.revlens.app.ui.screens.team.TeamScreen
 import com.revlens.app.ui.screens.team.TeamViewModel
 import com.revlens.app.ui.screens.workspace.CreateWorkspaceScreen
 import com.revlens.app.ui.screens.workspace.WorkspaceManagementScreen
 import com.revlens.app.ui.theme.RevLensTheme
 import com.revlens.app.ui.theme.RevLensTypography
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 private const val ANIM_DURATION = 350
@@ -282,10 +277,6 @@ fun RevLensNavGraph(
                 "Reports"
             ) -> "reports"
 
-            currentDestination?.hasRoute<SecurityRoute>() == true || currentRoute.contains(
-                "Security"
-            ) -> "security"
-
             currentDestination?.hasRoute<NotificationsRoute>() == true || currentRoute.contains(
                 "Notifications"
             ) -> "notifications"
@@ -352,7 +343,6 @@ fun RevLensNavGraph(
 
                 "input" -> navController.navigate(InputDataRoute) { launchSingleTop = true }
                 "reports" -> navController.navigate(ReportsRoute) { launchSingleTop = true }
-                "security" -> navController.navigate(SecurityRoute) { launchSingleTop = true }
                 "notifications" -> navController.navigate(NotificationsRoute) {
                     launchSingleTop = true
                 }
@@ -401,7 +391,6 @@ fun RevLensNavGraph(
 
                     "input" -> navController.navigate(InputDataRoute) { launchSingleTop = true }
                     "reports" -> navController.navigate(ReportsRoute) { launchSingleTop = true }
-                    "security" -> navController.navigate(SecurityRoute) { launchSingleTop = true }
                     "notifications" -> navController.navigate(
                         NotificationsRoute
                     ) { launchSingleTop = true }
@@ -434,17 +423,10 @@ fun RevLensNavGraph(
         }
     }
 
-    val appLockRepository: AppLockRepository = koinInject()
-    val biometricAuthenticator: BiometricAuthenticator = koinInject()
-
-    AppLockGate(
-        appLockRepository = appLockRepository,
-        biometricAuthenticator = biometricAuthenticator
+    CompositionLocalProvider(
+        LocalAppNavigator provides navigateToTab,
+        LocalCurrentTab provides (currentTab ?: "Dashboard")
     ) {
-        CompositionLocalProvider(
-            LocalAppNavigator provides navigateToTab,
-            LocalCurrentTab provides (currentTab ?: "Dashboard")
-        ) {
             Scaffold(
                 contentWindowInsets = WindowInsets(0, 0, 0, 0),
                 bottomBar = {
@@ -795,7 +777,6 @@ fun RevLensNavGraph(
                             onNavigateToSignUp = { navController.navigate(LoginRoute) },
                             onNavigateToProfile = { navController.navigate(ProfileRoute) },
                             onNavigateToReports = { navController.navigate(ReportsRoute) },
-                            onNavigateToSecurity = { navController.navigate(SecurityRoute) },
                             onNavigateToNotifications = {
                                 navController.navigate(
                                     NotificationsRoute
@@ -946,15 +927,6 @@ fun RevLensNavGraph(
                         )
                     }
 
-                    composable<SecurityRoute> {
-                        val securityViewModel: SecuritySettingsViewModel = koinViewModel()
-                        SecuritySettingsScreen(
-                            viewModel = securityViewModel,
-                            onNavigateBack = { navController.popBackStack() },
-                            onNavigateToSignUp = { navController.navigate(LoginRoute) }
-                        )
-                    }
-
                     composable<NotificationsRoute> {
                         val notifViewModel: NotificationSettingsViewModel = koinViewModel()
                         NotificationSettingsScreen(
@@ -1034,4 +1006,3 @@ fun RevLensNavGraph(
             }
         }
     }
-}

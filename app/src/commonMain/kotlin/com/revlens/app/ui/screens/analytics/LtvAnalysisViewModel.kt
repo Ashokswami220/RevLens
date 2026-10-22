@@ -4,17 +4,14 @@ import androidx.lifecycle.viewModelScope
 import com.revlens.app.core.ui.MviViewModel
 import com.revlens.app.data.ProfileRepository
 import com.revlens.app.domain.calc.LtvCalculator
-import com.revlens.app.domain.repository.AnalyticsRepository
 import com.revlens.app.model.BigDecimal
 import com.revlens.app.model.BusinessProfile
 import com.revlens.app.ui.components.display.DataSourceMode
 import com.revlens.app.utils.CurrencyUtils
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class LtvAnalysisViewModel(
-    private val profileRepository: ProfileRepository,
-    private val analyticsRepository: AnalyticsRepository
+    private val profileRepository: ProfileRepository
 ) : MviViewModel<LtvAnalysisUiState, LtvAnalysisEvent, LtvAnalysisEffect>(
     LtvAnalysisUiState()
 ) {
@@ -26,10 +23,7 @@ class LtvAnalysisViewModel(
 
     private fun observeProfile() {
         viewModelScope.launch {
-            combine(
-                profileRepository.profileFlow,
-                analyticsRepository.datasetFlow
-            ) { profile, dataset ->
+            profileRepository.profileFlow.collect { profile ->
                 currentProfile = profile
                 if (profile != null) {
                     val arpu = profile.arpu
@@ -41,8 +35,7 @@ class LtvAnalysisViewModel(
                         80.0
                     }
 
-                    val symbol =
-                        CurrencyUtils.getCurrency(profile.currencyCode).symbol
+                    val symbol = CurrencyUtils.getCurrency(profile.currencyCode).symbol
                     update {
                         copy(
                             baseArpu = arpu,
@@ -51,16 +44,12 @@ class LtvAnalysisViewModel(
                             grossMarginPercent = margin,
                             cac = profile.cac,
                             currencySymbol = symbol,
-                            dataSourceMode = if (dataset != null && dataset.subscriptions.isNotEmpty()) {
-                                DataSourceMode.ACTUAL
-                            } else {
-                                DataSourceMode.MODELED
-                            }
+                            dataSourceMode = DataSourceMode.MODELED
                         )
                     }
                     recalculate()
                 }
-            }.collect {}
+            }
         }
     }
 
@@ -101,7 +90,6 @@ class LtvAnalysisViewModel(
             LtvMethod.MARGIN_ADJUSTED -> LtvCalculator.calculateMarginAdjustedLtv(
                 arpu, margin, s.baseChurnPercent
             )
-
             LtvMethod.SIMPLE -> LtvCalculator.calculateSimpleLtv(arpu, s.baseChurnPercent)
         }
 
@@ -109,22 +97,26 @@ class LtvAnalysisViewModel(
             LtvMethod.MARGIN_ADJUSTED -> LtvCalculator.calculateMarginAdjustedLtv(
                 arpu, margin, s.simulatedChurnPercent
             )
-
             LtvMethod.SIMPLE -> LtvCalculator.calculateSimpleLtv(arpu, s.simulatedChurnPercent)
         }
 
-        val curve = LtvCalculator.calculateSensitivityPoints(arpu, margin)
+        val payback = if (arpu > BigDecimal.ZERO && margin > 0.0) {
+            val netMonthly = arpu.toDouble() * (margin / 100.0)
+            if (netMonthly > 0.0) s.cac.toDouble() / netMonthly else 0.0
+        } else 0.0
 
-        val monthlyProfitPerCust = arpu.toDouble() * (margin / 100.0)
-        val payback = if (monthlyProfitPerCust > 0) s.cac.toDouble() / monthlyProfitPerCust else 0.0
-        val ltvToCac = if (s.cac.toDouble() > 0) simLtv.toDouble() / s.cac.toDouble() else 0.0
+        val ratio = if (s.cac > BigDecimal.ZERO) {
+            simLtv.toDouble() / s.cac.toDouble()
+        } else 0.0
+
+        val curve = LtvCalculator.calculateSensitivityPoints(arpu, margin)
 
         update {
             copy(
                 baseLtv = baseLtv,
                 simulatedLtv = simLtv,
-                paybackPeriodMonths = (payback * 10).toInt() / 10.0,
-                ltvToCacRatio = (ltvToCac * 10).toInt() / 10.0,
+                paybackPeriodMonths = payback,
+                ltvToCacRatio = ratio,
                 sensitivityCurve = curve
             )
         }

@@ -4,21 +4,16 @@ import androidx.lifecycle.viewModelScope
 import com.revlens.app.core.ui.MviViewModel
 import com.revlens.app.data.ProfileRepository
 import com.revlens.app.domain.calc.CustomerSegmentationCalculator
-import com.revlens.app.domain.model.Dataset
-import com.revlens.app.domain.repository.AnalyticsRepository
 import com.revlens.app.model.BusinessProfile
 import com.revlens.app.utils.CurrencyUtils
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class CustomerAnalyticsViewModel(
-    private val profileRepository: ProfileRepository,
-    private val analyticsRepository: AnalyticsRepository
+    private val profileRepository: ProfileRepository
 ) : MviViewModel<CustomerAnalyticsUiState, CustomerAnalyticsEvent, CustomerAnalyticsEffect>(
     CustomerAnalyticsUiState()
 ) {
     private var cachedProfile: BusinessProfile? = null
-    private var cachedDataset: Dataset? = null
 
     init {
         observeData()
@@ -26,23 +21,17 @@ class CustomerAnalyticsViewModel(
 
     private fun observeData() {
         viewModelScope.launch {
-            combine(
-                profileRepository.profileFlow,
-                analyticsRepository.datasetFlow
-            ) { profile, dataset ->
+            profileRepository.profileFlow.collect { profile ->
                 cachedProfile = profile
-                cachedDataset = dataset
-                val hasActual = dataset != null && dataset.subscriptions.isNotEmpty()
-                val symbol =
-                    CurrencyUtils.getCurrency(profile?.currencyCode).symbol
+                val symbol = CurrencyUtils.getCurrency(profile?.currencyCode).symbol
                 update {
                     copy(
-                        hasActualData = hasActual,
+                        hasActualData = false,
                         currencySymbol = symbol
                     )
                 }
                 recompute()
-            }.collect {}
+            }
         }
     }
 
@@ -78,7 +67,7 @@ class CustomerAnalyticsViewModel(
         val currentState = state.value
         val result = CustomerSegmentationCalculator.calculate(
             profile = cachedProfile,
-            dataset = cachedDataset,
+            dataset = null,
             period = currentState.period,
             segmentBy = currentState.segmentBy
         )

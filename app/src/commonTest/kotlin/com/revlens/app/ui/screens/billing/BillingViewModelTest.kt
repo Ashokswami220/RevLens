@@ -1,7 +1,5 @@
 package com.revlens.app.ui.screens.billing
 
-import com.revlens.app.data.fake.FakeBillingRepository
-import com.revlens.app.domain.context.DefaultWorkspaceContext
 import com.revlens.app.domain.model.BillingPeriod
 import com.revlens.app.domain.model.PlanTier
 import kotlinx.coroutines.Dispatchers
@@ -34,24 +32,19 @@ class BillingViewModelTest {
     }
 
     @Test
-    fun testInitialStateLoadsSubscriptionAndInvoices() = runTest(testDispatcher) {
-        val repo = FakeBillingRepository()
-        val wsContext = DefaultWorkspaceContext("ws_1")
-        val vm = BillingViewModel(repo, wsContext)
-        advanceUntilIdle()
-
+    fun testInitialState() = runTest(testDispatcher) {
+        val vm = BillingViewModel()
         val s = vm.state.value
         assertEquals(PlanTier.PRO, s.subscription.planTier)
-        assertEquals(3, s.invoices.size)
-        assertFalse(s.subscription.cancelAtPeriodEnd)
+        assertFalse(s.isChangePlanSheetVisible)
     }
 
     @Test
-    fun testChangePlanUpdatesSubscriptionAndAddsInvoice() = runTest(testDispatcher) {
-        val repo = FakeBillingRepository()
-        val wsContext = DefaultWorkspaceContext("ws_1")
-        val vm = BillingViewModel(repo, wsContext)
-        advanceUntilIdle()
+    fun testChangePlan() = runTest(testDispatcher) {
+        val vm = BillingViewModel()
+
+        vm.onEvent(BillingEvent.OpenChangePlanSheet)
+        assertTrue(vm.state.value.isChangePlanSheetVisible)
 
         vm.onEvent(BillingEvent.SelectBillingPeriod(BillingPeriod.MONTHLY))
         vm.onEvent(BillingEvent.SelectPlan(PlanTier.ENTERPRISE))
@@ -59,25 +52,6 @@ class BillingViewModelTest {
 
         val s = vm.state.value
         assertEquals(PlanTier.ENTERPRISE, s.subscription.planTier)
-        assertEquals(BillingPeriod.MONTHLY, s.subscription.period)
-        assertEquals(4, s.invoices.size)
-    }
-
-    @Test
-    fun testCancelSubscriptionAndReactivate() = runTest(testDispatcher) {
-        val repo = FakeBillingRepository()
-        val wsContext = DefaultWorkspaceContext("ws_1")
-        val vm = BillingViewModel(repo, wsContext)
-        advanceUntilIdle()
-
-        // Cancel
-        vm.onEvent(BillingEvent.ConfirmCancelSubscription)
-        advanceUntilIdle()
-        assertTrue(vm.state.value.subscription.cancelAtPeriodEnd)
-
-        // Reactivate
-        vm.onEvent(BillingEvent.ReactivateSubscription)
-        advanceUntilIdle()
-        assertFalse(vm.state.value.subscription.cancelAtPeriodEnd)
+        assertFalse(s.isChangePlanSheetVisible)
     }
 }

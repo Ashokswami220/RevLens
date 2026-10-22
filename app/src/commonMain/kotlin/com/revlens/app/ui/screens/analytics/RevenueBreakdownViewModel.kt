@@ -5,23 +5,16 @@ import com.revlens.app.core.ui.MviViewModel
 import com.revlens.app.data.ProfileRepository
 import com.revlens.app.domain.calc.RevenueBreakdownCalculator
 import com.revlens.app.domain.calc.RevenueBreakdownResult
-import com.revlens.app.domain.context.WorkspaceContext
-import com.revlens.app.domain.model.Dataset
-import com.revlens.app.domain.repository.AnalyticsRepository
 import com.revlens.app.model.BusinessProfile
 import com.revlens.app.utils.CurrencyUtils
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class RevenueBreakdownViewModel(
-    private val profileRepository: ProfileRepository,
-    private val analyticsRepository: AnalyticsRepository,
-    private val workspaceContext: WorkspaceContext
+    private val profileRepository: ProfileRepository
 ) : MviViewModel<RevenueBreakdownUiState, RevenueBreakdownEvent, RevenueBreakdownEffect>(
     RevenueBreakdownUiState()
 ) {
     private var cachedProfile: BusinessProfile? = null
-    private var cachedDataset: Dataset? = null
 
     init {
         observeData()
@@ -29,17 +22,12 @@ class RevenueBreakdownViewModel(
 
     private fun observeData() {
         viewModelScope.launch {
-            combine(
-                profileRepository.profileFlow,
-                analyticsRepository.datasetFlow
-            ) { profile, dataset ->
+            profileRepository.profileFlow.collect { profile ->
                 cachedProfile = profile
-                cachedDataset = dataset
-                val hasActual = dataset != null && dataset.subscriptions.isNotEmpty()
                 val symbol = CurrencyUtils.getCurrency(profile?.currencyCode).symbol
-                update { copy(hasActualData = hasActual, currencySymbol = symbol) }
+                update { copy(hasActualData = false, currencySymbol = symbol) }
                 recompute()
-            }.collect {}
+            }
         }
     }
 
@@ -72,9 +60,7 @@ class RevenueBreakdownViewModel(
         }
 
         val result: RevenueBreakdownResult? =
-            if (s.sourceMode == RevenueSourceMode.ACTUAL && cachedDataset != null && cachedDataset!!.subscriptions.isNotEmpty()) {
-                RevenueBreakdownCalculator.calculateActual(cachedDataset!!.subscriptions)
-            } else if (cachedProfile != null) {
+            if (cachedProfile != null) {
                 val baseProfile = cachedProfile!!
                 RevenueBreakdownCalculator.calculateModeled(
                     profile = baseProfile,

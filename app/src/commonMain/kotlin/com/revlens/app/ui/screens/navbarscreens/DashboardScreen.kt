@@ -30,7 +30,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.outlined.FileUpload
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -493,13 +492,6 @@ private fun DashboardContent(
         profile = profile,
         currencyFormatter = currencyFormatter,
         onNavigateToGoalPlanner = onNavigateToGoalPlanner
-    )
-
-    ActionCardButton(
-        text = "Export Executive Board Deck (PDF)",
-        icon = Icons.Outlined.FileUpload,
-        onClick = {},
-        modifier = Modifier.fillMaxWidth()
     )
 
     Spacer(modifier = Modifier.height(8.dp))

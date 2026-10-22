@@ -1,16 +1,10 @@
 package com.revlens.app.di
 
-import com.revlens.app.data.DefaultTeamRepository
 import com.revlens.app.domain.model.SessionState
-import com.revlens.app.data.DefaultIntegrationRepository
-import com.revlens.app.data.DefaultDeveloperRepository
-import com.revlens.app.data.DefaultBillingRepository
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
-import com.revlens.app.core.platform.BiometricAuthenticator
-import com.revlens.app.core.platform.DefaultBiometricAuthenticator
 import com.revlens.app.core.platform.DefaultFilePicker
 import com.revlens.app.core.platform.DefaultFileSharer
 import com.revlens.app.core.platform.DefaultLocalNotifier
@@ -29,24 +23,15 @@ import com.revlens.app.data.AndroidFirestoreWorkspaceRepository
 import com.revlens.app.data.DataStoreProfileRepository
 import com.revlens.app.data.DataStoreScenarioRepository
 import com.revlens.app.data.DefaultAnalyticsRepository
-import com.revlens.app.data.DefaultAppLockRepository
 import com.revlens.app.data.DefaultExperimentRepository
-import com.revlens.app.data.DefaultNotificationPreferencesRepository
-import com.revlens.app.data.DefaultReportRepository
 import com.revlens.app.data.DefaultWorkspaceRepository
 import com.revlens.app.data.ProfileRepository
 import com.revlens.app.data.ScenarioRepository
 import com.revlens.app.domain.context.DefaultWorkspaceContext
 import com.revlens.app.domain.context.WorkspaceContext
 import com.revlens.app.domain.repository.AnalyticsRepository
-import com.revlens.app.domain.repository.AppLockRepository
 import com.revlens.app.domain.repository.AuthRepository
-import com.revlens.app.domain.repository.BillingRepository
-import com.revlens.app.domain.repository.DeveloperRepository
 import com.revlens.app.domain.repository.ExperimentRepository
-import com.revlens.app.domain.repository.IntegrationRepository
-import com.revlens.app.domain.repository.NotificationPreferencesRepository
-import com.revlens.app.domain.repository.ReportRepository
 import com.revlens.app.domain.repository.TeamRepository
 import com.revlens.app.domain.repository.WorkspaceRepository
 import com.revlens.app.domain.session.DefaultSessionManager
@@ -79,7 +64,6 @@ import com.revlens.app.ui.screens.marketing.PublicPricingViewModel
 import com.revlens.app.ui.screens.notifications.NotificationSettingsViewModel
 import com.revlens.app.ui.screens.profile.ProfileViewModel
 import com.revlens.app.ui.screens.reports.ReportsViewModel
-import com.revlens.app.ui.screens.security.SecuritySettingsViewModel
 import com.revlens.app.ui.screens.simulator.GrowthSimulatorViewModel
 import com.revlens.app.ui.screens.team.TeamViewModel
 import com.revlens.app.ui.screens.workspace.CreateWorkspaceViewModel
@@ -118,13 +102,9 @@ val appModule = module {
     single<FilePicker> { DefaultFilePicker() }
     single<FileSharer> { DefaultFileSharer() }
     single<SecureStorage> { InMemorySecureStorage() }
-    single<BiometricAuthenticator> { DefaultBiometricAuthenticator() }
     single<LocalNotifier> { DefaultLocalNotifier() }
     single<AnalyticsRepository> { DefaultAnalyticsRepository() }
     single<ExperimentRepository> { DefaultExperimentRepository() }
-    single<ReportRepository> { DefaultReportRepository() }
-    single<AppLockRepository> { DefaultAppLockRepository() }
-    single<NotificationPreferencesRepository> { DefaultNotificationPreferencesRepository() }
     single<AuthRepository> {
         AndroidFirebaseAuthRepository(
             context = androidContext(),
@@ -138,9 +118,6 @@ val appModule = module {
             authRepository = get()
         )
     }
-    single<BillingRepository> { DefaultBillingRepository() }
-    single<IntegrationRepository> { DefaultIntegrationRepository() }
-    single<DeveloperRepository> { DefaultDeveloperRepository() }
     single { MigrateGuestDataUseCase(get(), get(), get(), get()) }
     single { LoginUseCase(get(), get(), getOrNull()) }
     single { SignUpUseCase(get(), get(), getOrNull()) }
@@ -181,51 +158,18 @@ val appModule = module {
             authRepository = get()
         )
     }
-    viewModel {
-        DataImportViewModel(
-            analyticsRepository = get(),
-            workspaceContext = get(),
-            filePicker = get()
-        )
-    }
-    viewModel {
-        RevenueBreakdownViewModel(
-            profileRepository = get(),
-            analyticsRepository = get(),
-            workspaceContext = get()
-        )
-    }
-    viewModel {
-        LtvAnalysisViewModel(
-            profileRepository = get(),
-            analyticsRepository = get()
-        )
-    }
-    viewModel {
-        CacAnalyticsViewModel(
-            profileRepository = get(),
-            analyticsRepository = get(),
-            workspaceContext = get()
-        )
-    }
+    viewModel { DataImportViewModel() }
+    viewModel { RevenueBreakdownViewModel(profileRepository = get()) }
+    viewModel { LtvAnalysisViewModel(profileRepository = get()) }
+    viewModel { CacAnalyticsViewModel(profileRepository = get()) }
     viewModel {
         GrowthSimulatorViewModel(
             profileRepository = get(),
             scenarioRepository = get()
         )
     }
-    viewModel {
-        CustomerAnalyticsViewModel(
-            profileRepository = get(),
-            analyticsRepository = get()
-        )
-    }
-    viewModel {
-        CohortAnalysisViewModel(
-            profileRepository = get(),
-            analyticsRepository = get()
-        )
-    }
+    viewModel { CustomerAnalyticsViewModel(profileRepository = get()) }
+    viewModel { CohortAnalysisViewModel(profileRepository = get()) }
     viewModel {
         ExperimentsViewModel(
             experimentRepository = get(),
@@ -237,28 +181,8 @@ val appModule = module {
             experimentRepository = get()
         )
     }
-    viewModel {
-        ReportsViewModel(
-            reportRepository = get(),
-            workspaceContext = get(),
-            profileRepository = get(),
-            scenarioRepository = get(),
-            fileSharer = get()
-        )
-    }
-    viewModel {
-        SecuritySettingsViewModel(
-            appLockRepository = get(),
-            biometricAuthenticator = get(),
-            sessionManager = get()
-        )
-    }
-    viewModel {
-        NotificationSettingsViewModel(
-            preferencesRepository = get(),
-            localNotifier = get()
-        )
-    }
+    viewModel { ReportsViewModel() }
+    viewModel { NotificationSettingsViewModel() }
     viewModel {
         LoginViewModel(
             loginUseCase = get(),
@@ -284,32 +208,10 @@ val appModule = module {
             workspaceContext = get()
         )
     }
-    viewModel {
-        TeamViewModel(
-            teamRepository = get(),
-            workspaceContext = get(),
-            sessionManager = get(),
-            authRepository = get()
-        )
-    }
-    viewModel {
-        BillingViewModel(
-            billingRepository = get(),
-            workspaceContext = get()
-        )
-    }
-    viewModel {
-        IntegrationsViewModel(
-            integrationRepository = get(),
-            workspaceContext = get()
-        )
-    }
-    viewModel {
-        ApiWebhooksViewModel(
-            developerRepository = get(),
-            workspaceContext = get()
-        )
-    }
+    viewModel { TeamViewModel() }
+    viewModel { BillingViewModel() }
+    viewModel { IntegrationsViewModel() }
+    viewModel { ApiWebhooksViewModel() }
     viewModel { PublicPricingViewModel() }
     viewModel { LandingViewModel() }
 }

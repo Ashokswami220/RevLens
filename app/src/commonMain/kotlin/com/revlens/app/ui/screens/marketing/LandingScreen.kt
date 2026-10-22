@@ -276,7 +276,7 @@ fun LandingScreen(
                         )
                         FeaturePillarCard(
                             title = "Local-First Privacy & Speed",
-                            description = "Instant responsiveness with zero latency. Sensitive revenue models stay private on your device with biometric lock.",
+                            description = "Instant responsiveness with zero latency. Sensitive revenue models stay private on your device with local encryption.",
                             modifier = Modifier.weight(1f)
                         )
                     }
