@@ -23,30 +23,10 @@ data class PickedFile(
     }
 }
 
-interface FilePicker {
-    suspend fun pickCsv(): PickedFile?
-}
-
-interface FileSharer {
-    suspend fun shareFile(filename: String, mimeType: String, content: ByteArray)
-}
-
 interface SecureStorage {
     suspend fun put(key: String, value: String)
     suspend fun get(key: String): String?
     suspend fun remove(key: String)
-}
-
-interface LocalNotifier {
-    fun notify(id: Int, title: String, message: String)
-}
-
-class DefaultFilePicker : FilePicker {
-    override suspend fun pickCsv(): PickedFile? = null
-}
-
-class DefaultFileSharer : FileSharer {
-    override suspend fun shareFile(filename: String, mimeType: String, content: ByteArray) {}
 }
 
 class InMemorySecureStorage : SecureStorage {
@@ -59,8 +39,4 @@ class InMemorySecureStorage : SecureStorage {
     override suspend fun remove(key: String) {
         map.remove(key)
     }
-}
-
-class DefaultLocalNotifier : LocalNotifier {
-    override fun notify(id: Int, title: String, message: String) {}
 }

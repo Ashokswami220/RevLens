@@ -5,13 +5,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
-import com.revlens.app.core.platform.DefaultFilePicker
-import com.revlens.app.core.platform.DefaultFileSharer
-import com.revlens.app.core.platform.DefaultLocalNotifier
-import com.revlens.app.core.platform.FilePicker
-import com.revlens.app.core.platform.FileSharer
 import com.revlens.app.core.platform.InMemorySecureStorage
-import com.revlens.app.core.platform.LocalNotifier
 import com.revlens.app.core.platform.SecureStorage
 import com.revlens.app.core.util.DefaultIdGenerator
 import com.revlens.app.core.util.IdGenerator
@@ -99,10 +93,7 @@ val appModule = module {
     single<SessionManager> { DefaultSessionManager(SessionState.Unknown) }
     single { ResolveGateUseCase() }
     single<IdGenerator> { DefaultIdGenerator() }
-    single<FilePicker> { DefaultFilePicker() }
-    single<FileSharer> { DefaultFileSharer() }
     single<SecureStorage> { InMemorySecureStorage() }
-    single<LocalNotifier> { DefaultLocalNotifier() }
     single<AnalyticsRepository> { DefaultAnalyticsRepository() }
     single<ExperimentRepository> { DefaultExperimentRepository() }
     single<AuthRepository> {

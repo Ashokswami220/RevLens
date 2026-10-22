@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.update
 
 class DefaultExperimentRepository : ExperimentRepository {
 
-    private val _experimentsFlow = MutableStateFlow<List<Experiment>>(defaultSampleExperiments())
+    private val _experimentsFlow = MutableStateFlow(defaultSampleExperiments())
     override val experimentsFlow: Flow<List<Experiment>> = _experimentsFlow.asStateFlow()
 
     override suspend fun saveExperiment(experiment: Experiment) {
