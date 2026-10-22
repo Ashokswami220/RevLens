@@ -41,7 +41,6 @@ import com.revlens.app.domain.session.DefaultSessionManager
 import com.revlens.app.domain.session.SessionManager
 import com.revlens.app.domain.usecase.CreateWorkspaceUseCase
 import com.revlens.app.domain.usecase.LoginUseCase
-import com.revlens.app.domain.usecase.ResolveGateUseCase
 import com.revlens.app.ui.screens.marketing.LandingViewModel
 import com.revlens.app.ui.screens.marketing.PublicPricingViewModel
 import com.revlens.app.ui.screens.notifications.NotificationSettingsViewModel
@@ -116,7 +115,7 @@ class WasmProfileRepository : ProfileRepository {
                     profile
                 }
             } else if (loadOnboardingCompleted()) {
-                val defaultProf = com.revlens.app.model.createDefaultGuestProfile()
+                val defaultProf = com.revlens.app.model.createDefaultProfile()
                 window.localStorage.setItem("revlens_profile", json.encodeToString(defaultProf))
                 defaultProf
             } else null
@@ -222,7 +221,6 @@ val wasmModule = module {
     }
     single<WorkspaceContext> { DefaultWorkspaceContext() }
     single<SessionManager> { DefaultSessionManager(SessionState.Unknown) }
-    single { ResolveGateUseCase() }
     single<IdGenerator> { DefaultIdGenerator() }
     single<SecureStorage> { InMemorySecureStorage() }
     single<ExperimentRepository> { DefaultExperimentRepository() }

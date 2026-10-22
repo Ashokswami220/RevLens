@@ -84,7 +84,10 @@ class ApiWebhooksViewModel :
             return
         }
 
-        val secretToken = "rev_live_${name.lowercase().replace(" ", "_")}_xyz123"
+        val secretToken = "rev_live_${
+            name.lowercase()
+                .replace(" ", "_")
+        }_xyz123"
         val newKey = ApiKey(
             id = "key_${name.lowercase()}",
             name = name,
@@ -174,7 +177,11 @@ class ApiWebhooksViewModel :
 
     private fun retryDelivery(deliveryId: String) {
         viewModelScope.launch {
-            emit(ApiWebhooksEffect.ShowToast("Webhook delivery redelivered successfully (Status: 200)"))
+            emit(
+                ApiWebhooksEffect.ShowToast(
+                    "Webhook delivery redelivered successfully (Status: 200)"
+                )
+            )
         }
     }
 }

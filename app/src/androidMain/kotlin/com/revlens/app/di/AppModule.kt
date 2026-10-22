@@ -28,7 +28,6 @@ import com.revlens.app.domain.session.DefaultSessionManager
 import com.revlens.app.domain.session.SessionManager
 import com.revlens.app.domain.usecase.CreateWorkspaceUseCase
 import com.revlens.app.domain.usecase.LoginUseCase
-import com.revlens.app.domain.usecase.ResolveGateUseCase
 import com.revlens.app.presentation.MainViewModel
 import com.revlens.app.ui.screens.analytics.CacAnalyticsViewModel
 import com.revlens.app.ui.screens.analytics.CohortAnalysisViewModel
@@ -82,7 +81,6 @@ val appModule = module {
     }
     single<WorkspaceContext> { DefaultWorkspaceContext() }
     single<SessionManager> { DefaultSessionManager(SessionState.Unknown) }
-    single { ResolveGateUseCase() }
     single<IdGenerator> { DefaultIdGenerator() }
     single<SecureStorage> { InMemorySecureStorage() }
     single<ExperimentRepository> { DefaultExperimentRepository() }

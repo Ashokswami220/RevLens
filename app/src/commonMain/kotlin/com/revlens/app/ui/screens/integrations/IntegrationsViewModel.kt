@@ -8,7 +8,9 @@ import com.revlens.app.domain.model.IntegrationProvider
 import kotlinx.coroutines.launch
 
 class IntegrationsViewModel :
-    MviViewModel<IntegrationsUiState, IntegrationsEvent, IntegrationsEffect>(IntegrationsUiState()) {
+    MviViewModel<IntegrationsUiState, IntegrationsEvent, IntegrationsEffect>(
+        IntegrationsUiState()
+    ) {
 
     override fun onEvent(event: IntegrationsEvent) {
         when (event) {

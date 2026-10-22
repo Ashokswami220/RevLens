@@ -90,6 +90,7 @@ class LtvAnalysisViewModel(
             LtvMethod.MARGIN_ADJUSTED -> LtvCalculator.calculateMarginAdjustedLtv(
                 arpu, margin, s.baseChurnPercent
             )
+
             LtvMethod.SIMPLE -> LtvCalculator.calculateSimpleLtv(arpu, s.baseChurnPercent)
         }
 
@@ -97,6 +98,7 @@ class LtvAnalysisViewModel(
             LtvMethod.MARGIN_ADJUSTED -> LtvCalculator.calculateMarginAdjustedLtv(
                 arpu, margin, s.simulatedChurnPercent
             )
+
             LtvMethod.SIMPLE -> LtvCalculator.calculateSimpleLtv(arpu, s.simulatedChurnPercent)
         }
 

@@ -12,6 +12,7 @@ interface ProfileRepository {
     suspend fun setOnboardingCompleted(completed: Boolean)
     val hasSeenIntroFlow: Flow<Boolean>
         get() = flowOf(false)
+
     suspend fun setHasSeenIntro(seen: Boolean) {}
     suspend fun syncRemoteProfile(): BusinessProfile? = null
     suspend fun clearLocalData() {}

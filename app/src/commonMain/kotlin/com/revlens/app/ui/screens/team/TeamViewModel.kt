@@ -103,7 +103,10 @@ class TeamViewModel : MviViewModel<TeamUiState, TeamEvent, TeamEffect>(
             update { copy(error = "Please enter a valid email address") }
             return
         }
-        if (current.currentUserEmail.isNotBlank() && email.equals(current.currentUserEmail, ignoreCase = true)) {
+        if (current.currentUserEmail.isNotBlank() && email.equals(
+                current.currentUserEmail, ignoreCase = true
+            )
+        ) {
             update { copy(error = "You are already a member of this workspace") }
             return
         }

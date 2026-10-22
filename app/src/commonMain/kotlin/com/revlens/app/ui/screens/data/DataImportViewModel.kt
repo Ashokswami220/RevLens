@@ -203,7 +203,9 @@ class DataImportViewModel : MviViewModel<DataImportUiState, DataImportEvent, Dat
         update { copy(isLoading = false, step = 4) }
         emit(
             DataImportEffect.ShowMessage(
-                UiText.DynamicString("Successfully imported ${if (count > 0) "$count records" else "dataset"}")
+                UiText.DynamicString(
+                    "Successfully imported ${if (count > 0) "$count records" else "dataset"}"
+                )
             )
         )
     }

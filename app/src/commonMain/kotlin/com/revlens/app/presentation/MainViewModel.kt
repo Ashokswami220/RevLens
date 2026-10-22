@@ -7,7 +7,6 @@ import com.revlens.app.data.ProfileRepository
 import com.revlens.app.data.ScenarioRepository
 import com.revlens.app.domain.context.DefaultWorkspaceContext
 import com.revlens.app.domain.context.WorkspaceContext
-import com.revlens.app.domain.model.BusinessModel
 import com.revlens.app.domain.model.Role
 import com.revlens.app.domain.model.SessionState
 import com.revlens.app.domain.model.Workspace
@@ -18,7 +17,6 @@ import com.revlens.app.domain.session.DefaultSessionManager
 import com.revlens.app.domain.session.SessionManager
 import com.revlens.app.model.BusinessProfile
 import com.revlens.app.model.Scenario
-import com.revlens.app.utils.getCurrentTimeMillis
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,7 +24,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -214,31 +211,6 @@ class MainViewModel(
         if (!RolePermissions.canEditBaselinesAndScenarios(currentUserRole.value)) return
         viewModelScope.launch {
             scenarioRepository.deleteScenario(scenarioId)
-        }
-    }
-
-    fun createWorkspace(
-        name: String,
-        currency: String = "USD",
-        businessModel: BusinessModel = BusinessModel.B2bSaas,
-        timeZoneId: String = "UTC",
-        fiscalYearStartMonth: Int = 1
-    ) {
-        viewModelScope.launch {
-            val allWs = workspaceRepository.workspacesFlow.firstOrNull().orEmpty()
-            allWs.forEach { ws -> workspaceRepository.deleteWorkspace(ws.id) }
-
-            val newWorkspace = Workspace(
-                id = "ws_${getCurrentTimeMillis()}",
-                name = name,
-                currency = currency,
-                timeZoneId = timeZoneId,
-                fiscalYearStartMonth = fiscalYearStartMonth,
-                businessModel = businessModel,
-                createdAtMillis = getCurrentTimeMillis()
-            )
-            workspaceRepository.createWorkspace(newWorkspace)
-            workspaceContext.switchTo(newWorkspace.id)
         }
     }
 }

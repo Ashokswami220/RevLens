@@ -5,7 +5,6 @@ import com.revlens.app.core.ui.MviViewModel
 import com.revlens.app.core.ui.toUiText
 import com.revlens.app.data.ProfileRepository
 import com.revlens.app.domain.usecase.LoginUseCase
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull

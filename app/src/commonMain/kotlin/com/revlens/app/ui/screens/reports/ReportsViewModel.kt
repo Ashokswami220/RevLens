@@ -1,14 +1,13 @@
 package com.revlens.app.ui.screens.reports
 
-import androidx.lifecycle.viewModelScope
 import com.revlens.app.core.ui.MviViewModel
 import com.revlens.app.domain.model.PeriodPreset
 import com.revlens.app.domain.model.ReportFormat
 import com.revlens.app.domain.model.ReportSnapshot
-import kotlinx.coroutines.launch
 import kotlin.random.Random
 
-class ReportsViewModel : MviViewModel<ReportsUiState, ReportsEvent, ReportsEffect>(ReportsUiState()) {
+class ReportsViewModel :
+    MviViewModel<ReportsUiState, ReportsEvent, ReportsEffect>(ReportsUiState()) {
 
     private var allReports: List<ReportSnapshot> = emptyList()
 

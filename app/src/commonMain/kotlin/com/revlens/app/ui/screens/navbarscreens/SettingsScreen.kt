@@ -108,7 +108,9 @@ fun SettingsScreen(
 
     fun showRoleDeniedToast(requiredRolesText: String) {
         scope.launch {
-            snackbarHostState.showSnackbar("Permission denied (${userRole.name}): $requiredRolesText")
+            snackbarHostState.showSnackbar(
+                "Permission denied (${userRole.name}): $requiredRolesText"
+            )
         }
     }
 
@@ -142,14 +144,18 @@ fun SettingsScreen(
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 val displayName =
-                    currentUser?.name?.ifBlank { currentUser.email.substringBefore("@") } ?: "Guest User"
+                    currentUser?.name?.ifBlank { currentUser.email.substringBefore("@") }
+                        ?: "Guest User"
                 val displayEmail = currentUser?.email ?: "Local-only session"
                 val initials = if (currentUser == null) {
                     "GU"
                 } else {
                     displayName.split(" ")
                         .filter { it.isNotBlank() }
-                        .mapNotNull { it.firstOrNull()?.toString() }
+                        .mapNotNull {
+                            it.firstOrNull()
+                                ?.toString()
+                        }
                         .take(2)
                         .joinToString("")
                         .uppercase()
@@ -244,7 +250,9 @@ fun SettingsScreen(
                         isLocked = !canEditBaseline,
                         onClick = {
                             if (!canEditBaseline) {
-                                showRoleDeniedToast("Only Owners, Admins, and Editors can edit baselines.")
+                                showRoleDeniedToast(
+                                    "Only Owners, Admins, and Editors can edit baselines."
+                                )
                             } else {
                                 onNavigateToBaseline()
                             }
@@ -262,7 +270,9 @@ fun SettingsScreen(
                         isLocked = !canEditBaseline,
                         onClick = {
                             if (!canEditBaseline) {
-                                showRoleDeniedToast("Viewers cannot upload or overwrite workspace datasets.")
+                                showRoleDeniedToast(
+                                    "Viewers cannot upload or overwrite workspace datasets."
+                                )
                             } else {
                                 onNavigateToDataImport()
                             }
@@ -280,7 +290,9 @@ fun SettingsScreen(
                         onClick = {
                             if (isGuest) lockedFeaturePrompt = "Integrations"
                             else if (!canManageApiAndIntegrations) {
-                                showRoleDeniedToast("Only Workspace Owners and Admins can manage integrations.")
+                                showRoleDeniedToast(
+                                    "Only Workspace Owners and Admins can manage integrations."
+                                )
                             } else {
                                 onNavigateToIntegrations()
                             }
@@ -293,7 +305,9 @@ fun SettingsScreen(
                         onClick = {
                             if (isGuest) lockedFeaturePrompt = "Developer API"
                             else if (!canManageApiAndIntegrations) {
-                                showRoleDeniedToast("Only Workspace Owners and Admins can manage API keys and webhooks.")
+                                showRoleDeniedToast(
+                                    "Only Workspace Owners and Admins can manage API keys and webhooks."
+                                )
                             } else {
                                 onNavigateToApiWebhooks()
                             }
@@ -312,7 +326,9 @@ fun SettingsScreen(
                         onClick = {
                             if (isGuest) lockedFeaturePrompt = "Billing & Subscriptions"
                             else if (!canManageBilling) {
-                                showRoleDeniedToast("Only the Workspace Owner can manage billing and subscriptions.")
+                                showRoleDeniedToast(
+                                    "Only the Workspace Owner can manage billing and subscriptions."
+                                )
                             } else {
                                 onNavigateToBilling()
                             }

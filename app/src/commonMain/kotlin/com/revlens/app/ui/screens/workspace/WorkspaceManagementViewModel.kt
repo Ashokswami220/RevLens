@@ -97,9 +97,23 @@ class WorkspaceManagementViewModel(
             }
 
             WorkspaceManagementEvent.ShowSwitchSheet -> update { copy(isSwitchSheetVisible = true) }
-            WorkspaceManagementEvent.HideSwitchSheet -> update { copy(isSwitchSheetVisible = false) }
-            WorkspaceManagementEvent.ShowEditNameDialog -> update { copy(isEditNameDialogVisible = true) }
-            WorkspaceManagementEvent.HideEditNameDialog -> update { copy(isEditNameDialogVisible = false) }
+            WorkspaceManagementEvent.HideSwitchSheet -> update {
+                copy(
+                    isSwitchSheetVisible = false
+                )
+            }
+
+            WorkspaceManagementEvent.ShowEditNameDialog -> update {
+                copy(
+                    isEditNameDialogVisible = true
+                )
+            }
+
+            WorkspaceManagementEvent.HideEditNameDialog -> update {
+                copy(
+                    isEditNameDialogVisible = false
+                )
+            }
         }
     }
 }

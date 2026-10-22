@@ -64,12 +64,6 @@ class BigDecimal(
         return roundToScale(quotient, scale, roundingMode)
     }
 
-    fun divide(other: BigDecimal, roundingMode: RoundingMode): BigDecimal =
-        divide(other, 2, roundingMode)
-
-    fun divide(other: BigDecimal): BigDecimal =
-        divide(other, 2, RoundingMode.HALF_UP)
-
     fun setScale(newScale: Int, roundingMode: RoundingMode): BigDecimal =
         roundToScale(this.rawValue, newScale, roundingMode)
 

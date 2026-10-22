@@ -47,8 +47,8 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import com.revlens.app.model.BigDecimal
 import com.revlens.app.domain.policy.RolePermissions
+import com.revlens.app.model.BigDecimal
 import com.revlens.app.model.BusinessProfile
 import com.revlens.app.model.Plan
 import com.revlens.app.model.toBigDecimalOrNull

@@ -24,7 +24,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.revlens.app.domain.model.Role
 import com.revlens.app.presentation.MainViewModel
 import com.revlens.app.ui.components.ActionCardButton
 import com.revlens.app.ui.components.RevLensTopAppBar
@@ -32,7 +31,6 @@ import com.revlens.app.ui.components.SectionCard
 import com.revlens.app.ui.components.feedback.TypedConfirmDialog
 import com.revlens.app.ui.theme.RevLensTheme
 import com.revlens.app.ui.theme.RevLensTypography
-import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -1,7 +1,6 @@
 package com.revlens.app.ui.screens.notifications
 
 import com.revlens.app.core.ui.MviViewModel
-import com.revlens.app.domain.model.NotificationPrefs
 
 class NotificationSettingsViewModel :
     MviViewModel<NotificationSettingsUiState, NotificationSettingsEvent, NotificationSettingsEffect>(

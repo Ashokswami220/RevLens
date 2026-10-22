@@ -119,7 +119,7 @@ data class MetricResult(
     val isPositive: Boolean = true
 )
 
-fun createDefaultGuestProfile(): BusinessProfile = BusinessProfile(
+fun createDefaultProfile(): BusinessProfile = BusinessProfile(
     monthlyChurnRate = 0.045,
     monthlyGrowthRate = 0.085,
     cac = BigDecimal("175.00"),

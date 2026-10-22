@@ -139,7 +139,11 @@ fun CreateWorkspaceScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         RevLensTextField(
                             value = state.name,
-                            onValueChange = { viewModel.onEvent(CreateWorkspaceEvent.NameChanged(it)) },
+                            onValueChange = {
+                                viewModel.onEvent(
+                                    CreateWorkspaceEvent.NameChanged(it)
+                                )
+                            },
                             label = "Business / Workspace Name",
                             placeholder = "e.g. Acme SaaS Inc.",
                             isError = state.nameError != null,
@@ -167,7 +171,9 @@ fun CreateWorkspaceScreen(
                                             .weight(1f)
                                             .clip(RoundedCornerShape(10.dp))
                                             .background(
-                                                if (selected) RevLensTheme.colors.brandPrimary.copy(alpha = 0.15f)
+                                                if (selected) RevLensTheme.colors.brandPrimary.copy(
+                                                    alpha = 0.15f
+                                                )
                                                 else RevLensTheme.colors.surfaceElevated
                                             )
                                             .border(
@@ -177,7 +183,9 @@ fun CreateWorkspaceScreen(
                                                 RoundedCornerShape(10.dp)
                                             )
                                             .clickable {
-                                                viewModel.onEvent(CreateWorkspaceEvent.BusinessModelChanged(model))
+                                                viewModel.onEvent(
+                                                    CreateWorkspaceEvent.BusinessModelChanged(model)
+                                                )
                                             }
                                             .padding(vertical = 12.dp),
                                         contentAlignment = Alignment.Center
@@ -213,7 +221,9 @@ fun CreateWorkspaceScreen(
                                 modifier = Modifier
                                     .size(44.dp)
                                     .clip(CircleShape)
-                                    .background(RevLensTheme.colors.brandPrimary.copy(alpha = 0.14f)),
+                                    .background(
+                                        RevLensTheme.colors.brandPrimary.copy(alpha = 0.14f)
+                                    ),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
@@ -240,7 +250,11 @@ fun CreateWorkspaceScreen(
 
                         RevLensTextField(
                             value = state.joinCode,
-                            onValueChange = { viewModel.onEvent(CreateWorkspaceEvent.JoinCodeChanged(it)) },
+                            onValueChange = {
+                                viewModel.onEvent(
+                                    CreateWorkspaceEvent.JoinCodeChanged(it)
+                                )
+                            },
                             label = "Team Join Code / Invite Code",
                             placeholder = "e.g. RL-8F3A2B",
                             isError = state.joinCodeError != null,

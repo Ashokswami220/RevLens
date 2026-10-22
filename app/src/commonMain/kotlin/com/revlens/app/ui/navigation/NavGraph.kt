@@ -84,11 +84,11 @@ import com.revlens.app.ui.screens.navbarscreens.SettingsScreen
 import com.revlens.app.ui.screens.navbarscreens.SimulatorScreen
 import com.revlens.app.ui.screens.notifications.NotificationSettingsScreen
 import com.revlens.app.ui.screens.notifications.NotificationSettingsViewModel
+import com.revlens.app.ui.screens.profile.AccountActionsScreen
 import com.revlens.app.ui.screens.profile.ProfileScreen
 import com.revlens.app.ui.screens.profile.ProfileViewModel
 import com.revlens.app.ui.screens.reports.ReportsScreen
 import com.revlens.app.ui.screens.reports.ReportsViewModel
-import com.revlens.app.ui.screens.profile.AccountActionsScreen
 import com.revlens.app.ui.screens.team.TeamScreen
 import com.revlens.app.ui.screens.team.TeamViewModel
 import com.revlens.app.ui.screens.workspace.CreateWorkspaceScreen
@@ -427,582 +427,582 @@ fun RevLensNavGraph(
         LocalAppNavigator provides navigateToTab,
         LocalCurrentTab provides (currentTab ?: "Dashboard")
     ) {
-            Scaffold(
-                contentWindowInsets = WindowInsets(0, 0, 0, 0),
-                bottomBar = {
-                    if (showBottomBar) {
-                        RevLensBottomBar(
-                            items = bottomNavItems,
-                            currentRoute = currentTab,
-                            onNavigate = navigateToTab
+        Scaffold(
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
+            bottomBar = {
+                if (showBottomBar) {
+                    RevLensBottomBar(
+                        items = bottomNavItems,
+                        currentRoute = currentTab,
+                        onNavigate = navigateToTab
+                    )
+                }
+            }
+        ) { innerPadding ->
+            val isNonDashboardTab =
+                currentTab != null && currentTab != "Dashboard" && currentTab != "Home"
+
+            PlatformBackHandler(enabled = isNonDashboardTab) {
+                navController.navigate(DashboardRoute) {
+                    popUpTo(DashboardRoute) { inclusive = false }
+                    launchSingleTop = true
+                }
+            }
+
+            // Strictly acts as a fallback Auth Guard, leaves forward routing to the ViewModels
+            LaunchedEffect(session, hasSeenIntro) {
+                // If user hasn't seen intro yet, let them view the intro screen uninterrupted
+                if (hasSeenIntro == false) return@LaunchedEffect
+
+                val currentRouteStr = navController.currentDestination?.route ?: ""
+                if (currentRouteStr.isEmpty()) return@LaunchedEffect
+
+                val isAuthScreen =
+                    currentRouteStr.contains("IntroRoute") || currentRouteStr.contains(
+                        "LoginRoute"
+                    )
+
+                when (session) {
+                    is SessionState.SignedOut -> {
+                        // Once intro is seen, SignedOut ALWAYS routes to LoginRoute (never Intro!)
+                        if (!currentRouteStr.contains("LoginRoute")) {
+                            navController.navigate(LoginRoute) {
+                                popUpTo(0) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }
+                    }
+
+                    is SessionState.Authenticated -> {
+                        // If they restart the app or authenticate and are on Auth screens,
+                        // push them to Dashboard or CreateWorkspace.
+                        if (isAuthScreen) {
+                            val target: Any =
+                                if (activeWorkspace != null && isOnboardingCompleted == true) DashboardRoute else CreateWorkspaceRoute
+                            navController.navigate(target) {
+                                popUpTo(0) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }
+                    }
+
+                    else -> {}
+                }
+            }
+
+            val initialStartDestination = remember {
+                when {
+                    hasSeenIntro == false -> IntroRoute
+                    session !is SessionState.Authenticated -> LoginRoute
+                    activeWorkspace != null && isOnboardingCompleted == true -> DashboardRoute
+                    else -> CreateWorkspaceRoute
+                }
+            }
+
+            NavHost(
+                navController = navController,
+                startDestination = initialStartDestination,
+                modifier = modifier.padding(innerPadding),
+                enterTransition = {
+                    val isTargetMainTab = isMainTab(targetState.destination.route)
+                    val isInitialMainTab = isMainTab(initialState.destination.route)
+                    if (isTargetMainTab && isInitialMainTab) {
+                        fadeIn(animationSpec = tween(ANIM_DURATION))
+                    } else {
+                        slideInHorizontally(
+                            initialOffsetX = { it },
+                            animationSpec = tween(ANIM_DURATION, easing = ANIM_EASING)
+                        )
+                    }
+                },
+                exitTransition = {
+                    val isTargetMainTab = isMainTab(targetState.destination.route)
+                    val isInitialMainTab = isMainTab(initialState.destination.route)
+                    if (isTargetMainTab && isInitialMainTab) {
+                        fadeOut(animationSpec = tween(ANIM_DURATION))
+                    } else {
+                        slideOutHorizontally(
+                            targetOffsetX = { -it / 3 },
+                            animationSpec = tween(ANIM_DURATION, easing = ANIM_EASING)
+                        )
+                    }
+                },
+                popEnterTransition = {
+                    val isTargetMainTab = isMainTab(targetState.destination.route)
+                    val isInitialMainTab = isMainTab(initialState.destination.route)
+                    if (isTargetMainTab && isInitialMainTab) {
+                        fadeIn(animationSpec = tween(ANIM_DURATION))
+                    } else {
+                        slideInHorizontally(
+                            initialOffsetX = { -it / 3 },
+                            animationSpec = tween(ANIM_DURATION, easing = ANIM_EASING)
+                        )
+                    }
+                },
+                popExitTransition = {
+                    val isTargetMainTab = isMainTab(targetState.destination.route)
+                    val isInitialMainTab = isMainTab(initialState.destination.route)
+                    if (isTargetMainTab && isInitialMainTab) {
+                        fadeOut(animationSpec = tween(ANIM_DURATION))
+                    } else {
+                        slideOutHorizontally(
+                            targetOffsetX = { it },
+                            animationSpec = tween(ANIM_DURATION, easing = ANIM_EASING)
                         )
                     }
                 }
-            ) { innerPadding ->
-                val isNonDashboardTab =
-                    currentTab != null && currentTab != "Dashboard" && currentTab != "Home"
-
-                PlatformBackHandler(enabled = isNonDashboardTab) {
-                    navController.navigate(DashboardRoute) {
-                        popUpTo(DashboardRoute) { inclusive = false }
-                        launchSingleTop = true
-                    }
+            ) {
+                composable<IntroRoute> {
+                    IntroScreen(
+                        onGetStarted = {
+                            viewModel.setIntroSeen()
+                            navController.navigate(LoginRoute) {
+                                popUpTo(0) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                            BrowserRouter.updateUrl("login")
+                        }
+                    )
                 }
 
-                // Strictly acts as a fallback Auth Guard, leaves forward routing to the ViewModels
-                LaunchedEffect(session, hasSeenIntro) {
-                    // If user hasn't seen intro yet, let them view the intro screen uninterrupted
-                    if (hasSeenIntro == false) return@LaunchedEffect
+                composable<LoginRoute> {
+                    val loginViewModel: LoginViewModel = koinViewModel()
+                    LoginScreen(
+                        viewModel = loginViewModel,
+                        onNavigateToDashboard = {
+                            navController.navigate(DashboardRoute) {
+                                popUpTo(0) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                            BrowserRouter.updateUrl("dashboard")
+                        },
+                        onNavigateToCreateWorkspace = {
+                            navController.navigate(CreateWorkspaceRoute) {
+                                popUpTo(0) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        },
+                        onNavigateToInviteAcceptance = {
+                            navController.navigate(InviteAcceptanceRoute) {
+                                popUpTo(0) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        },
+                        onNavigateBack = null
+                    )
+                }
 
-                    val currentRouteStr = navController.currentDestination?.route ?: ""
-                    if (currentRouteStr.isEmpty()) return@LaunchedEffect
+                composable<InviteAcceptanceRoute> {
+                    val inviteViewModel: InviteAcceptanceViewModel = koinViewModel()
+                    InviteAcceptanceScreen(
+                        viewModel = inviteViewModel,
+                        onNavigateToDashboard = {
+                            navController.navigate(DashboardRoute) {
+                                popUpTo(0) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                            BrowserRouter.updateUrl("dashboard")
+                        },
+                        onNavigateToCreateWorkspace = {
+                            navController.navigate(CreateWorkspaceRoute) {
+                                popUpTo(0) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }
+                    )
+                }
 
-                    val isAuthScreen =
-                        currentRouteStr.contains("IntroRoute") || currentRouteStr.contains(
-                            "LoginRoute"
-                        )
-
-                    when (session) {
-                        is SessionState.SignedOut -> {
-                            // Once intro is seen, SignedOut ALWAYS routes to LoginRoute (never Intro!)
-                            if (!currentRouteStr.contains("LoginRoute")) {
+                composable<CreateWorkspaceRoute> {
+                    CreateWorkspaceScreen(
+                        onNavigateToOnboarding = {
+                            navController.navigate(OnboardingRoute) {
+                                launchSingleTop = true
+                            }
+                        },
+                        onNavigateToDashboard = {
+                            navController.navigate(DashboardRoute) {
+                                popUpTo(0) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                            BrowserRouter.updateUrl("dashboard")
+                        },
+                        onBackClick = null,
+                        onLogout = {
+                            viewModel.logout {
                                 navController.navigate(LoginRoute) {
                                     popUpTo(0) { inclusive = true }
                                     launchSingleTop = true
                                 }
+                                BrowserRouter.updateUrl("login")
                             }
                         }
+                    )
+                }
 
-                        is SessionState.Authenticated -> {
-                            // If they restart the app or authenticate and are on Auth screens,
-                            // push them to Dashboard or CreateWorkspace.
-                            if (isAuthScreen) {
-                                val target: Any =
-                                    if (activeWorkspace != null && isOnboardingCompleted == true) DashboardRoute else CreateWorkspaceRoute
-                                navController.navigate(target) {
-                                    popUpTo(0) { inclusive = true }
-                                    launchSingleTop = true
-                                }
+                composable<OnboardingRoute> {
+                    OnboardingDataScreen(
+                        onNavigateBack = {
+                            navController.popBackStack()
+                        },
+                        onFinishOnboarding = { newProfile ->
+                            viewModel.completeOnboarding(newProfile)
+                            navController.navigate(DashboardRoute) {
+                                popUpTo(0) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                            BrowserRouter.updateUrl("dashboard")
+                        }
+                    )
+                }
+
+                composable<DashboardRoute> {
+                    DashboardScreen(
+                        onNavigateToInput = {
+                            navController.navigate(InputDataRoute)
+                        },
+                        onNavigateToPricing = {
+                            navController.navigate(PricingSimulatorRoute(initialTab = 0)) {
+                                launchSingleTop = true
+                            }
+                        },
+                        onNavigateToWhatIf = {
+                            navController.navigate(PricingSimulatorRoute(initialTab = 1)) {
+                                launchSingleTop = true
+                            }
+                        },
+                        onNavigateToBreakEven = {
+                            navController.navigate(PricingSimulatorRoute(initialTab = 2)) {
+                                launchSingleTop = true
+                            }
+                        },
+                        onNavigateToGrowth = {
+                            navController.navigate(PricingSimulatorRoute(initialTab = 3)) {
+                                launchSingleTop = true
+                            }
+                        },
+                        onNavigateToMetrics = {
+                            navController.navigate(MetricsRoute)
+                        },
+                        onNavigateToGoalPlanner = {
+                            navController.navigate(GoalPlannerRoute)
+                        }
+                    )
+                }
+
+                composable<InputDataRoute> {
+                    BusinessSetupScreen(
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable<PricingSimulatorRoute> { backStackEntry ->
+                    val route = backStackEntry.toRoute<PricingSimulatorRoute>()
+                    SimulatorScreen(
+                        initialTab = route.initialTab,
+                        onNavigateToMetrics = { navController.navigate(MetricsRoute) }
+                    )
+                }
+
+                composable<ScenarioBuilderRoute> {
+                    ScenarioBuilderScreen(
+                        onNavigateToCreate = {
+                            navController.navigate(PricingSimulatorRoute(initialTab = 0)) {
+                                launchSingleTop = true
+                            }
+                        },
+                        onNavigateToCompare = {
+                            navController.navigate(ScenarioComparisonRoute)
+                        },
+                        onNavigateToMetrics = { navController.navigate(MetricsRoute) },
+                        onNavigateToExperiments = { navController.navigate(ExperimentsRoute) }
+                    )
+                }
+
+                composable<ScenarioComparisonRoute> {
+                    ScenarioComparisonScreen(
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable<ForecastRoute> {
+                    ForecastScreen(
+                        onNavigateToGoalPlanner = { navController.navigate(GoalPlannerRoute) },
+                        onNavigateToMetrics = { navController.navigate(MetricsRoute) }
+                    )
+                }
+
+                composable<GoalPlannerRoute> {
+                    GoalPlannerScreen(
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable<MetricsRoute> {
+                    SaaSMetricsScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToRevenueBreakdown = {
+                            navController.navigate(
+                                RevenueBreakdownRoute
+                            )
+                        },
+                        onNavigateToLtvAnalysis = { navController.navigate(LtvAnalysisRoute) },
+                        onNavigateToCacAnalytics = {
+                            navController.navigate(
+                                CacAnalyticsRoute
+                            )
+                        },
+                        onNavigateToCustomerAnalytics = {
+                            navController.navigate(
+                                CustomerAnalyticsRoute
+                            )
+                        },
+                        onNavigateToCohortAnalysis = {
+                            navController.navigate(
+                                CohortAnalysisRoute
+                            )
+                        }
+                    )
+                }
+
+                composable<SettingsRoute> {
+                    SettingsScreen(
+                        onNavigateToWorkspace = {
+                            navController.navigate(
+                                WorkspaceManagementRoute
+                            )
+                        },
+                        onNavigateToTeam = { navController.navigate(TeamRoute) },
+                        onNavigateToBaseline = { navController.navigate(InputDataRoute) },
+                        onNavigateToDataImport = { navController.navigate(DataImportRoute) },
+                        onNavigateToSignUp = { navController.navigate(LoginRoute) },
+                        onNavigateToProfile = { navController.navigate(ProfileRoute) },
+                        onNavigateToReports = { navController.navigate(ReportsRoute) },
+                        onNavigateToNotifications = {
+                            navController.navigate(
+                                NotificationsRoute
+                            )
+                        },
+                        onNavigateToMore = { navController.navigate(AccountActionsRoute) },
+                        onNavigateToBilling = { navController.navigate(BillingRoute) },
+                        onNavigateToIntegrations = {
+                            navController.navigate(
+                                IntegrationsRoute
+                            )
+                        },
+                        onNavigateToApiWebhooks = { navController.navigate(ApiWebhooksRoute) }
+                    )
+                }
+
+                composable<AccountActionsRoute> {
+                    AccountActionsScreen(
+                        viewModel = viewModel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onLogout = {
+                            navController.navigate(LoginRoute) {
+                                popUpTo(0) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                            BrowserRouter.updateUrl("login")
+                        },
+                        onNavigateToCreateWorkspace = {
+                            navController.navigate(CreateWorkspaceRoute) {
+                                popUpTo(0) { inclusive = true }
+                                launchSingleTop = true
                             }
                         }
-
-                        else -> {}
-                    }
+                    )
                 }
 
-                val initialStartDestination = remember {
-                    when {
-                        hasSeenIntro == false -> IntroRoute
-                        session !is SessionState.Authenticated -> LoginRoute
-                        activeWorkspace != null && isOnboardingCompleted == true -> DashboardRoute
-                        else -> CreateWorkspaceRoute
-                    }
+                composable<WorkspaceManagementRoute> {
+                    WorkspaceManagementScreen(
+                        onBackClick = { navController.popBackStack() },
+                        onNavigateToBaseline = { navController.navigate(InputDataRoute) },
+                        onNavigateToCreateWorkspace = {
+                            navController.navigate(CreateWorkspaceRoute) {
+                                popUpTo(0) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }
+                    )
                 }
 
-                NavHost(
-                    navController = navController,
-                    startDestination = initialStartDestination,
-                    modifier = modifier.padding(innerPadding),
-                    enterTransition = {
-                        val isTargetMainTab = isMainTab(targetState.destination.route)
-                        val isInitialMainTab = isMainTab(initialState.destination.route)
-                        if (isTargetMainTab && isInitialMainTab) {
-                            fadeIn(animationSpec = tween(ANIM_DURATION))
-                        } else {
-                            slideInHorizontally(
-                                initialOffsetX = { it },
-                                animationSpec = tween(ANIM_DURATION, easing = ANIM_EASING)
+                composable<DataImportRoute> {
+                    val importViewModel: DataImportViewModel = koinViewModel()
+                    DataImportScreen(
+                        viewModel = importViewModel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToAnalytics = {
+                            navController.navigate(RevenueBreakdownRoute) {
+                                popUpTo(DashboardRoute) { inclusive = false }
+                            }
+                        }
+                    )
+                }
+
+                composable<RevenueBreakdownRoute> {
+                    val breakdownViewModel: RevenueBreakdownViewModel = koinViewModel()
+                    RevenueBreakdownScreen(
+                        viewModel = breakdownViewModel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToDataImport = { navController.navigate(DataImportRoute) },
+                        onNavigateToSimulator = {
+                            navController.navigate(
+                                PricingSimulatorRoute(0)
                             )
                         }
-                    },
-                    exitTransition = {
-                        val isTargetMainTab = isMainTab(targetState.destination.route)
-                        val isInitialMainTab = isMainTab(initialState.destination.route)
-                        if (isTargetMainTab && isInitialMainTab) {
-                            fadeOut(animationSpec = tween(ANIM_DURATION))
-                        } else {
-                            slideOutHorizontally(
-                                targetOffsetX = { -it / 3 },
-                                animationSpec = tween(ANIM_DURATION, easing = ANIM_EASING)
+                    )
+                }
+
+                composable<LtvAnalysisRoute> {
+                    val ltvViewModel: LtvAnalysisViewModel = koinViewModel()
+                    LtvAnalysisScreen(
+                        viewModel = ltvViewModel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToWhatIf = {
+                            navController.navigate(
+                                PricingSimulatorRoute(1)
+                            )
+                        },
+                        onNavigateToBaseline = { navController.navigate(InputDataRoute) }
+                    )
+                }
+
+                composable<CacAnalyticsRoute> {
+                    val cacViewModel: CacAnalyticsViewModel = koinViewModel()
+                    CacAnalyticsScreen(
+                        viewModel = cacViewModel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToGrowthSimulator = {
+                            navController.navigate(
+                                PricingSimulatorRoute(3)
                             )
                         }
-                    },
-                    popEnterTransition = {
-                        val isTargetMainTab = isMainTab(targetState.destination.route)
-                        val isInitialMainTab = isMainTab(initialState.destination.route)
-                        if (isTargetMainTab && isInitialMainTab) {
-                            fadeIn(animationSpec = tween(ANIM_DURATION))
-                        } else {
-                            slideInHorizontally(
-                                initialOffsetX = { -it / 3 },
-                                animationSpec = tween(ANIM_DURATION, easing = ANIM_EASING)
-                            )
+                    )
+                }
+
+                composable<CustomerAnalyticsRoute> {
+                    val customerViewModel: CustomerAnalyticsViewModel = koinViewModel()
+                    CustomerAnalyticsScreen(
+                        viewModel = customerViewModel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToDataImport = { navController.navigate(DataImportRoute) }
+                    )
+                }
+
+                composable<CohortAnalysisRoute> {
+                    val cohortViewModel: CohortAnalysisViewModel = koinViewModel()
+                    CohortAnalysisScreen(
+                        viewModel = cohortViewModel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToDataImport = { navController.navigate(DataImportRoute) }
+                    )
+                }
+
+                composable<ExperimentsRoute> {
+                    val expViewModel: ExperimentsViewModel = koinViewModel()
+                    ExperimentsScreen(
+                        viewModel = expViewModel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToDetails = { id ->
+                            navController.navigate(ExperimentDetailsRoute(id))
                         }
-                    },
-                    popExitTransition = {
-                        val isTargetMainTab = isMainTab(targetState.destination.route)
-                        val isInitialMainTab = isMainTab(initialState.destination.route)
-                        if (isTargetMainTab && isInitialMainTab) {
-                            fadeOut(animationSpec = tween(ANIM_DURATION))
-                        } else {
-                            slideOutHorizontally(
-                                targetOffsetX = { it },
-                                animationSpec = tween(ANIM_DURATION, easing = ANIM_EASING)
-                            )
-                        }
-                    }
-                ) {
-                    composable<IntroRoute> {
-                        IntroScreen(
-                            onGetStarted = {
-                                viewModel.setIntroSeen()
+                    )
+                }
+
+                composable<ExperimentDetailsRoute> { backStackEntry ->
+                    val route = backStackEntry.toRoute<ExperimentDetailsRoute>()
+                    val detailsViewModel: ExperimentDetailsViewModel = koinViewModel()
+                    ExperimentDetailsScreen(
+                        experimentId = route.id,
+                        viewModel = detailsViewModel,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable<ReportsRoute> {
+                    val reportsViewModel: ReportsViewModel = koinViewModel()
+                    ReportsScreen(
+                        viewModel = reportsViewModel,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable<NotificationsRoute> {
+                    val notifViewModel: NotificationSettingsViewModel = koinViewModel()
+                    NotificationSettingsScreen(
+                        viewModel = notifViewModel,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable<ProfileRoute> {
+                    val profileViewModel: ProfileViewModel = koinViewModel()
+                    ProfileScreen(
+                        viewModel = profileViewModel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToLogin = {
+                            viewModel.logout {
                                 navController.navigate(LoginRoute) {
                                     popUpTo(0) { inclusive = true }
                                     launchSingleTop = true
                                 }
                                 BrowserRouter.updateUrl("login")
                             }
-                        )
-                    }
+                        }
+                    )
+                }
 
-                    composable<LoginRoute> {
-                        val loginViewModel: LoginViewModel = koinViewModel()
-                        LoginScreen(
-                            viewModel = loginViewModel,
-                            onNavigateToDashboard = {
-                                navController.navigate(DashboardRoute) {
-                                    popUpTo(0) { inclusive = true }
-                                    launchSingleTop = true
-                                }
-                                BrowserRouter.updateUrl("dashboard")
-                            },
-                            onNavigateToCreateWorkspace = {
-                                navController.navigate(CreateWorkspaceRoute) {
-                                    popUpTo(0) { inclusive = true }
-                                    launchSingleTop = true
-                                }
-                            },
-                            onNavigateToInviteAcceptance = {
-                                navController.navigate(InviteAcceptanceRoute) {
-                                    popUpTo(0) { inclusive = true }
-                                    launchSingleTop = true
-                                }
-                            },
-                            onNavigateBack = null
-                        )
-                    }
+                composable<TeamRoute> {
+                    val teamViewModel: TeamViewModel = koinViewModel()
+                    TeamScreen(
+                        viewModel = teamViewModel,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
 
-                    composable<InviteAcceptanceRoute> {
-                        val inviteViewModel: InviteAcceptanceViewModel = koinViewModel()
-                        InviteAcceptanceScreen(
-                            viewModel = inviteViewModel,
-                            onNavigateToDashboard = {
-                                navController.navigate(DashboardRoute) {
-                                    popUpTo(0) { inclusive = true }
-                                    launchSingleTop = true
-                                }
-                                BrowserRouter.updateUrl("dashboard")
-                            },
-                            onNavigateToCreateWorkspace = {
-                                navController.navigate(CreateWorkspaceRoute) {
-                                    popUpTo(0) { inclusive = true }
-                                    launchSingleTop = true
-                                }
-                            }
-                        )
-                    }
+                composable<BillingRoute> {
+                    val billingViewModel: BillingViewModel = koinViewModel()
+                    BillingScreen(
+                        viewModel = billingViewModel,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
 
-                    composable<CreateWorkspaceRoute> {
-                        CreateWorkspaceScreen(
-                            onNavigateToOnboarding = {
-                                navController.navigate(OnboardingRoute) {
-                                    launchSingleTop = true
-                                }
-                            },
-                            onNavigateToDashboard = {
-                                navController.navigate(DashboardRoute) {
-                                    popUpTo(0) { inclusive = true }
-                                    launchSingleTop = true
-                                }
-                                BrowserRouter.updateUrl("dashboard")
-                            },
-                            onBackClick = null,
-                            onLogout = {
-                                viewModel.logout {
-                                    navController.navigate(LoginRoute) {
-                                        popUpTo(0) { inclusive = true }
-                                        launchSingleTop = true
-                                    }
-                                    BrowserRouter.updateUrl("login")
-                                }
-                            }
-                        )
-                    }
+                composable<IntegrationsRoute> {
+                    val integrationsViewModel: IntegrationsViewModel = koinViewModel()
+                    IntegrationsScreen(
+                        viewModel = integrationsViewModel,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
 
-                    composable<OnboardingRoute> {
-                        OnboardingDataScreen(
-                            onNavigateBack = {
-                                navController.popBackStack()
-                            },
-                            onFinishOnboarding = { newProfile ->
-                                viewModel.completeOnboarding(newProfile)
-                                navController.navigate(DashboardRoute) {
-                                    popUpTo(0) { inclusive = true }
-                                    launchSingleTop = true
-                                }
-                                BrowserRouter.updateUrl("dashboard")
-                            }
-                        )
-                    }
+                composable<ApiWebhooksRoute> {
+                    val developerViewModel: ApiWebhooksViewModel = koinViewModel()
+                    ApiWebhooksScreen(
+                        viewModel = developerViewModel,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
 
-                    composable<DashboardRoute> {
-                        DashboardScreen(
-                            onNavigateToInput = {
-                                navController.navigate(InputDataRoute)
-                            },
-                            onNavigateToPricing = {
-                                navController.navigate(PricingSimulatorRoute(initialTab = 0)) {
-                                    launchSingleTop = true
-                                }
-                            },
-                            onNavigateToWhatIf = {
-                                navController.navigate(PricingSimulatorRoute(initialTab = 1)) {
-                                    launchSingleTop = true
-                                }
-                            },
-                            onNavigateToBreakEven = {
-                                navController.navigate(PricingSimulatorRoute(initialTab = 2)) {
-                                    launchSingleTop = true
-                                }
-                            },
-                            onNavigateToGrowth = {
-                                navController.navigate(PricingSimulatorRoute(initialTab = 3)) {
-                                    launchSingleTop = true
-                                }
-                            },
-                            onNavigateToMetrics = {
-                                navController.navigate(MetricsRoute)
-                            },
-                            onNavigateToGoalPlanner = {
-                                navController.navigate(GoalPlannerRoute)
-                            }
-                        )
-                    }
+                composable<LandingRoute> {
+                    val landingViewModel: LandingViewModel = koinViewModel()
+                    LandingScreen(
+                        viewModel = landingViewModel,
+                        onNavigateToAuth = { navController.navigate(LoginRoute) },
+                        onNavigateToDemo = { navController.navigate(DashboardRoute) },
+                        onNavigateToPricing = { navController.navigate(PublicPricingRoute) }
+                    )
+                }
 
-                    composable<InputDataRoute> {
-                        BusinessSetupScreen(
-                            onNavigateBack = { navController.popBackStack() }
-                        )
-                    }
-
-                    composable<PricingSimulatorRoute> { backStackEntry ->
-                        val route = backStackEntry.toRoute<PricingSimulatorRoute>()
-                        SimulatorScreen(
-                            initialTab = route.initialTab,
-                            onNavigateToMetrics = { navController.navigate(MetricsRoute) }
-                        )
-                    }
-
-                    composable<ScenarioBuilderRoute> {
-                        ScenarioBuilderScreen(
-                            onNavigateToCreate = {
-                                navController.navigate(PricingSimulatorRoute(initialTab = 0)) {
-                                    launchSingleTop = true
-                                }
-                            },
-                            onNavigateToCompare = {
-                                navController.navigate(ScenarioComparisonRoute)
-                            },
-                            onNavigateToMetrics = { navController.navigate(MetricsRoute) },
-                            onNavigateToExperiments = { navController.navigate(ExperimentsRoute) }
-                        )
-                    }
-
-                    composable<ScenarioComparisonRoute> {
-                        ScenarioComparisonScreen(
-                            onNavigateBack = { navController.popBackStack() }
-                        )
-                    }
-
-                    composable<ForecastRoute> {
-                        ForecastScreen(
-                            onNavigateToGoalPlanner = { navController.navigate(GoalPlannerRoute) },
-                            onNavigateToMetrics = { navController.navigate(MetricsRoute) }
-                        )
-                    }
-
-                    composable<GoalPlannerRoute> {
-                        GoalPlannerScreen(
-                            onNavigateBack = { navController.popBackStack() }
-                        )
-                    }
-
-                    composable<MetricsRoute> {
-                        SaaSMetricsScreen(
-                            onNavigateBack = { navController.popBackStack() },
-                            onNavigateToRevenueBreakdown = {
-                                navController.navigate(
-                                    RevenueBreakdownRoute
-                                )
-                            },
-                            onNavigateToLtvAnalysis = { navController.navigate(LtvAnalysisRoute) },
-                            onNavigateToCacAnalytics = {
-                                navController.navigate(
-                                    CacAnalyticsRoute
-                                )
-                            },
-                            onNavigateToCustomerAnalytics = {
-                                navController.navigate(
-                                    CustomerAnalyticsRoute
-                                )
-                            },
-                            onNavigateToCohortAnalysis = {
-                                navController.navigate(
-                                    CohortAnalysisRoute
-                                )
-                            }
-                        )
-                    }
-
-                    composable<SettingsRoute> {
-                        SettingsScreen(
-                            onNavigateToWorkspace = {
-                                navController.navigate(
-                                    WorkspaceManagementRoute
-                                )
-                            },
-                            onNavigateToTeam = { navController.navigate(TeamRoute) },
-                            onNavigateToBaseline = { navController.navigate(InputDataRoute) },
-                            onNavigateToDataImport = { navController.navigate(DataImportRoute) },
-                            onNavigateToSignUp = { navController.navigate(LoginRoute) },
-                            onNavigateToProfile = { navController.navigate(ProfileRoute) },
-                            onNavigateToReports = { navController.navigate(ReportsRoute) },
-                            onNavigateToNotifications = {
-                                navController.navigate(
-                                    NotificationsRoute
-                                )
-                            },
-                            onNavigateToMore = { navController.navigate(AccountActionsRoute) },
-                            onNavigateToBilling = { navController.navigate(BillingRoute) },
-                            onNavigateToIntegrations = {
-                                navController.navigate(
-                                    IntegrationsRoute
-                                )
-                            },
-                            onNavigateToApiWebhooks = { navController.navigate(ApiWebhooksRoute) }
-                        )
-                    }
-
-                    composable<AccountActionsRoute> {
-                        AccountActionsScreen(
-                            viewModel = viewModel,
-                            onNavigateBack = { navController.popBackStack() },
-                            onLogout = {
-                                navController.navigate(LoginRoute) {
-                                    popUpTo(0) { inclusive = true }
-                                    launchSingleTop = true
-                                }
-                                BrowserRouter.updateUrl("login")
-                            },
-                            onNavigateToCreateWorkspace = {
-                                navController.navigate(CreateWorkspaceRoute) {
-                                    popUpTo(0) { inclusive = true }
-                                    launchSingleTop = true
-                                }
-                            }
-                        )
-                    }
-
-                    composable<WorkspaceManagementRoute> {
-                        WorkspaceManagementScreen(
-                            onBackClick = { navController.popBackStack() },
-                            onNavigateToBaseline = { navController.navigate(InputDataRoute) },
-                            onNavigateToCreateWorkspace = {
-                                navController.navigate(CreateWorkspaceRoute) {
-                                    popUpTo(0) { inclusive = true }
-                                    launchSingleTop = true
-                                }
-                            }
-                        )
-                    }
-
-                    composable<DataImportRoute> {
-                        val importViewModel: DataImportViewModel = koinViewModel()
-                        DataImportScreen(
-                            viewModel = importViewModel,
-                            onNavigateBack = { navController.popBackStack() },
-                            onNavigateToAnalytics = {
-                                navController.navigate(RevenueBreakdownRoute) {
-                                    popUpTo(DashboardRoute) { inclusive = false }
-                                }
-                            }
-                        )
-                    }
-
-                    composable<RevenueBreakdownRoute> {
-                        val breakdownViewModel: RevenueBreakdownViewModel = koinViewModel()
-                        RevenueBreakdownScreen(
-                            viewModel = breakdownViewModel,
-                            onNavigateBack = { navController.popBackStack() },
-                            onNavigateToDataImport = { navController.navigate(DataImportRoute) },
-                            onNavigateToSimulator = {
-                                navController.navigate(
-                                    PricingSimulatorRoute(0)
-                                )
-                            }
-                        )
-                    }
-
-                    composable<LtvAnalysisRoute> {
-                        val ltvViewModel: LtvAnalysisViewModel = koinViewModel()
-                        LtvAnalysisScreen(
-                            viewModel = ltvViewModel,
-                            onNavigateBack = { navController.popBackStack() },
-                            onNavigateToWhatIf = {
-                                navController.navigate(
-                                    PricingSimulatorRoute(1)
-                                )
-                            },
-                            onNavigateToBaseline = { navController.navigate(InputDataRoute) }
-                        )
-                    }
-
-                    composable<CacAnalyticsRoute> {
-                        val cacViewModel: CacAnalyticsViewModel = koinViewModel()
-                        CacAnalyticsScreen(
-                            viewModel = cacViewModel,
-                            onNavigateBack = { navController.popBackStack() },
-                            onNavigateToGrowthSimulator = {
-                                navController.navigate(
-                                    PricingSimulatorRoute(3)
-                                )
-                            }
-                        )
-                    }
-
-                    composable<CustomerAnalyticsRoute> {
-                        val customerViewModel: CustomerAnalyticsViewModel = koinViewModel()
-                        CustomerAnalyticsScreen(
-                            viewModel = customerViewModel,
-                            onNavigateBack = { navController.popBackStack() },
-                            onNavigateToDataImport = { navController.navigate(DataImportRoute) }
-                        )
-                    }
-
-                    composable<CohortAnalysisRoute> {
-                        val cohortViewModel: CohortAnalysisViewModel = koinViewModel()
-                        CohortAnalysisScreen(
-                            viewModel = cohortViewModel,
-                            onNavigateBack = { navController.popBackStack() },
-                            onNavigateToDataImport = { navController.navigate(DataImportRoute) }
-                        )
-                    }
-
-                    composable<ExperimentsRoute> {
-                        val expViewModel: ExperimentsViewModel = koinViewModel()
-                        ExperimentsScreen(
-                            viewModel = expViewModel,
-                            onNavigateBack = { navController.popBackStack() },
-                            onNavigateToDetails = { id ->
-                                navController.navigate(ExperimentDetailsRoute(id))
-                            }
-                        )
-                    }
-
-                    composable<ExperimentDetailsRoute> { backStackEntry ->
-                        val route = backStackEntry.toRoute<ExperimentDetailsRoute>()
-                        val detailsViewModel: ExperimentDetailsViewModel = koinViewModel()
-                        ExperimentDetailsScreen(
-                            experimentId = route.id,
-                            viewModel = detailsViewModel,
-                            onNavigateBack = { navController.popBackStack() }
-                        )
-                    }
-
-                    composable<ReportsRoute> {
-                        val reportsViewModel: ReportsViewModel = koinViewModel()
-                        ReportsScreen(
-                            viewModel = reportsViewModel,
-                            onNavigateBack = { navController.popBackStack() }
-                        )
-                    }
-
-                    composable<NotificationsRoute> {
-                        val notifViewModel: NotificationSettingsViewModel = koinViewModel()
-                        NotificationSettingsScreen(
-                            viewModel = notifViewModel,
-                            onNavigateBack = { navController.popBackStack() }
-                        )
-                    }
-
-                    composable<ProfileRoute> {
-                        val profileViewModel: ProfileViewModel = koinViewModel()
-                        ProfileScreen(
-                            viewModel = profileViewModel,
-                            onNavigateBack = { navController.popBackStack() },
-                            onNavigateToLogin = {
-                                viewModel.logout {
-                                    navController.navigate(LoginRoute) {
-                                        popUpTo(0) { inclusive = true }
-                                        launchSingleTop = true
-                                    }
-                                    BrowserRouter.updateUrl("login")
-                                }
-                            }
-                        )
-                    }
-
-                    composable<TeamRoute> {
-                        val teamViewModel: TeamViewModel = koinViewModel()
-                        TeamScreen(
-                            viewModel = teamViewModel,
-                            onNavigateBack = { navController.popBackStack() }
-                        )
-                    }
-
-                    composable<BillingRoute> {
-                        val billingViewModel: BillingViewModel = koinViewModel()
-                        BillingScreen(
-                            viewModel = billingViewModel,
-                            onNavigateBack = { navController.popBackStack() }
-                        )
-                    }
-
-                    composable<IntegrationsRoute> {
-                        val integrationsViewModel: IntegrationsViewModel = koinViewModel()
-                        IntegrationsScreen(
-                            viewModel = integrationsViewModel,
-                            onNavigateBack = { navController.popBackStack() }
-                        )
-                    }
-
-                    composable<ApiWebhooksRoute> {
-                        val developerViewModel: ApiWebhooksViewModel = koinViewModel()
-                        ApiWebhooksScreen(
-                            viewModel = developerViewModel,
-                            onNavigateBack = { navController.popBackStack() }
-                        )
-                    }
-
-                    composable<LandingRoute> {
-                        val landingViewModel: LandingViewModel = koinViewModel()
-                        LandingScreen(
-                            viewModel = landingViewModel,
-                            onNavigateToAuth = { navController.navigate(LoginRoute) },
-                            onNavigateToDemo = { navController.navigate(DashboardRoute) },
-                            onNavigateToPricing = { navController.navigate(PublicPricingRoute) }
-                        )
-                    }
-
-                    composable<PublicPricingRoute> {
-                        val pricingViewModel: PublicPricingViewModel = koinViewModel()
-                        PublicPricingScreen(
-                            viewModel = pricingViewModel,
-                            onNavigateToAuth = { navController.navigate(LoginRoute) },
-                            onNavigateToHome = { navController.navigate(LandingRoute) }
-                        )
-                    }
+                composable<PublicPricingRoute> {
+                    val pricingViewModel: PublicPricingViewModel = koinViewModel()
+                    PublicPricingScreen(
+                        viewModel = pricingViewModel,
+                        onNavigateToAuth = { navController.navigate(LoginRoute) },
+                        onNavigateToHome = { navController.navigate(LandingRoute) }
+                    )
                 }
             }
         }
     }
+}

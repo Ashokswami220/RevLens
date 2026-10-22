@@ -51,7 +51,6 @@ import com.revlens.app.ui.components.TextLinkButton
 import com.revlens.app.ui.components.display.RoleChip
 import com.revlens.app.ui.theme.RevLensTheme
 import com.revlens.app.ui.theme.RevLensTypography
-import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -7,21 +7,22 @@ import com.revlens.app.domain.model.Role
 import com.revlens.app.domain.model.TeamInviteDetail
 import kotlinx.coroutines.launch
 
-class InviteAcceptanceViewModel : MviViewModel<InviteAcceptanceUiState, InviteAcceptanceEvent, InviteAcceptanceEffect>(
-    InviteAcceptanceUiState(
-        invites = listOf(
-            TeamInviteDetail(
-                inviteId = "inv_sample",
-                workspaceId = "ws_sample",
-                workspaceName = "Sample Business",
-                invitedEmail = "alex@revlens.io",
-                role = Role.Editor,
-                invitedBy = "Alex Rivera",
-                sentAt = "2 days ago"
+class InviteAcceptanceViewModel :
+    MviViewModel<InviteAcceptanceUiState, InviteAcceptanceEvent, InviteAcceptanceEffect>(
+        InviteAcceptanceUiState(
+            invites = listOf(
+                TeamInviteDetail(
+                    inviteId = "inv_sample",
+                    workspaceId = "ws_sample",
+                    workspaceName = "Sample Business",
+                    invitedEmail = "alex@revlens.io",
+                    role = Role.Editor,
+                    invitedBy = "Alex Rivera",
+                    sentAt = "2 days ago"
+                )
             )
         )
-    )
-) {
+    ) {
 
     override fun onEvent(event: InviteAcceptanceEvent) {
         when (event) {

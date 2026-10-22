@@ -113,7 +113,10 @@ class CreateWorkspaceViewModel(
 
         viewModelScope.launch {
             update { copy(isLoading = true, joinCodeError = null) }
-            val targetWsId = "ws_${code.lowercase().replace(" ", "_")}"
+            val targetWsId = "ws_${
+                code.lowercase()
+                    .replace(" ", "_")
+            }"
             val remoteWs = Workspace(
                 id = targetWsId,
                 name = "Joined Workspace ($code)",
