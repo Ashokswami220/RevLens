@@ -42,7 +42,6 @@ import com.revlens.app.ui.components.SectionCard
 import com.revlens.app.ui.components.SegmentedTabs
 import com.revlens.app.ui.theme.RevLensTheme
 import com.revlens.app.ui.theme.RevLensTypography
-import com.revlens.app.utils.CurrencyUtils
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -125,11 +124,7 @@ fun CreateWorkspaceScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         RevLensTextField(
                             value = state.name,
-                            onValueChange = {
-                                viewModel.onEvent(
-                                    CreateWorkspaceEvent.NameChanged(it)
-                                )
-                            },
+                            onValueChange = { viewModel.onEvent(CreateWorkspaceEvent.NameChanged(it)) },
                             label = "Business / Workspace Name",
                             placeholder = "e.g. Acme SaaS Inc.",
                             isError = state.nameError != null,
@@ -157,9 +152,7 @@ fun CreateWorkspaceScreen(
                                             .weight(1f)
                                             .clip(RoundedCornerShape(10.dp))
                                             .background(
-                                                if (selected) RevLensTheme.colors.brandPrimary.copy(
-                                                    alpha = 0.15f
-                                                )
+                                                if (selected) RevLensTheme.colors.brandPrimary.copy(alpha = 0.15f)
                                                 else RevLensTheme.colors.surfaceElevated
                                             )
                                             .border(
@@ -169,9 +162,7 @@ fun CreateWorkspaceScreen(
                                                 RoundedCornerShape(10.dp)
                                             )
                                             .clickable {
-                                                viewModel.onEvent(
-                                                    CreateWorkspaceEvent.BusinessModelChanged(model)
-                                                )
+                                                viewModel.onEvent(CreateWorkspaceEvent.BusinessModelChanged(model))
                                             }
                                             .padding(vertical = 12.dp),
                                         contentAlignment = Alignment.Center
@@ -185,57 +176,6 @@ fun CreateWorkspaceScreen(
                                         )
                                     }
                                 }
-                            }
-                        }
-
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(
-                                text = "Base Currency",
-                                style = RevLensTypography.labelMedium,
-                                color = RevLensTheme.colors.textSecondary
-                            )
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                CurrencyUtils.supportedCurrencies.take(4)
-                                    .forEach { curr ->
-                                        val selected = state.currency == curr.code
-                                        Box(
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .clip(RoundedCornerShape(10.dp))
-                                                .background(
-                                                    if (selected) RevLensTheme.colors.brandPrimary.copy(
-                                                        alpha = 0.15f
-                                                    )
-                                                    else RevLensTheme.colors.surfaceElevated
-                                                )
-                                                .border(
-                                                    1.dp,
-                                                    if (selected) RevLensTheme.colors.brandPrimary
-                                                    else RevLensTheme.colors.borderDefault,
-                                                    RoundedCornerShape(10.dp)
-                                                )
-                                                .clickable {
-                                                    viewModel.onEvent(
-                                                        CreateWorkspaceEvent.CurrencyChanged(
-                                                            curr.code
-                                                        )
-                                                    )
-                                                }
-                                                .padding(vertical = 10.dp),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                text = "${curr.symbol} ${curr.code}",
-                                                style = RevLensTypography.labelMedium,
-                                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                                                color = if (selected) RevLensTheme.colors.brandPrimary
-                                                else RevLensTheme.colors.textPrimary
-                                            )
-                                        }
-                                    }
                             }
                         }
                     }
@@ -258,9 +198,7 @@ fun CreateWorkspaceScreen(
                                 modifier = Modifier
                                     .size(44.dp)
                                     .clip(CircleShape)
-                                    .background(
-                                        RevLensTheme.colors.brandPrimary.copy(alpha = 0.14f)
-                                    ),
+                                    .background(RevLensTheme.colors.brandPrimary.copy(alpha = 0.14f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
@@ -287,11 +225,7 @@ fun CreateWorkspaceScreen(
 
                         RevLensTextField(
                             value = state.joinCode,
-                            onValueChange = {
-                                viewModel.onEvent(
-                                    CreateWorkspaceEvent.JoinCodeChanged(it)
-                                )
-                            },
+                            onValueChange = { viewModel.onEvent(CreateWorkspaceEvent.JoinCodeChanged(it)) },
                             label = "Team Join Code / Invite Code",
                             placeholder = "e.g. RL-8F3A2B",
                             isError = state.joinCodeError != null,

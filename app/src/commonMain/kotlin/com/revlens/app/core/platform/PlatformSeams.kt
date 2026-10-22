@@ -39,7 +39,6 @@ interface SecureStorage {
 
 enum class BiometricStatus {
     Available,
-    NotEnrolled,
     NotAvailable
 }
 

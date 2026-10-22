@@ -2,7 +2,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -11,7 +10,6 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // User Profile, Baseline Profile, Workspaces, and Scenarios
     match /users/{userId} {
       allow read, write: if isOwner(userId);
 
@@ -20,17 +18,22 @@ service cloud.firestore {
       }
     }
 
-    // Root Workspaces collection
     match /workspaces/{workspaceId} {
       allow read, write: if isAuthenticated();
+
+      match /{document=**} {
+        allow read, write: if isAuthenticated();
+      }
     }
 
-    // Root Profiles collection
-    match /profiles/{userId} {
+    match /team_invites/{inviteId} {
       allow read, write: if isAuthenticated();
     }
 
-    // Root Scenarios collection
+    match /profiles/{profileId} {
+      allow read, write: if isAuthenticated();
+    }
+
     match /scenarios/{scenarioId} {
       allow read, write: if isAuthenticated();
     }

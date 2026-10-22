@@ -34,7 +34,6 @@ import com.revlens.app.data.ScenarioRepository
 import com.revlens.app.data.fake.FakeBillingRepository
 import com.revlens.app.data.fake.FakeDeveloperRepository
 import com.revlens.app.data.fake.FakeIntegrationRepository
-import com.revlens.app.data.fake.FakeTeamRepository
 import com.revlens.app.domain.context.DefaultWorkspaceContext
 import com.revlens.app.domain.context.WorkspaceContext
 import com.revlens.app.domain.repository.AnalyticsRepository
@@ -94,7 +93,8 @@ val appModule = module {
     single<ProfileRepository> {
         AndroidFirestoreProfileRepository(
             localFallback = DataStoreProfileRepository(get()),
-            workspaceContext = getOrNull()
+            workspaceContext = get(),
+            authRepository = get()
         )
     }
     single<ScenarioRepository> {
@@ -104,7 +104,8 @@ val appModule = module {
     }
     single<WorkspaceRepository> {
         AndroidFirestoreWorkspaceRepository(
-            DefaultWorkspaceRepository()
+            localFallback = DefaultWorkspaceRepository(emptyList()),
+            authRepository = get()
         )
     }
     single<WorkspaceContext> { DefaultWorkspaceContext() }
@@ -123,13 +124,15 @@ val appModule = module {
     single<NotificationPreferencesRepository> { DefaultNotificationPreferencesRepository() }
     single<AuthRepository> {
         AndroidFirebaseAuthRepository(
-            get(), getOrNull()
+            context = androidContext(),
+            sessionManager = get()
         )
     }
     single<TeamRepository> {
         AndroidFirestoreTeamRepository(
-            localFallback = FakeTeamRepository(),
-            profileRepository = getOrNull()
+            workspaceContext = get(),
+            profileRepository = get(),
+            authRepository = get()
         )
     }
     single<BillingRepository> { FakeBillingRepository() }

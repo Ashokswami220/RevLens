@@ -18,8 +18,6 @@ sealed interface UiText {
 }
 
 sealed interface Loadable<out T> {
-    data object Loading : Loadable<Nothing>
-    data class Content<T>(val data: T) : Loadable<T>
     data class Failed(val error: AppError) : Loadable<Nothing>
 }
 

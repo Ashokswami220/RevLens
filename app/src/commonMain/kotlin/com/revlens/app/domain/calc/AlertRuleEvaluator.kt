@@ -9,8 +9,7 @@ object AlertRuleEvaluator {
 
     fun evaluate(
         prefs: NotificationPrefs,
-        profile: BusinessProfile?,
-        currentTimeString: String = "12:00"
+        profile: BusinessProfile?
     ): List<TriggeredAlert> {
         if (profile == null) return emptyList()
 
@@ -64,7 +63,7 @@ object AlertRuleEvaluator {
             currentMin in startMin..endMin
         } else {
             // Wraps past midnight (e.g., 22:00 to 07:00)
-            currentMin >= startMin || currentMin < endMin
+            currentMin !in endMin..<startMin
         }
     }
 

@@ -51,8 +51,6 @@ enum class IntegrationProvider(
 enum class ConnectionStatus {
     CONNECTED,
     DISCONNECTED,
-    SYNCING,
-    ERROR
 }
 
 @Serializable

@@ -35,6 +35,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,10 +49,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.revlens.app.domain.model.SessionState
+import com.revlens.app.domain.model.UserAccount
 import com.revlens.app.domain.policy.RolePermissions
+import com.revlens.app.domain.repository.AuthRepository
 import com.revlens.app.domain.repository.TeamRepository
 import com.revlens.app.presentation.MainViewModel
-import com.revlens.app.ui.components.PrimaryButton
+import com.revlens.app.ui.components.DestructiveButton
 import com.revlens.app.ui.components.RevLensTopAppBar
 import com.revlens.app.ui.components.SectionCard
 import com.revlens.app.ui.components.display.RoleChip
@@ -84,13 +87,21 @@ fun SettingsScreen(
     val activeWorkspace by viewModel.activeWorkspace.collectAsState()
     val session by viewModel.session.collectAsState()
     val userRole by viewModel.currentUserRole.collectAsState()
-    val isGuest = session !is SessionState.Authenticated
 
+    val authRepository: AuthRepository = koinInject()
     val teamRepository: TeamRepository = koinInject()
+
+    var directAuthUser by remember { mutableStateOf<UserAccount?>(null) }
+    LaunchedEffect(session) {
+        directAuthUser = (session as? SessionState.Authenticated)?.user
+            ?: authRepository.getCurrentUser()
+    }
+
+    val currentUser = (session as? SessionState.Authenticated)?.user ?: directAuthUser
+    val isGuest = currentUser == null
+
     val wsId = activeWorkspace?.id ?: "ws_default"
-    val teamMembers by remember(wsId) { teamRepository.getMembers(wsId) }.collectAsState(
-        initial = emptyList()
-    )
+    val teamMembers by remember(wsId) { teamRepository.getMembers(wsId) }.collectAsState(initial = emptyList())
     val seatsUsed = teamMembers.size.coerceAtLeast(1)
 
     val canEditBaseline = RolePermissions.canEditBaselinesAndScenarios(userRole)
@@ -104,9 +115,7 @@ fun SettingsScreen(
 
     fun showRoleDeniedToast(requiredRolesText: String) {
         scope.launch {
-            snackbarHostState.showSnackbar(
-                "Permission denied (${userRole.name}): $requiredRolesText"
-            )
+            snackbarHostState.showSnackbar("Permission denied (${userRole.name}): $requiredRolesText")
         }
     }
 
@@ -139,21 +148,15 @@ fun SettingsScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                val currentUser = (session as? SessionState.Authenticated)?.user
                 val displayName =
-                    if (isGuest) "Guest User" else (currentUser?.name?.ifBlank { null }
-                        ?: "User")
-                val displayEmail =
-                    if (isGuest) "Local-only session" else (currentUser?.email ?: "")
-                val initials = if (isGuest) {
+                    currentUser?.name?.ifBlank { currentUser.email.substringBefore("@") } ?: "Guest User"
+                val displayEmail = currentUser?.email ?: "Local-only session"
+                val initials = if (currentUser == null) {
                     "GU"
                 } else {
                     displayName.split(" ")
                         .filter { it.isNotBlank() }
-                        .mapNotNull {
-                            it.firstOrNull()
-                                ?.toString()
-                        }
+                        .mapNotNull { it.firstOrNull()?.toString() }
                         .take(2)
                         .joinToString("")
                         .uppercase()
@@ -225,39 +228,6 @@ fun SettingsScreen(
                 }
             }
 
-            // Guest Cloud Sync Prompt (if guest)
-            if (isGuest) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(RevLensTheme.colors.brandPrimary.copy(alpha = 0.08f))
-                        .padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Cloud Sync & Collaboration",
-                            style = RevLensTypography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = RevLensTheme.colors.textPrimary
-                        )
-                        Text(
-                            text = "Create an account to backup your data and invite teammates.",
-                            style = RevLensTypography.bodySmall,
-                            color = RevLensTheme.colors.textSecondary
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    PrimaryButton(
-                        text = "Sign Up",
-                        onClick = onNavigateToSignUp,
-                        modifier = Modifier.width(100.dp)
-                    )
-                }
-            }
-
             // WORKSPACE SECTION
             SectionCard(title = "Workspace") {
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -281,9 +251,7 @@ fun SettingsScreen(
                         isLocked = !canEditBaseline,
                         onClick = {
                             if (!canEditBaseline) {
-                                showRoleDeniedToast(
-                                    "Only Owners, Admins, and Editors can edit baselines."
-                                )
+                                showRoleDeniedToast("Only Owners, Admins, and Editors can edit baselines.")
                             } else {
                                 onNavigateToBaseline()
                             }
@@ -301,9 +269,7 @@ fun SettingsScreen(
                         isLocked = !canEditBaseline,
                         onClick = {
                             if (!canEditBaseline) {
-                                showRoleDeniedToast(
-                                    "Viewers cannot upload or overwrite workspace datasets."
-                                )
+                                showRoleDeniedToast("Viewers cannot upload or overwrite workspace datasets.")
                             } else {
                                 onNavigateToDataImport()
                             }
@@ -321,9 +287,7 @@ fun SettingsScreen(
                         onClick = {
                             if (isGuest) lockedFeaturePrompt = "Integrations"
                             else if (!canManageApiAndIntegrations) {
-                                showRoleDeniedToast(
-                                    "Only Workspace Owners and Admins can manage integrations."
-                                )
+                                showRoleDeniedToast("Only Workspace Owners and Admins can manage integrations.")
                             } else {
                                 onNavigateToIntegrations()
                             }
@@ -336,9 +300,7 @@ fun SettingsScreen(
                         onClick = {
                             if (isGuest) lockedFeaturePrompt = "Developer API"
                             else if (!canManageApiAndIntegrations) {
-                                showRoleDeniedToast(
-                                    "Only Workspace Owners and Admins can manage API keys and webhooks."
-                                )
+                                showRoleDeniedToast("Only Workspace Owners and Admins can manage API keys and webhooks.")
                             } else {
                                 onNavigateToApiWebhooks()
                             }
@@ -357,9 +319,7 @@ fun SettingsScreen(
                         onClick = {
                             if (isGuest) lockedFeaturePrompt = "Billing & Subscriptions"
                             else if (!canManageBilling) {
-                                showRoleDeniedToast(
-                                    "Only the Workspace Owner can manage billing and subscriptions."
-                                )
+                                showRoleDeniedToast("Only the Workspace Owner can manage billing and subscriptions.")
                             } else {
                                 onNavigateToBilling()
                             }
@@ -377,7 +337,7 @@ fun SettingsScreen(
                     )
                     SettingsNavigationRow(
                         title = "More",
-                        subtitle = "Log out, session actions & delete account",
+                        subtitle = "Session actions, leave business & delete account",
                         onClick = onNavigateToMore
                     )
                 }
@@ -427,7 +387,7 @@ fun SettingsScreen(
 
             // ABOUT & LOG OUT SECTION
             SectionCard(title = "About RevLens") {
-                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -453,6 +413,16 @@ fun SettingsScreen(
                             text = "1.0.0 (KMP)",
                             style = RevLensTypography.bodyMedium,
                             color = RevLensTheme.colors.textSecondary
+                        )
+                    }
+
+                    if (!isGuest) {
+                        DestructiveButton(
+                            text = "Log Out",
+                            onClick = {
+                                viewModel.logout()
+                                onLogout()
+                            }
                         )
                     }
                 }
