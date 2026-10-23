@@ -8,6 +8,7 @@ import com.revlens.app.domain.repository.AuthRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
+import kotlin.time.Duration.Companion.milliseconds
 
 @JsFun("() => { if (window.revlensFirebase) { window.revlensFirebase.triggerGoogleSignIn(); } }")
 private external fun jsTriggerGoogleSignIn()
@@ -55,14 +56,13 @@ class WebFirebaseAuthRepository(
         try {
             jsTriggerGoogleSignIn()
 
-            val success = withTimeoutOrNull(120_000L) {
+            val success = withTimeoutOrNull(120_000L.milliseconds) {
                 while (true) {
                     val status = jsGetAuthStatus()
                     if (status == "success") return@withTimeoutOrNull true
                     if (status == "error") return@withTimeoutOrNull false
-                    delay(150)
+                    delay(150.milliseconds)
                 }
-                false
             }
 
             if (success == true) {

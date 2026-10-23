@@ -245,4 +245,3 @@ fun LabeledSlider(
         }
     }
 }
-

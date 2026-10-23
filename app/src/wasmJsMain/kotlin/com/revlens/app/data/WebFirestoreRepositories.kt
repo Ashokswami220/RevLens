@@ -19,7 +19,7 @@ import kotlin.time.Duration.Companion.milliseconds
 private external fun jsTriggerSaveDoc(collection: String, docId: String, jsonStr: String)
 
 @JsFun(
-    "(collection, docId) => { if (window.revlensFirebase) { window.revlensFiarebase.triggerGetDoc(collection, docId); } }"
+    "(collection, docId) => { if (window.revlensFirebase) { window.revlensFirebase.triggerGetDoc(collection, docId); } }"
 )
 private external fun jsTriggerGetDoc(collection: String, docId: String)
 

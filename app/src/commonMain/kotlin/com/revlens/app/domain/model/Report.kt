@@ -9,9 +9,9 @@ enum class ReportTemplate(val displayName: String, val description: String) {
     FORECAST_SUMMARY("Forecast Summary", "12-month projections, cash runway & target milestones")
 }
 
-enum class ReportFormat(val extension: String, val mimeType: String, val label: String) {
-    PDF("pdf", "application/pdf", "PDF Document"),
-    CSV("csv", "text/csv", "CSV Spreadsheet")
+enum class ReportFormat(val label: String) {
+    PDF("PDF Document"),
+    CSV("CSV Spreadsheet")
 }
 
 enum class ReportSection(val title: String, val description: String) {
