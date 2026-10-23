@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
@@ -118,11 +120,11 @@ fun RevLensNavGraph(
     viewModel: MainViewModel = koinViewModel()
 ) {
     val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsState()
+    val profile by viewModel.profile.collectAsState()
     val hasSeenIntro by viewModel.hasSeenIntro.collectAsState()
     val session by viewModel.session.collectAsState()
     val accessRevokedMessage by viewModel.accessRevokedMessage.collectAsState()
     val isReady by viewModel.isReady.collectAsState()
-    val activeWorkspace by viewModel.activeWorkspace.collectAsState()
 
     if (accessRevokedMessage != null) {
         AlertDialog(
@@ -160,9 +162,13 @@ fun RevLensNavGraph(
 
     if (!isReady || hasSeenIntro == null || (hasSeenIntro == true && session is SessionState.Authenticated && isOnboardingCompleted == null)) {
         Box(
-            modifier = modifier.fillMaxSize()
-                .background(RevLensTheme.colors.background)
-        )
+            modifier = modifier
+                .fillMaxSize()
+                .background(RevLensTheme.colors.background),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = RevLensTheme.colors.brandPrimary)
+        }
         return
     }
 
@@ -449,55 +455,58 @@ fun RevLensNavGraph(
                 }
             }
 
-            // Strictly acts as a fallback Auth Guard, leaves forward routing to the ViewModels
-            LaunchedEffect(session, hasSeenIntro) {
-                // If user hasn't seen intro yet, let them view the intro screen uninterrupted
-                if (hasSeenIntro == false) return@LaunchedEffect
+            val hasBusinessSetup = isOnboardingCompleted == true && profile != null
 
-                val currentRouteStr = navController.currentDestination?.route ?: ""
-                if (currentRouteStr.isEmpty()) return@LaunchedEffect
+                LaunchedEffect(session, hasSeenIntro, hasBusinessSetup, currentRoute) {
+                    if (hasSeenIntro == false) return@LaunchedEffect
 
-                val isAuthScreen =
-                    currentRouteStr.contains("IntroRoute") || currentRouteStr.contains(
-                        "LoginRoute"
-                    )
+                    val currentRouteStr = navController.currentDestination?.route ?: ""
+                    if (currentRouteStr.isEmpty()) return@LaunchedEffect
 
-                when (session) {
-                    is SessionState.SignedOut -> {
-                        // Once intro is seen, SignedOut ALWAYS routes to LoginRoute (never Intro!)
-                        if (!currentRouteStr.contains("LoginRoute")) {
-                            navController.navigate(LoginRoute) {
-                                popUpTo(0) { inclusive = true }
-                                launchSingleTop = true
+                    val isIntroScreen = currentRouteStr.contains("IntroRoute")
+                    val isLoginScreen = currentRouteStr.contains("LoginRoute")
+                    val isSetupScreen = currentRouteStr.contains("CreateWorkspaceRoute") ||
+                        currentRouteStr.contains("OnboardingRoute")
+
+                    when (session) {
+                        is SessionState.SignedOut -> {
+                            // Once intro is seen, SignedOut ALWAYS routes to LoginRoute (never IntroRoute)
+                            if (!isLoginScreen) {
+                                navController.navigate(LoginRoute) {
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
+                                }
                             }
                         }
-                    }
 
-                    is SessionState.Authenticated -> {
-                        // If they restart the app or authenticate and are on Auth screens,
-                        // push them to Dashboard or CreateWorkspace.
-                        if (isAuthScreen) {
-                            val target: Any =
-                                if (activeWorkspace != null && isOnboardingCompleted == true) DashboardRoute else CreateWorkspaceRoute
-                            navController.navigate(target) {
-                                popUpTo(0) { inclusive = true }
-                                launchSingleTop = true
+                        is SessionState.Authenticated -> {
+                            if (isIntroScreen) {
+                                val target: Any = if (hasBusinessSetup) DashboardRoute else CreateWorkspaceRoute
+                                navController.navigate(target) {
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            } else if (!isLoginScreen && !hasBusinessSetup && !isSetupScreen) {
+                                // Logged-in user without business setup is always sent to setup flow
+                                navController.navigate(CreateWorkspaceRoute) {
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
+                                }
                             }
                         }
+
+                        else -> {}
                     }
-
-                    else -> {}
                 }
-            }
 
-            val initialStartDestination = remember {
-                when {
-                    hasSeenIntro == false -> IntroRoute
-                    session !is SessionState.Authenticated -> LoginRoute
-                    activeWorkspace != null && isOnboardingCompleted == true -> DashboardRoute
-                    else -> CreateWorkspaceRoute
+                val initialStartDestination = remember {
+                    when {
+                        hasSeenIntro == false -> IntroRoute
+                        session !is SessionState.Authenticated -> LoginRoute
+                        hasBusinessSetup -> DashboardRoute
+                        else -> CreateWorkspaceRoute
+                    }
                 }
-            }
 
             NavHost(
                 navController = navController,

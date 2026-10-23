@@ -6,6 +6,7 @@ import com.revlens.app.domain.model.BusinessModel
 import com.revlens.app.domain.model.Workspace
 import com.revlens.app.domain.repository.WorkspaceRepository
 import com.revlens.app.utils.getCurrentTimeMillis
+import kotlinx.coroutines.flow.firstOrNull
 
 class CreateWorkspaceUseCase(
     private val workspaceRepository: WorkspaceRepository,
@@ -19,14 +20,23 @@ class CreateWorkspaceUseCase(
         timeZoneId: String = "UTC",
         fiscalYearStartMonth: Int = 1
     ): Workspace {
+        // Reuse existing workspace ID if the user already created one and navigated back
+        val activeId = workspaceContext.activeWorkspaceId.value
+            ?.takeIf { it.isNotBlank() && it != "ws_default" }
+        val existingWs = workspaceRepository.workspacesFlow.firstOrNull()
+            ?.firstOrNull { it.id.isNotBlank() && it.id != "ws_default" }
+
+        val targetId = activeId ?: existingWs?.id ?: idGenerator.generate("ws")
+        val createdAt = existingWs?.createdAtMillis?.takeIf { it > 0L } ?: getCurrentTimeMillis()
+
         val workspace = Workspace(
-            id = idGenerator.generate("ws"),
+            id = targetId,
             name = name.trim(),
             currency = currency,
             timeZoneId = timeZoneId,
             fiscalYearStartMonth = fiscalYearStartMonth,
             businessModel = businessModel,
-            createdAtMillis = getCurrentTimeMillis()
+            createdAtMillis = createdAt
         )
         workspaceRepository.createWorkspace(workspace)
         workspaceContext.switchTo(workspace.id)

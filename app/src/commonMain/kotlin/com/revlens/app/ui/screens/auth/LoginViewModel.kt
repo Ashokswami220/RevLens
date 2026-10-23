@@ -5,7 +5,6 @@ import com.revlens.app.core.ui.MviViewModel
 import com.revlens.app.core.ui.toUiText
 import com.revlens.app.data.ProfileRepository
 import com.revlens.app.domain.usecase.LoginUseCase
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration.Companion.milliseconds
@@ -28,20 +27,19 @@ class LoginViewModel(
             update { copy(isLoading = true, error = null) }
             try {
                 val result = loginUseCase.loginWithGoogle(idToken, email, displayName)
-                result.onSuccess { userAccount ->
-
+                result.onSuccess {
                     val remoteProf = runCatching {
-                        withTimeoutOrNull(4000L.milliseconds) {
+                        withTimeoutOrNull(6000L.milliseconds) {
                             profileRepository?.syncRemoteProfile()
                         }
                     }.getOrNull()
 
-                    val localProf = profileRepository?.profileFlow?.firstOrNull()
-                    if (remoteProf != null || localProf != null) {
+                    if (remoteProf != null) {
                         profileRepository?.setOnboardingCompleted(true)
                         emit(LoginEffect.NavigateToDashboard)
                     } else {
-                        // DO NOT wipe local data here! If Firestore is slow, wiping data creates a permanent setup loop.
+                        profileRepository?.clearLocalData()
+                        profileRepository?.setOnboardingCompleted(false)
                         emit(LoginEffect.NavigateToCreateWorkspace)
                     }
                 }

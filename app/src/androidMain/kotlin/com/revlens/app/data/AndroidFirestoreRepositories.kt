@@ -8,18 +8,12 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
 import com.revlens.app.domain.context.WorkspaceContext
 import com.revlens.app.domain.model.BusinessModel
-import com.revlens.app.domain.model.Member
 import com.revlens.app.domain.model.Role
-import com.revlens.app.domain.model.TeamInvite
-import com.revlens.app.domain.model.TeamInviteDetail
-import com.revlens.app.domain.model.UserAccount
 import com.revlens.app.domain.model.Workspace
 import com.revlens.app.domain.repository.AuthRepository
 import com.revlens.app.domain.repository.WorkspaceRepository
 import com.revlens.app.model.BusinessProfile
 import com.revlens.app.model.Scenario
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -34,6 +28,9 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.time.Duration.Companion.milliseconds
 
 private val safeFirestore: FirebaseFirestore?
     get() = try {
@@ -57,15 +54,6 @@ private fun parseBusinessModel(raw: String?): BusinessModel {
         BusinessModel.valueOf(raw)
     } catch (_: Throwable) {
         BusinessModel.B2bSaas
-    }
-}
-
-private fun parseRole(raw: String?): Role {
-    if (raw.isNullOrBlank()) return Role.Viewer
-    return try {
-        Role.valueOf(raw)
-    } catch (_: Throwable) {
-        Role.Viewer
     }
 }
 
@@ -116,9 +104,12 @@ class AndroidFirestoreWorkspaceRepository(
                                 val name = doc.getString("name") ?: "My Workspace"
                                 val currency = doc.getString("currency") ?: "USD"
                                 val timeZoneId = doc.getString("timeZoneId") ?: "UTC"
-                                val fiscalYearStartMonth = doc.getLong("fiscalYearStartMonth")?.toInt() ?: 1
-                                val businessModel = parseBusinessModel(doc.getString("businessModel"))
-                                val createdAtMillis = doc.getLong("createdAtMillis") ?: System.currentTimeMillis()
+                                val fiscalYearStartMonth = doc.getLong("fiscalYearStartMonth")
+                                    ?.toInt() ?: 1
+                                val businessModel =
+                                    parseBusinessModel(doc.getString("businessModel"))
+                                val createdAtMillis =
+                                    doc.getLong("createdAtMillis") ?: System.currentTimeMillis()
 
                                 Workspace(
                                     id = id,
@@ -207,9 +198,11 @@ class AndroidFirestoreWorkspaceRepository(
                 val name = snapshot.getString("name") ?: "My Workspace"
                 val currency = snapshot.getString("currency") ?: "USD"
                 val timeZoneId = snapshot.getString("timeZoneId") ?: "UTC"
-                val fiscalYearStartMonth = snapshot.getLong("fiscalYearStartMonth")?.toInt() ?: 1
+                val fiscalYearStartMonth = snapshot.getLong("fiscalYearStartMonth")
+                    ?.toInt() ?: 1
                 val businessModel = parseBusinessModel(snapshot.getString("businessModel"))
-                val createdAtMillis = snapshot.getLong("createdAtMillis") ?: System.currentTimeMillis()
+                val createdAtMillis =
+                    snapshot.getLong("createdAtMillis") ?: System.currentTimeMillis()
 
                 return Workspace(
                     id = id,
@@ -228,28 +221,64 @@ class AndroidFirestoreWorkspaceRepository(
     }
 
     override suspend fun createWorkspace(workspace: Workspace) = withContext(NonCancellable) {
-        val previousIds = _workspaces.value.map { it.id }.filter { it != workspace.id }
-        _workspaces.value = listOf(workspace)
+        if (workspace.id.isBlank() || workspace.id == "ws_default") return@withContext
+
+        val firestore = db
+        val currentUser = authRepository?.getCurrentUser()
+        val uid = auth?.currentUser?.uid ?: currentUser?.id
+
+        // Check if a workspace already exists locally or in Firestore for this user so we update in-place
+        var effectiveId = _workspaces.value
+            .firstOrNull { it.id.isNotBlank() && it.id != "ws_default" }
+            ?.id
+
+        if (effectiveId == null && firestore != null && !uid.isNullOrBlank()) {
+            try {
+                val existingDocs = firestore.collection("users")
+                    .document(uid)
+                    .collection("workspaces")
+                    .get()
+                    .await()
+                val existingRemote = existingDocs.documents.firstOrNull { doc ->
+                    val id = doc.getString("id") ?: doc.id
+                    id.isNotBlank() && id != "ws_default"
+                }
+                if (existingRemote != null) {
+                    effectiveId = existingRemote.getString("id") ?: existingRemote.id
+                }
+            } catch (_: Throwable) {
+            }
+        }
+
+        val finalWorkspace = if (!effectiveId.isNullOrBlank() && effectiveId != workspace.id) {
+            workspace.copy(id = effectiveId)
+        } else {
+            workspace
+        }
+
+        val previousIds = _workspaces.value.map { it.id }
+            .filter { it != finalWorkspace.id }
+        _workspaces.value = listOf(finalWorkspace)
         previousIds.forEach { oldId ->
             localFallback.deleteWorkspace(oldId)
         }
-        localFallback.createWorkspace(workspace)
+        localFallback.createWorkspace(finalWorkspace)
 
-        val firestore = db ?: return@withContext
-        if (workspace.id.isBlank() || workspace.id == "ws_default") return@withContext
+        if (firestore == null) return@withContext
 
-        val currentUser = authRepository?.getCurrentUser()
-        val uid = auth?.currentUser?.uid ?: currentUser?.id
-        val joinCode = "RL-" + workspace.id.removePrefix("ws_").uppercase().take(6).padEnd(6, '0')
+        val joinCode = "RL-" + finalWorkspace.id.removePrefix("ws_")
+            .uppercase()
+            .take(6)
+            .padEnd(6, '0')
         val map = mutableMapOf<String, Any>(
-            "id" to workspace.id,
-            "name" to workspace.name,
-            "currency" to workspace.currency,
-            "timeZoneId" to workspace.timeZoneId,
-            "fiscalYearStartMonth" to workspace.fiscalYearStartMonth,
-            "businessModel" to workspace.businessModel.name,
+            "id" to finalWorkspace.id,
+            "name" to finalWorkspace.name,
+            "currency" to finalWorkspace.currency,
+            "timeZoneId" to finalWorkspace.timeZoneId,
+            "fiscalYearStartMonth" to finalWorkspace.fiscalYearStartMonth,
+            "businessModel" to finalWorkspace.businessModel.name,
             "joinCode" to joinCode,
-            "createdAtMillis" to workspace.createdAtMillis,
+            "createdAtMillis" to finalWorkspace.createdAtMillis,
             "updatedAt" to System.currentTimeMillis()
         )
 
@@ -263,14 +292,22 @@ class AndroidFirestoreWorkspaceRepository(
                     .get()
                     .await()
                 for (doc in existingDocs.documents) {
-                    if (doc.id != workspace.id) {
-                        doc.reference.delete().await()
+                    if (doc.id != finalWorkspace.id) {
+                        doc.reference.delete()
+                            .await()
+                        try {
+                            firestore.collection("workspaces")
+                                .document(doc.id)
+                                .delete()
+                                .await()
+                        } catch (_: Throwable) {
+                        }
                     }
                 }
                 firestore.collection("users")
                     .document(uid)
                     .collection("workspaces")
-                    .document(workspace.id)
+                    .document(finalWorkspace.id)
                     .set(map, SetOptions.merge())
                     .await()
                 firestore.collection("users")
@@ -278,7 +315,7 @@ class AndroidFirestoreWorkspaceRepository(
                     .set(
                         mapOf(
                             "id" to uid,
-                            "activeWorkspaceId" to workspace.id,
+                            "activeWorkspaceId" to finalWorkspace.id,
                             "updatedAt" to System.currentTimeMillis()
                         ),
                         SetOptions.merge()
@@ -291,7 +328,7 @@ class AndroidFirestoreWorkspaceRepository(
 
         try {
             firestore.collection("workspaces")
-                .document(workspace.id)
+                .document(finalWorkspace.id)
                 .set(map, SetOptions.merge())
                 .await()
         } catch (e: Throwable) {
@@ -301,24 +338,29 @@ class AndroidFirestoreWorkspaceRepository(
         try {
             if (!uid.isNullOrBlank()) {
                 val memberRef = firestore.collection("workspaces")
-                    .document(workspace.id)
+                    .document(finalWorkspace.id)
                     .collection("members")
                     .document(uid)
-                val existingMember = memberRef.get().await()
+                val existingMember = memberRef.get()
+                    .await()
                 if (!existingMember.exists()) {
                     val email = auth?.currentUser?.email ?: currentUser?.email ?: ""
                     val defaultName = auth?.currentUser?.displayName?.ifBlank { null }
                         ?: currentUser?.name?.ifBlank { null }
-                        ?: email.substringBefore("@").ifBlank { "Owner" }
+                        ?: email.substringBefore("@")
+                            .ifBlank { "Owner" }
                     val ownerMap = mapOf(
                         "id" to uid,
                         "name" to defaultName,
-                        "email" to email.trim().lowercase(),
+                        "email" to email.trim()
+                            .lowercase(),
                         "role" to Role.Owner.name,
                         "joinedAt" to "Workspace Owner",
-                        "avatarUrl" to (auth?.currentUser?.photoUrl?.toString() ?: currentUser?.avatarUrl)
+                        "avatarUrl" to (auth?.currentUser?.photoUrl?.toString()
+                            ?: currentUser?.avatarUrl)
                     )
-                    memberRef.set(ownerMap, SetOptions.merge()).await()
+                    memberRef.set(ownerMap, SetOptions.merge())
+                        .await()
                 }
             }
         } catch (e: Throwable) {
@@ -372,16 +414,36 @@ class AndroidFirestoreProfileRepository(
     private val json = Json { ignoreUnknownKeys = true }
     private val _profile = MutableStateFlow<BusinessProfile?>(null)
 
+    private fun sanitizeKey(raw: String): String {
+        return raw.trim()
+            .lowercase()
+            .replace(Regex("[^a-z0-9_-]"), "_")
+    }
+
+    private suspend fun resolveUserIdentity(): Pair<String?, String?> {
+        val currentUser = runCatching { authRepository?.getCurrentUser() }.getOrNull()
+        val uid = auth?.currentUser?.uid?.takeIf { it.isNotBlank() }
+            ?: currentUser?.id?.takeIf { it.isNotBlank() }
+        val email = (auth?.currentUser?.email ?: currentUser?.email)
+            ?.trim()
+            ?.lowercase()
+            ?.takeIf { it.isNotBlank() }
+        return Pair(uid, email)
+    }
+
     private suspend fun resolveEffectiveWorkspaceId(): String {
         val fromContext = workspaceContext?.activeWorkspaceId?.value
         if (!fromContext.isNullOrBlank() && fromContext != "ws_default") {
             return fromContext
         }
-        val uid = auth?.currentUser?.uid ?: authRepository?.getCurrentUser()?.id
+        val (uid, email) = resolveUserIdentity()
         val firestore = db
         if (firestore != null && !uid.isNullOrBlank()) {
             try {
-                val userDoc = firestore.collection("users").document(uid).get().await()
+                val userDoc = firestore.collection("users")
+                    .document(uid)
+                    .get()
+                    .await()
                 val activeWs = userDoc.getString("activeWorkspaceId")
                 if (!activeWs.isNullOrBlank() && activeWs != "ws_default") {
                     workspaceContext?.switchTo(activeWs)
@@ -403,13 +465,18 @@ class AndroidFirestoreProfileRepository(
             workspaceContext?.switchTo(fallbackWsId)
             return fallbackWsId
         }
+        if (!email.isNullOrBlank()) {
+            val emailWsId = "ws_${sanitizeKey(email)}"
+            workspaceContext?.switchTo(emailWsId)
+            return emailWsId
+        }
         return "ws_default"
     }
 
     override val profileFlow: Flow<BusinessProfile?> = callbackFlow {
         val firestore = db
         var rootProfileListener: ListenerRegistration? = null
-        var subProfileListener: ListenerRegistration? = null
+        var userProfileListener: ListenerRegistration? = null
 
         trySend(_profile.value)
 
@@ -420,6 +487,7 @@ class AndroidFirestoreProfileRepository(
                 _profile.value = profile
                 ioScope.launch {
                     localFallback.saveProfile(profile)
+                    localFallback.setOnboardingCompleted(true)
                 }
                 trySend(profile)
             } catch (e: Throwable) {
@@ -427,67 +495,47 @@ class AndroidFirestoreProfileRepository(
             }
         }
 
-        fun attachWorkspaceProfileListeners(wsId: String?) {
+        fun attachListeners(wsId: String?) {
             rootProfileListener?.remove()
-            subProfileListener?.remove()
+            userProfileListener?.remove()
+            if (firestore == null) return
+
             val effectiveWsId = wsId?.takeIf { it.isNotBlank() && it != "ws_default" }
-            if (effectiveWsId == null || firestore == null) {
-                _profile.value = null
-                trySend(null)
-                return
+            if (effectiveWsId != null) {
+                try {
+                    rootProfileListener = firestore.collection("profiles")
+                        .document(effectiveWsId)
+                        .addSnapshotListener { snapshot, error ->
+                            if (error == null && snapshot != null && snapshot.exists()) {
+                                decodeAndEmit(snapshot.getString("payload"))
+                            }
+                        }
+                } catch (_: Throwable) {
+                }
             }
 
-            try {
-                // Listen to /profiles/{wsId} (Always permitted by root /profiles/{id} rule)
-                rootProfileListener = firestore.collection("profiles")
-                    .document(effectiveWsId)
-                    .addSnapshotListener { snapshot, error ->
-                        if (error == null && snapshot != null && snapshot.exists()) {
-                            decodeAndEmit(snapshot.getString("payload"))
+            val uid = auth?.currentUser?.uid
+            if (!uid.isNullOrBlank()) {
+                try {
+                    userProfileListener = firestore.collection("profiles")
+                        .document("user_$uid")
+                        .addSnapshotListener { snapshot, error ->
+                            if (error == null && snapshot != null && snapshot.exists()) {
+                                decodeAndEmit(snapshot.getString("payload"))
+                            }
                         }
-                    }
-            } catch (_: Throwable) {
-            }
-
-            try {
-                // Also listen to /workspaces/{wsId}/profile/current
-                subProfileListener = firestore.collection("workspaces")
-                    .document(effectiveWsId)
-                    .collection("profile")
-                    .document("current")
-                    .addSnapshotListener { snapshot, error ->
-                        if (error == null && snapshot != null && snapshot.exists()) {
-                            decodeAndEmit(snapshot.getString("payload"))
-                        }
-                    }
-            } catch (_: Throwable) {
+                } catch (_: Throwable) {
+                }
             }
         }
 
         val wsJob = ioScope.launch {
             if (workspaceContext != null) {
                 workspaceContext.activeWorkspaceId.collectLatest { wsId ->
-                    attachWorkspaceProfileListeners(wsId)
+                    attachListeners(wsId)
                 }
-            }
-        }
-
-        val fbAuth = auth
-        val authStateListener = if (fbAuth != null) {
-            FirebaseAuth.AuthStateListener { firebaseAuth ->
-                if (firebaseAuth.currentUser == null) {
-                    _profile.value = null
-                    trySend(null)
-                }
-            }
-        } else {
-            null
-        }
-
-        if (fbAuth != null && authStateListener != null) {
-            try {
-                fbAuth.addAuthStateListener(authStateListener)
-            } catch (_: Throwable) {
+            } else {
+                attachListeners(null)
             }
         }
 
@@ -496,19 +544,15 @@ class AndroidFirestoreProfileRepository(
                 if (localProfile != null && _profile.value == null) {
                     _profile.value = localProfile
                     trySend(localProfile)
+                } else if (localProfile == null && _profile.value == null) {
+                    trySend(null)
                 }
             }
         }
 
         awaitClose {
-            if (fbAuth != null && authStateListener != null) {
-                try {
-                    fbAuth.removeAuthStateListener(authStateListener)
-                } catch (_: Throwable) {
-                }
-            }
             rootProfileListener?.remove()
-            subProfileListener?.remove()
+            userProfileListener?.remove()
             wsJob.cancel()
             localJob.cancel()
         }
@@ -524,20 +568,26 @@ class AndroidFirestoreProfileRepository(
     override suspend fun clearLocalData() = withContext(NonCancellable) {
         _profile.value = null
         localFallback.clearLocalData()
-        localFallback.setOnboardingCompleted(false)
     }
 
     override suspend fun saveProfile(profile: BusinessProfile) = withContext(NonCancellable) {
         _profile.value = profile
         localFallback.saveProfile(profile)
+        localFallback.setOnboardingCompleted(true)
+
+        val (uid, email) = resolveUserIdentity()
+        val dsFallback = localFallback as? DataStoreProfileRepository
+        if (dsFallback != null) {
+            if (!uid.isNullOrBlank()) dsFallback.saveUserProfileBackup(uid, profile)
+            if (!email.isNullOrBlank()) dsFallback.saveUserProfileBackup(email, profile)
+        }
 
         val firestore = db ?: return@withContext
-        val uid = auth?.currentUser?.uid ?: authRepository?.getCurrentUser()?.id
         val wsId = resolveEffectiveWorkspaceId()
 
         try {
             val serialized = json.encodeToString(BusinessProfile.serializer(), profile)
-            val map = mutableMapOf<String, Any>(
+            val map = mutableMapOf(
                 "payload" to serialized,
                 "workspaceId" to wsId,
                 "updatedAt" to System.currentTimeMillis(),
@@ -565,46 +615,62 @@ class AndroidFirestoreProfileRepository(
             }
             if (!uid.isNullOrBlank()) {
                 map["updatedBy"] = uid
+                map["userId"] = uid
+            }
+            if (!email.isNullOrBlank()) {
+                map["email"] = email
             }
 
-            // 1. Save to /profiles/{wsId} (Root collection allowed by firestore.rules!)
-            try {
-                firestore.collection("profiles")
-                    .document(wsId)
-                    .set(map)
-                    .await()
-            } catch (e: Throwable) {
-                Log.e("RevLensFirestore", "Failed saving /profiles/$wsId", e)
+            // 1. Save directly under user-keyed documents in /profiles (Always permitted by root rules!)
+            if (!uid.isNullOrBlank()) {
+                try {
+                    firestore.collection("profiles")
+                        .document("user_$uid")
+                        .set(map)
+                        .await()
+                } catch (e: Throwable) {
+                    Log.e("RevLensFirestore", "Failed saving /profiles/user_$uid", e)
+                }
+            }
+            if (!email.isNullOrBlank()) {
+                val emailDocId = "email_${sanitizeKey(email)}"
+                try {
+                    firestore.collection("profiles")
+                        .document(emailDocId)
+                        .set(map)
+                        .await()
+                } catch (e: Throwable) {
+                    Log.e("RevLensFirestore", "Failed saving /profiles/$emailDocId", e)
+                }
             }
 
-            // 2. Save profilePayload onto /workspaces/{wsId} root document (Allowed by firestore.rules!)
-            try {
-                firestore.collection("workspaces")
-                    .document(wsId)
-                    .set(
-                        mapOf(
-                            "id" to wsId,
-                            "currency" to profile.currencyCode,
-                            "profilePayload" to serialized,
-                            "updatedAt" to System.currentTimeMillis()
-                        ),
-                        SetOptions.merge()
-                    )
-                    .await()
-            } catch (e: Throwable) {
-                Log.e("RevLensFirestore", "Failed merging profilePayload to /workspaces/$wsId", e)
-            }
+            // 2. Save to /profiles/{wsId}
+            if (wsId.isNotBlank() && wsId != "ws_default") {
+                try {
+                    firestore.collection("profiles")
+                        .document(wsId)
+                        .set(map)
+                        .await()
+                } catch (e: Throwable) {
+                    Log.e("RevLensFirestore", "Failed saving /profiles/$wsId", e)
+                }
 
-            // 3. Save to /workspaces/{wsId}/profile/current subcollection
-            try {
-                firestore.collection("workspaces")
-                    .document(wsId)
-                    .collection("profile")
-                    .document("current")
-                    .set(map)
-                    .await()
-            } catch (e: Throwable) {
-                Log.e("RevLensFirestore", "Failed saving /workspaces/$wsId/profile/current", e)
+                // 3. Save profilePayload onto /workspaces/{wsId}
+                try {
+                    firestore.collection("workspaces")
+                        .document(wsId)
+                        .set(
+                            mapOf(
+                                "id" to wsId,
+                                "currency" to profile.currencyCode,
+                                "profilePayload" to serialized,
+                                "updatedAt" to System.currentTimeMillis()
+                            ),
+                            SetOptions.merge()
+                        )
+                        .await()
+                } catch (_: Throwable) {
+                }
             }
 
             // 4. Update /users/{uid} metadata & user-scoped backup
@@ -616,6 +682,7 @@ class AndroidFirestoreProfileRepository(
                             mapOf(
                                 "id" to uid,
                                 "activeWorkspaceId" to wsId,
+                                "profilePayload" to serialized,
                                 "onboardingCompleted" to true,
                                 "updatedAt" to System.currentTimeMillis()
                             ),
@@ -629,8 +696,7 @@ class AndroidFirestoreProfileRepository(
                         .document("current")
                         .set(map)
                         .await()
-                } catch (e: Throwable) {
-                    Log.e("RevLensFirestore", "Failed saving user profile reference", e)
+                } catch (_: Throwable) {
                 }
             }
         } catch (e: Throwable) {
@@ -639,117 +705,209 @@ class AndroidFirestoreProfileRepository(
     }
 
     override suspend fun syncRemoteProfile(): BusinessProfile? {
-        val firestore = db ?: return null
-        val currentUser = authRepository?.getCurrentUser()
-        val uid = auth?.currentUser?.uid ?: currentUser?.id ?: return null
-        val email = (auth?.currentUser?.email ?: currentUser?.email)?.trim()?.lowercase().orEmpty()
+        val (uid, email) = resolveUserIdentity()
+        if (uid.isNullOrBlank() && email.isNullOrBlank()) {
+            return null
+        }
 
-        return try {
-            val userWorkspacesSnap = withTimeoutOrNull(3500L) {
-                try {
-                    firestore.collection("users")
-                        .document(uid)
-                        .collection("workspaces")
-                        .get()
-                        .await()
-                } catch (_: Throwable) {
-                    null
-                }
-            }
+        val dsFallback = localFallback as? DataStoreProfileRepository
+        val firestore = db
 
-            var validWsId: String? = null
-            if (userWorkspacesSnap != null && !userWorkspacesSnap.isEmpty) {
-                for (doc in userWorkspacesSnap.documents) {
-                    val candidateId = doc.getString("id") ?: doc.id
-                    if (candidateId.isBlank() || candidateId == "ws_default") continue
+        var resolvedWsId: String? = workspaceContext?.activeWorkspaceId?.value
+            ?.takeIf { it.isNotBlank() && it != "ws_default" }
+        var resolvedPayload: String? = null
 
-                    val rootWs = try {
-                        firestore.collection("workspaces").document(candidateId).get().await()
+        if (firestore != null) {
+            // 1. Fast direct lookup in /profiles/user_{uid} and /profiles/email_{email}
+            if (!uid.isNullOrBlank() && resolvedPayload.isNullOrBlank()) {
+                withTimeoutOrNull(3500L.milliseconds) {
+                    try {
+                        val doc = firestore.collection("profiles")
+                            .document("user_$uid")
+                            .get()
+                            .await()
+                        if (doc.exists()) {
+                            resolvedPayload = doc.getString("payload")
+                            val docWs = doc.getString("workspaceId")
+                            if (!docWs.isNullOrBlank() && docWs != "ws_default") {
+                                resolvedWsId = docWs
+                            }
+                        }
                     } catch (_: Throwable) {
-                        null
-                    }
-                    if (rootWs != null && rootWs.exists()) {
-                        validWsId = candidateId
-                        break
                     }
                 }
             }
 
-            if (validWsId == null) {
-                val userDoc = try {
-                    firestore.collection("users").document(uid).get().await()
-                } catch (_: Throwable) {
-                    null
-                }
-                val activeWs = userDoc?.getString("activeWorkspaceId")
-                if (!activeWs.isNullOrBlank() && activeWs != "ws_default") {
-                    validWsId = activeWs
+            if (!email.isNullOrBlank() && resolvedPayload.isNullOrBlank()) {
+                val emailDocId = "email_${sanitizeKey(email)}"
+                withTimeoutOrNull(3500L.milliseconds) {
+                    try {
+                        val doc = firestore.collection("profiles")
+                            .document(emailDocId)
+                            .get()
+                            .await()
+                        if (doc.exists()) {
+                            resolvedPayload = doc.getString("payload")
+                            val docWs = doc.getString("workspaceId")
+                            if (!docWs.isNullOrBlank() && docWs != "ws_default") {
+                                resolvedWsId = docWs
+                            }
+                        }
+                    } catch (_: Throwable) {
+                    }
                 }
             }
 
-            if (validWsId == null) {
-                workspaceContext?.switchTo("")
-                clearLocalData()
-                return null
+            // 2. Fallback lookup in /users/{uid} and /users/{uid}/workspaces
+            if (!uid.isNullOrBlank() && resolvedPayload.isNullOrBlank()) {
+                withTimeoutOrNull(3500L.milliseconds) {
+                    try {
+                        val userDoc = firestore.collection("users")
+                            .document(uid)
+                            .get()
+                            .await()
+                        if (userDoc.exists()) {
+                            val directPayload = userDoc.getString("profilePayload")
+                            if (!directPayload.isNullOrBlank()) {
+                                resolvedPayload = directPayload
+                            }
+                            val activeWs = userDoc.getString("activeWorkspaceId")
+                            if (!activeWs.isNullOrBlank() && activeWs != "ws_default") {
+                                resolvedWsId = activeWs
+                            }
+                        }
+                    } catch (_: Throwable) {
+                    }
+
+                    if (resolvedPayload.isNullOrBlank()) {
+                        try {
+                            val subProf = firestore.collection("users")
+                                .document(uid)
+                                .collection("profile")
+                                .document("current")
+                                .get()
+                                .await()
+                            if (subProf.exists() && !subProf.getString("payload")
+                                    .isNullOrBlank()
+                            ) {
+                                resolvedPayload = subProf.getString("payload")
+                            }
+                        } catch (_: Throwable) {
+                        }
+                    }
+
+                    if (resolvedWsId == null) {
+                        try {
+                            val wsSnap = firestore.collection("users")
+                                .document(uid)
+                                .collection("workspaces")
+                                .get()
+                                .await()
+                            val candidate = wsSnap.documents.firstOrNull {
+                                val id = it.getString("id") ?: it.id
+                                id.isNotBlank() && id != "ws_default"
+                            }
+                            if (candidate != null) {
+                                resolvedWsId = candidate.getString("id") ?: candidate.id
+                            }
+                        } catch (_: Throwable) {
+                        }
+                    }
+                }
             }
 
-            workspaceContext?.switchTo(validWsId)
-
-            // Read shared profile from /profiles/{wsId}, /workspaces/{wsId}, or /workspaces/{wsId}/profile/current
-            val payload = withTimeoutOrNull(3500L) {
-                try {
-                    val profDoc = firestore.collection("profiles").document(validWsId).get().await()
-                    if (profDoc.exists() && !profDoc.getString("payload").isNullOrBlank()) {
-                        return@withTimeoutOrNull profDoc.getString("payload")
+            // 3. If we found a workspace ID, check /profiles/{wsId} and /workspaces/{wsId}
+            val targetWsId = resolvedWsId ?: if (!uid.isNullOrBlank()) "ws_$uid" else null
+            if (!targetWsId.isNullOrBlank() && resolvedPayload.isNullOrBlank()) {
+                withTimeoutOrNull(3500L.milliseconds) {
+                    try {
+                        val profDoc = firestore.collection("profiles")
+                            .document(targetWsId)
+                            .get()
+                            .await()
+                        if (profDoc.exists() && !profDoc.getString("payload")
+                                .isNullOrBlank()
+                        ) {
+                            resolvedPayload = profDoc.getString("payload")
+                            resolvedWsId = targetWsId
+                        }
+                    } catch (_: Throwable) {
                     }
-                } catch (_: Throwable) {
-                }
 
-                try {
-                    val wsDoc = firestore.collection("workspaces").document(validWsId).get().await()
-                    if (wsDoc.exists() && !wsDoc.getString("profilePayload").isNullOrBlank()) {
-                        return@withTimeoutOrNull wsDoc.getString("profilePayload")
+                    if (resolvedPayload.isNullOrBlank()) {
+                        try {
+                            val wsDoc = firestore.collection("workspaces")
+                                .document(targetWsId)
+                                .get()
+                                .await()
+                            if (wsDoc.exists() && !wsDoc.getString("profilePayload")
+                                    .isNullOrBlank()
+                            ) {
+                                resolvedPayload = wsDoc.getString("profilePayload")
+                                resolvedWsId = targetWsId
+                            }
+                        } catch (_: Throwable) {
+                        }
                     }
-                } catch (_: Throwable) {
                 }
-
-                try {
-                    val subDoc = firestore.collection("workspaces")
-                        .document(validWsId)
-                        .collection("profile")
-                        .document("current")
-                        .get()
-                        .await()
-                    if (subDoc.exists() && !subDoc.getString("payload").isNullOrBlank()) {
-                        return@withTimeoutOrNull subDoc.getString("payload")
-                    }
-                } catch (_: Throwable) {
-                }
-
-                null
             }
+        }
 
-            if (!payload.isNullOrBlank()) {
-                val profile = json.decodeFromString<BusinessProfile>(payload)
+        // 4. Decode remote payload if found
+        if (!resolvedPayload.isNullOrBlank()) {
+            try {
+                val profile = json.decodeFromString<BusinessProfile>(resolvedPayload!!)
+                val finalWsId = resolvedWsId
+                    ?: (!uid.isNullOrBlank()).let {
+                        if (it) "ws_$uid" else "ws_${
+                            sanitizeKey(
+                                email.orEmpty()
+                            )
+                        }"
+                    }
+                workspaceContext?.switchTo(finalWsId)
                 _profile.value = profile
                 localFallback.saveProfile(profile)
                 localFallback.setOnboardingCompleted(true)
+                if (dsFallback != null) {
+                    if (!uid.isNullOrBlank()) dsFallback.saveUserProfileBackup(uid, profile)
+                    if (!email.isNullOrBlank()) dsFallback.saveUserProfileBackup(email, profile)
+                }
                 return profile
+            } catch (e: Throwable) {
+                Log.e("RevLensFirestore", "Failed decoding synced remote profile", e)
             }
+        }
 
-            clearLocalData()
-            null
-        } catch (e: Throwable) {
-            Log.e("RevLensFirestore", "syncRemoteProfile failed", e)
+        // 5. Fallback to per-user local backup for this exact UID / email (handles offline / rules restrictions)
+        val localUserBackup = if (dsFallback != null) {
+            (!uid.isNullOrBlank()).let { hasUid ->
+                if (hasUid) dsFallback.getUserProfileBackup(uid!!) else null
+            } ?: (!email.isNullOrBlank()).let { hasEmail ->
+                if (hasEmail) dsFallback.getUserProfileBackup(email!!) else null
+            }
+        } else {
             null
         }
+
+        if (localUserBackup != null) {
+            val finalWsId = resolvedWsId
+                ?: if (!uid.isNullOrBlank()) "ws_$uid" else "ws_${sanitizeKey(email.orEmpty())}"
+            workspaceContext?.switchTo(finalWsId)
+            _profile.value = localUserBackup
+            localFallback.saveProfile(localUserBackup)
+            localFallback.setOnboardingCompleted(true)
+            return localUserBackup
+        }
+
+        return null
     }
 
     override suspend fun setOnboardingCompleted(completed: Boolean) = withContext(NonCancellable) {
         localFallback.setOnboardingCompleted(completed)
         val firestore = db ?: return@withContext
         try {
-            val uid = auth?.currentUser?.uid ?: authRepository?.getCurrentUser()?.id
+            val (uid, _) = resolveUserIdentity()
             if (!uid.isNullOrBlank()) {
                 firestore.collection("users")
                     .document(uid)
@@ -818,10 +976,8 @@ class AndroidFirestoreScenarioRepository(
         }
 
         val wsJob = ioScope.launch {
-            if (workspaceContext != null) {
-                workspaceContext.activeWorkspaceId.collectLatest { wsId ->
-                    attachListener(wsId)
-                }
+            workspaceContext?.activeWorkspaceId?.collectLatest { wsId ->
+                attachListener(wsId)
             }
         }
 

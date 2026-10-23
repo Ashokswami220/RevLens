@@ -123,15 +123,8 @@ fun CreateWorkspaceScreen(
 
             SegmentedTabs(
                 options = listOf("Create My Business", "Join Team via Code"),
-                selectedIndex = if (state.mode == WorkspaceSetupMode.CREATE_BUSINESS) 0 else 1,
-                onOptionSelected = { idx ->
-                    val targetMode = if (idx == 0) {
-                        WorkspaceSetupMode.CREATE_BUSINESS
-                    } else {
-                        WorkspaceSetupMode.JOIN_TEAM
-                    }
-                    viewModel.onEvent(CreateWorkspaceEvent.ModeChanged(targetMode))
-                }
+                selectedIndex = 0,
+                onOptionSelected = { /* Join Code tab is disabled */ }
             )
 
             if (state.mode == WorkspaceSetupMode.CREATE_BUSINESS) {

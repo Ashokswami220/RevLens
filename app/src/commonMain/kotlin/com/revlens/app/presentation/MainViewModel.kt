@@ -17,16 +17,19 @@ import com.revlens.app.domain.session.DefaultSessionManager
 import com.revlens.app.domain.session.SessionManager
 import com.revlens.app.model.BusinessProfile
 import com.revlens.app.model.Scenario
+import com.revlens.app.utils.getCurrentTimeMillis
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.time.Duration.Companion.milliseconds
 
 class MainViewModel(
     private val repository: ProfileRepository,
@@ -37,12 +40,19 @@ class MainViewModel(
     private val authRepository: AuthRepository? = null
 ) : ViewModel() {
 
-    val profile: StateFlow<BusinessProfile?> = repository.profileFlow
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = null
-        )
+    private val _immediateProfile = MutableStateFlow<BusinessProfile?>(null)
+    private val _immediateOnboardingCompleted = MutableStateFlow<Boolean?>(null)
+
+    val profile: StateFlow<BusinessProfile?> = combine(
+        repository.profileFlow,
+        _immediateProfile
+    ) { repoProfile, immediate ->
+        immediate ?: repoProfile
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = null
+    )
 
     val scenarios: StateFlow<List<Scenario>> = scenarioRepository.scenariosFlow
         .stateIn(
@@ -51,12 +61,16 @@ class MainViewModel(
             initialValue = emptyList()
         )
 
-    val isOnboardingCompleted: StateFlow<Boolean?> = repository.isOnboardingCompletedFlow
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = null
-        )
+    val isOnboardingCompleted: StateFlow<Boolean?> = combine(
+        repository.isOnboardingCompletedFlow,
+        _immediateOnboardingCompleted
+    ) { repoCompleted, immediate ->
+        immediate ?: repoCompleted
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = null
+    )
 
     val hasSeenIntro: StateFlow<Boolean?> = repository.hasSeenIntroFlow
         .stateIn(
@@ -90,38 +104,97 @@ class MainViewModel(
 
     val session: StateFlow<SessionState> = sessionManager.state
 
-    val currentUserRole: StateFlow<Role> = MutableStateFlow(Role.Owner).asStateFlow()
+    private val _currentUserRole = MutableStateFlow(Role.Owner)
+    val currentUserRole: StateFlow<Role> = _currentUserRole.asStateFlow()
 
     init {
         viewModelScope.launch {
             try {
-                val user = authRepository?.getCurrentUser()
-                if (user != null) {
-                    sessionManager.onLoggedIn(user)
-                    val remoteProfile = runCatching { repository.syncRemoteProfile() }.getOrNull()
-                    if (remoteProfile == null) {
-                        // Do not aggressively wipe the workspace. Just set onboarding to false.
-                        repository.setOnboardingCompleted(false)
-                    }
+                withTimeoutOrNull(1500L.milliseconds) {
+                    repository.hasSeenIntroFlow.firstOrNull()
+                }
+
+                // 1. Initial check on app launch
+                val initialUser = runCatching { authRepository?.getCurrentUser() }.getOrNull()
+                if (initialUser != null) {
+                    sessionManager.onLoggedIn(initialUser)
                 } else {
-                    // Do not aggressively wipe local data here. Firebase might just be slow to wake up.
                     sessionManager.signOut(wipeLocalSyncedData = false)
+                    wipeWorkspaceAndProfileLocally()
+                }
+
+                // 2. Observe session state continuously for logins & logouts
+                sessionManager.state.collect { state ->
+                    when (state) {
+                        is SessionState.Authenticated -> {
+                            val localCompleted = withTimeoutOrNull(1000L.milliseconds) {
+                                repository.isOnboardingCompletedFlow.firstOrNull()
+                            } == true
+                            val localProf = withTimeoutOrNull(1000L.milliseconds) {
+                                repository.profileFlow.firstOrNull()
+                            }
+
+                            if (localCompleted && localProf != null) {
+                                _immediateProfile.value = localProf
+                                _immediateOnboardingCompleted.value = true
+                                ensureActiveWorkspaceExists(localProf.currencyCode)
+                                repository.setOnboardingCompleted(true)
+                                viewModelScope.launch {
+                                    runCatching { repository.syncRemoteProfile() }
+                                }
+                            } else {
+                                // Set to null so the UI shows a loading state instead of bouncing to Onboarding
+                                _immediateOnboardingCompleted.value = null
+
+                                val remoteProfile = runCatching {
+                                    withTimeoutOrNull(5000L.milliseconds) {
+                                        repository.syncRemoteProfile()
+                                    }
+                                }.getOrNull()
+
+                                if (remoteProfile != null) {
+                                    _immediateProfile.value = remoteProfile
+                                    _immediateOnboardingCompleted.value = true
+                                    ensureActiveWorkspaceExists(remoteProfile.currencyCode)
+                                    repository.setOnboardingCompleted(true)
+                                } else {
+                                    wipeWorkspaceAndProfileLocally()
+                                }
+                            }
+                        }
+                        is SessionState.SignedOut -> {
+                            wipeWorkspaceAndProfileLocally()
+                        }
+                        is SessionState.Unknown -> {}
+                    }
+                    _isReady.value = true // Ensure UI unlocks after state processing
                 }
             } catch (_: Exception) {
-            } finally {
                 _isReady.value = true
             }
         }
-        viewModelScope.launch {
-            runCatching {
-                activeWorkspace.collectLatest { ws ->
-                    if (ws != null && ws.id != "ws_default") {
-                        if (workspaceContext.activeWorkspaceId.value != ws.id) {
-                            workspaceContext.switchTo(ws.id)
-                        }
-                    }
-                }
+    }
+
+    private suspend fun ensureActiveWorkspaceExists(currencyCode: String) {
+        val existingList = workspaceRepository.workspacesFlow.firstOrNull().orEmpty()
+        val currentId = workspaceContext.activeWorkspaceId.value
+        if (existingList.isEmpty()) {
+            val wsId = if (!currentId.isNullOrBlank() && currentId != "ws_default") {
+                currentId
+            } else {
+                val uid = authRepository?.getCurrentUser()?.id
+                if (!uid.isNullOrBlank()) "ws_$uid" else "ws_${getCurrentTimeMillis()}"
             }
+            val ws = Workspace(
+                id = wsId,
+                name = "My Business",
+                currency = currencyCode,
+                createdAtMillis = getCurrentTimeMillis()
+            )
+            workspaceRepository.createWorkspace(ws)
+            workspaceContext.switchTo(ws.id)
+        } else if (currentId.isNullOrBlank() || currentId == "ws_default") {
+            workspaceContext.switchTo(existingList.first().id)
         }
     }
 
@@ -134,41 +207,46 @@ class MainViewModel(
     }
 
     private suspend fun wipeWorkspaceAndProfileLocally() {
-        // Cache the intro state before clearing local data
-        val wasIntroSeen = hasSeenIntro.value ?: false
-
+        _immediateProfile.value = null
+        _immediateOnboardingCompleted.value = false
+        workspaceRepository.clearLocalData()
         workspaceContext.switchTo("")
+        repository.clearLocalData()
+        scenarioRepository.clearLocalData()
         repository.setOnboardingCompleted(false)
-
-        if (wasIntroSeen) {
-            repository.setHasSeenIntro(true)
-        }
     }
 
     fun updateProfile(updatedProfile: BusinessProfile) {
         if (!RolePermissions.canEditBaselinesAndScenarios(currentUserRole.value)) return
+        _immediateProfile.value = updatedProfile
         viewModelScope.launch {
             repository.saveProfile(updatedProfile)
             val currentWs = activeWorkspace.value
-            if (currentWs != null) {
-                if (currentWs.currency != updatedProfile.currencyCode) {
-                    workspaceRepository.updateWorkspace(
-                        currentWs.copy(currency = updatedProfile.currencyCode)
-                    )
-                }
+            if (currentWs != null && currentWs.currency != updatedProfile.currencyCode) {
+                workspaceRepository.updateWorkspace(
+                    currentWs.copy(currency = updatedProfile.currencyCode)
+                )
             }
         }
     }
 
-    fun completeOnboarding(profile: BusinessProfile) {
+    fun completeOnboarding(profile: BusinessProfile, onComplete: (() -> Unit)? = null) {
+        // Set synchronous state immediately so NavGraph never sees an incomplete state on DashboardRoute
+        _immediateProfile.value = profile
+        _immediateOnboardingCompleted.value = true
+        onComplete?.invoke()
+
         viewModelScope.launch {
-            repository.saveProfile(profile)
-            val currentWs = activeWorkspace.value
-            if (currentWs != null) {
-                val updatedWs = currentWs.copy(currency = profile.currencyCode)
-                workspaceRepository.updateWorkspace(updatedWs)
+            withContext(NonCancellable) {
+                ensureActiveWorkspaceExists(profile.currencyCode)
+                repository.saveProfile(profile)
+                repository.setOnboardingCompleted(true)
+                val currentWs = activeWorkspace.value
+                if (currentWs != null && currentWs.currency != profile.currencyCode) {
+                    val updatedWs = currentWs.copy(currency = profile.currencyCode)
+                    workspaceRepository.updateWorkspace(updatedWs)
+                }
             }
-            repository.setOnboardingCompleted(true)
         }
     }
 
@@ -213,4 +291,5 @@ class MainViewModel(
             scenarioRepository.deleteScenario(scenarioId)
         }
     }
+
 }

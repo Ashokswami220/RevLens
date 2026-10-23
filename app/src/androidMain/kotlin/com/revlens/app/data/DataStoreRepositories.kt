@@ -8,73 +8,124 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.revlens.app.model.BusinessProfile
 import com.revlens.app.model.Scenario
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 
 class DataStoreProfileRepository(
     private val dataStore: DataStore<Preferences>
 ) : ProfileRepository {
-    companion object {
-        val PROFILE_KEY = stringPreferencesKey("business_profile")
-        val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_completed")
-        val INTRO_SEEN_KEY = booleanPreferencesKey("intro_seen")
-    }
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    override val profileFlow: Flow<BusinessProfile?> = dataStore.data.map { preferences ->
-        val profileJson = preferences[PROFILE_KEY]
-        if (profileJson != null) {
-            try {
-                json.decodeFromString(profileJson)
-            } catch (e: Exception) {
-                e.printStackTrace()
+    companion object {
+        private val PROFILE_JSON_KEY = stringPreferencesKey("business_profile_json")
+        private val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_completed")
+        private val HAS_SEEN_INTRO_KEY = booleanPreferencesKey("has_seen_intro")
+
+        private fun userProfileBackupKey(userKey: String) =
+            stringPreferencesKey(
+                "user_profile_backup_${
+                    userKey.trim()
+                        .lowercase()
+                }"
+            )
+    }
+
+    private val _profileOverride = MutableStateFlow<BusinessProfile?>(null)
+    private val _onboardingOverride = MutableStateFlow<Boolean?>(null)
+    private val _introOverride = MutableStateFlow<Boolean?>(null)
+
+    override val profileFlow: Flow<BusinessProfile?> = combine(
+        dataStore.data,
+        _profileOverride
+    ) { prefs, overrideProfile ->
+        if (overrideProfile != null) {
+            overrideProfile
+        } else {
+            val raw = prefs[PROFILE_JSON_KEY]
+            if (!raw.isNullOrBlank()) {
+                runCatching { json.decodeFromString<BusinessProfile>(raw) }.getOrNull()
+            } else {
                 null
             }
-        } else {
+        }
+    }.distinctUntilChanged()
+
+    override val isOnboardingCompletedFlow: Flow<Boolean> = combine(
+        dataStore.data,
+        _onboardingOverride
+    ) { prefs, overrideCompleted ->
+        overrideCompleted ?: (prefs[ONBOARDING_COMPLETED_KEY] ?: false)
+    }.distinctUntilChanged()
+
+    override val hasSeenIntroFlow: Flow<Boolean> = combine(
+        dataStore.data,
+        _introOverride
+    ) { prefs, overrideIntro ->
+        overrideIntro ?: (prefs[HAS_SEEN_INTRO_KEY] ?: false)
+    }.distinctUntilChanged()
+
+    override suspend fun saveProfile(profile: BusinessProfile) {
+        _profileOverride.value = profile
+        val encoded = json.encodeToString(BusinessProfile.serializer(), profile)
+        dataStore.edit { prefs ->
+            prefs[PROFILE_JSON_KEY] = encoded
+        }
+    }
+
+    suspend fun saveUserProfileBackup(userKey: String, profile: BusinessProfile) {
+        if (userKey.isBlank()) return
+        val encoded = json.encodeToString(BusinessProfile.serializer(), profile)
+        dataStore.edit { prefs ->
+            prefs[userProfileBackupKey(userKey)] = encoded
+        }
+    }
+
+    suspend fun getUserProfileBackup(userKey: String): BusinessProfile? {
+        if (userKey.isBlank()) return null
+        return try {
+            val prefs = dataStore.data.first()
+            val raw = prefs[userProfileBackupKey(userKey)]
+            if (!raw.isNullOrBlank()) {
+                json.decodeFromString<BusinessProfile>(raw)
+            } else {
+                null
+            }
+        } catch (_: Throwable) {
             null
         }
     }
 
-    override suspend fun saveProfile(profile: BusinessProfile) {
-        dataStore.edit { preferences ->
-            val profileJson = json.encodeToString(profile)
-            preferences[PROFILE_KEY] = profileJson
-        }
-    }
-
-    override val isOnboardingCompletedFlow: Flow<Boolean> = dataStore.data.map { preferences ->
-        preferences[ONBOARDING_COMPLETED_KEY] == true
-    }
-
-    override suspend fun clearLocalData() {
-        dataStore.edit { preferences ->
-            val introSeen = preferences[INTRO_SEEN_KEY] ?: false
-            preferences.clear()
-            if (introSeen) {
-                preferences[INTRO_SEEN_KEY] = true
-            }
-        }
-    }
-
     override suspend fun setOnboardingCompleted(completed: Boolean) {
-        dataStore.edit { preferences ->
-            if (completed) {
-                preferences[ONBOARDING_COMPLETED_KEY] = true
-            } else {
-                preferences.remove(ONBOARDING_COMPLETED_KEY)
-                preferences.remove(PROFILE_KEY)
+        _onboardingOverride.value = completed
+        if (!completed) {
+            _profileOverride.value = null
+        }
+        dataStore.edit { prefs ->
+            prefs[ONBOARDING_COMPLETED_KEY] = completed
+            if (!completed) {
+                prefs.remove(PROFILE_JSON_KEY)
             }
         }
-    }
-
-    override val hasSeenIntroFlow: Flow<Boolean> = dataStore.data.map { preferences ->
-        preferences[INTRO_SEEN_KEY] == true
     }
 
     override suspend fun setHasSeenIntro(seen: Boolean) {
-        dataStore.edit { preferences ->
-            preferences[INTRO_SEEN_KEY] = seen
+        _introOverride.value = seen
+        dataStore.edit { prefs ->
+            prefs[HAS_SEEN_INTRO_KEY] = seen
+        }
+    }
+
+    override suspend fun clearLocalData() {
+        _profileOverride.value = null
+        _onboardingOverride.value = false
+        dataStore.edit { prefs ->
+            prefs.remove(PROFILE_JSON_KEY)
+            prefs[ONBOARDING_COMPLETED_KEY] = false
         }
     }
 }
@@ -82,70 +133,63 @@ class DataStoreProfileRepository(
 class DataStoreScenarioRepository(
     private val dataStore: DataStore<Preferences>
 ) : ScenarioRepository {
-    companion object {
-        val SCENARIOS_KEY = stringPreferencesKey("saved_scenarios")
-    }
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    override val scenariosFlow: Flow<List<Scenario>> = dataStore.data.map { preferences ->
-        val jsonStr = preferences[SCENARIOS_KEY]
-        if (jsonStr != null) {
-            try {
-                json.decodeFromString(jsonStr)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                emptyList()
-            }
-        } else {
-            emptyList()
-        }
+    companion object {
+        private val SCENARIOS_JSON_KEY = stringPreferencesKey("scenarios_json")
     }
 
+    override val scenariosFlow: Flow<List<Scenario>> = dataStore.data
+        .map { prefs ->
+            val raw = prefs[SCENARIOS_JSON_KEY]
+            if (!raw.isNullOrBlank()) {
+                runCatching { json.decodeFromString<List<Scenario>>(raw) }.getOrDefault(emptyList())
+            } else {
+                emptyList()
+            }
+        }
+        .distinctUntilChanged()
+
     override suspend fun saveScenario(scenario: Scenario) {
-        dataStore.edit { preferences ->
-            val currentJson = preferences[SCENARIOS_KEY]
-            val currentList = if (currentJson != null) {
-                try {
-                    json.decodeFromString<List<Scenario>>(currentJson)
-                        .toMutableList()
-                } catch (_: Exception) {
-                    mutableListOf()
-                }
+        dataStore.edit { prefs ->
+            val currentRaw = prefs[SCENARIOS_JSON_KEY]
+            val currentList = if (!currentRaw.isNullOrBlank()) {
+                runCatching { json.decodeFromString<List<Scenario>>(currentRaw) }.getOrDefault(
+                    emptyList()
+                )
             } else {
-                mutableListOf()
+                emptyList()
             }
-
-            val index = currentList.indexOfFirst { it.id == scenario.id }
+            val mutable = currentList.toMutableList()
+            val index = mutable.indexOfFirst { it.id == scenario.id }
             if (index != -1) {
-                currentList[index] = scenario
+                mutable[index] = scenario
             } else {
-                currentList.add(scenario)
+                mutable.add(scenario)
             }
-
-            preferences[SCENARIOS_KEY] = json.encodeToString(currentList)
+            prefs[SCENARIOS_JSON_KEY] = json.encodeToString(mutable)
         }
     }
 
     override suspend fun deleteScenario(scenarioId: String) {
-        dataStore.edit { preferences ->
-            val currentJson = preferences[SCENARIOS_KEY]
-            if (currentJson != null) {
-                try {
-                    val currentList = json.decodeFromString<List<Scenario>>(currentJson)
-                        .toMutableList()
-                    currentList.removeAll { it.id == scenarioId }
-                    preferences[SCENARIOS_KEY] = json.encodeToString(currentList)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+        dataStore.edit { prefs ->
+            val currentRaw = prefs[SCENARIOS_JSON_KEY]
+            val currentList = if (!currentRaw.isNullOrBlank()) {
+                runCatching { json.decodeFromString<List<Scenario>>(currentRaw) }.getOrDefault(
+                    emptyList()
+                )
+            } else {
+                emptyList()
             }
+            val updated = currentList.filter { it.id != scenarioId }
+            prefs[SCENARIOS_JSON_KEY] = json.encodeToString(updated)
         }
     }
 
     override suspend fun clearLocalData() {
-        dataStore.edit { preferences ->
-            preferences.remove(SCENARIOS_KEY)
+        dataStore.edit { prefs ->
+            prefs.remove(SCENARIOS_JSON_KEY)
         }
     }
 }

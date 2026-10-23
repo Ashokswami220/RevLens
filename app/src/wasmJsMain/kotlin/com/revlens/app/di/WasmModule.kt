@@ -206,7 +206,9 @@ class WasmScenarioRepository : ScenarioRepository {
 val wasmModule = module {
     single<ProfileRepository> {
         WebFirestoreProfileRepository(
-            WasmProfileRepository()
+            localFallback = WasmProfileRepository(),
+            workspaceContext = get(),
+            authRepository = get()
         )
     }
     single<ScenarioRepository> {
