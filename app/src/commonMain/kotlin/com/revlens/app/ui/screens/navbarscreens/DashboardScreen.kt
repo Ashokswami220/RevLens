@@ -551,7 +551,7 @@ private fun HeroRevenueCard(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "USD / mo",
+                    text = "mo",
                     color = TextMuted,
                     fontSize = 13.sp,
                     modifier = Modifier.padding(bottom = 4.dp)

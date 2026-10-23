@@ -638,10 +638,6 @@ fun RevLensNavGraph(
                         onBackClick = null,
                         onLogout = {
                             viewModel.logout {
-                                navController.navigate(LoginRoute) {
-                                    popUpTo(0) { inclusive = true }
-                                    launchSingleTop = true
-                                }
                                 BrowserRouter.updateUrl("login")
                             }
                         }
@@ -807,10 +803,6 @@ fun RevLensNavGraph(
                         viewModel = viewModel,
                         onNavigateBack = { navController.popBackStack() },
                         onLogout = {
-                            navController.navigate(LoginRoute) {
-                                popUpTo(0) { inclusive = true }
-                                launchSingleTop = true
-                            }
                             BrowserRouter.updateUrl("login")
                         },
                         onNavigateToCreateWorkspace = {
@@ -951,10 +943,6 @@ fun RevLensNavGraph(
                         onNavigateBack = { navController.popBackStack() },
                         onNavigateToLogin = {
                             viewModel.logout {
-                                navController.navigate(LoginRoute) {
-                                    popUpTo(0) { inclusive = true }
-                                    launchSingleTop = true
-                                }
                                 BrowserRouter.updateUrl("login")
                             }
                         }
