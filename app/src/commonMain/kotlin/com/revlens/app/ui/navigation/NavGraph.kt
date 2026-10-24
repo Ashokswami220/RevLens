@@ -81,6 +81,7 @@ import com.revlens.app.ui.screens.marketing.PublicPricingScreen
 import com.revlens.app.ui.screens.marketing.PublicPricingViewModel
 import com.revlens.app.ui.screens.navbarscreens.DashboardScreen
 import com.revlens.app.ui.screens.navbarscreens.ForecastScreen
+import com.revlens.app.model.ScenarioType
 import com.revlens.app.ui.screens.navbarscreens.ScenarioBuilderScreen
 import com.revlens.app.ui.screens.navbarscreens.SettingsScreen
 import com.revlens.app.ui.screens.navbarscreens.SimulatorScreen
@@ -704,6 +705,7 @@ fun RevLensNavGraph(
                     val route = backStackEntry.toRoute<PricingSimulatorRoute>()
                     SimulatorScreen(
                         initialTab = route.initialTab,
+                        scenarioId = route.scenarioId,
                         onNavigateToMetrics = { navController.navigate(MetricsRoute) }
                     )
                 }
@@ -719,7 +721,19 @@ fun RevLensNavGraph(
                             navController.navigate(ScenarioComparisonRoute)
                         },
                         onNavigateToMetrics = { navController.navigate(MetricsRoute) },
-                        onNavigateToExperiments = { navController.navigate(ExperimentsRoute) }
+                        onNavigateToExperiments = { navController.navigate(ExperimentsRoute) },
+                        onOpenScenario = { scenario ->
+                            val tab = when (scenario.type) {
+                                ScenarioType.PRICING -> 0
+                                ScenarioType.WHAT_IF -> 1
+                                ScenarioType.GROWTH -> 3
+                            }
+                            navController.navigate(
+                                PricingSimulatorRoute(initialTab = tab, scenarioId = scenario.id)
+                            ) {
+                                launchSingleTop = true
+                            }
+                        }
                     )
                 }
 

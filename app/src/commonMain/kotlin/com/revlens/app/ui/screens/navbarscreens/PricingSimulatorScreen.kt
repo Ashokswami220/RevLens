@@ -23,11 +23,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import com.revlens.app.model.ScenarioType
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -66,6 +68,17 @@ fun PricingSimulatorScreen(viewModel: MainViewModel) {
 
     var showSaveDialog by rememberSaveable { mutableStateOf(false) }
     var scenarioName by rememberSaveable { mutableStateOf("") }
+
+    val selectedScenario by viewModel.selectedScenario.collectAsState()
+    LaunchedEffect(selectedScenario) {
+        val s = selectedScenario
+        if (s != null && (s.type == ScenarioType.PRICING || s.assumptions.targetPlanId != null)) {
+            s.assumptions.targetPlanId?.let { selectedPlanId = it }
+            priceChangePercent = (s.assumptions.priceChangePercent * 100).toFloat()
+            churnChangePercent = (s.assumptions.churnChangePercent * 100).toFloat()
+            scenarioName = s.name
+        }
+    }
 
     val currencyFormatter = remember(profile?.currencyCode) {
         CurrencyUtils.getFormatter(profile?.currencyCode)
@@ -337,7 +350,8 @@ fun PricingSimulatorScreen(viewModel: MainViewModel) {
                             Scenario(
                                 name = scenarioName.ifEmpty { "New Pricing Scenario" },
                                 baselineProfile = p,
-                                assumptions = assumptions
+                                assumptions = assumptions,
+                                type = ScenarioType.PRICING
                             )
                         )
                     }

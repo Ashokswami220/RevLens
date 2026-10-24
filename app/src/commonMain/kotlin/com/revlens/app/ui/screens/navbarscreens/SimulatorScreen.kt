@@ -37,6 +37,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun SimulatorScreen(
     initialTab: Int = 0,
+    scenarioId: String? = null,
     viewModel: MainViewModel = koinViewModel(),
     onNavigateToMetrics: () -> Unit
 ) {
@@ -55,6 +56,12 @@ fun SimulatorScreen(
             if (pagerState.currentPage != target) {
                 pagerState.scrollToPage(target)
             }
+        }
+    }
+
+    LaunchedEffect(scenarioId) {
+        if (!scenarioId.isNullOrBlank()) {
+            viewModel.selectScenario(scenarioId)
         }
     }
 
@@ -103,7 +110,7 @@ fun SimulatorScreen(
                 0 -> PricingSimulatorScreen(viewModel = viewModel)
                 1 -> WhatIfScreen(viewModel = viewModel)
                 2 -> BreakEvenScreen(viewModel = viewModel)
-                3 -> GrowthSimulatorScreen()
+                3 -> GrowthSimulatorScreen(scenarioId = scenarioId)
             }
         }
     }

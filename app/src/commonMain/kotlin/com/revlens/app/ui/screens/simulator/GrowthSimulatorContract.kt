@@ -49,6 +49,7 @@ sealed interface GrowthSimulatorIntent {
     data object SaveScenario : GrowthSimulatorIntent
     data object OpenCashSheet : GrowthSimulatorIntent
     data object DismissCashSheet : GrowthSimulatorIntent
+    data class LoadScenarioById(val scenarioId: String) : GrowthSimulatorIntent
 }
 
 sealed interface GrowthSimulatorEffect {

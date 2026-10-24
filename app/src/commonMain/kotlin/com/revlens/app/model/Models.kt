@@ -101,11 +101,33 @@ data class Assumptions(
 )
 
 @Serializable
+enum class ScenarioType {
+    PRICING,
+    WHAT_IF,
+    GROWTH;
+
+    fun displayName(): String = when (this) {
+        PRICING -> "Pricing Scenario"
+        WHAT_IF -> "What-If Scenario"
+        GROWTH -> "Growth Scenario"
+    }
+}
+
+fun deriveScenarioType(assumptions: Assumptions): ScenarioType {
+    return when {
+        assumptions.growth != null -> ScenarioType.GROWTH
+        assumptions.targetPlanId != null || assumptions.priceChangePercent != 0.0 -> ScenarioType.PRICING
+        else -> ScenarioType.WHAT_IF
+    }
+}
+
+@Serializable
 data class Scenario(
     val id: String = randomUuid(),
     val name: String,
     val baselineProfile: BusinessProfile,
     val assumptions: Assumptions,
+    val type: ScenarioType = deriveScenarioType(assumptions),
     val createdAt: Long = getCurrentTimeMillis()
 )
 

@@ -12,7 +12,9 @@ import com.revlens.app.model.BigDecimal
 import com.revlens.app.model.BusinessProfile
 import com.revlens.app.model.Plan
 import com.revlens.app.model.Scenario
+import com.revlens.app.model.ScenarioType
 import com.revlens.app.utils.CurrencyUtils
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
@@ -169,6 +171,22 @@ class GrowthSimulatorViewModel(
             GrowthSimulatorIntent.SaveScenario -> saveScenario()
             GrowthSimulatorIntent.OpenCashSheet -> update { copy(showCashSheet = true) }
             GrowthSimulatorIntent.DismissCashSheet -> update { copy(showCashSheet = false) }
+            is GrowthSimulatorIntent.LoadScenarioById -> {
+                viewModelScope.launch {
+                    val list = scenarioRepository.scenariosFlow.firstOrNull() ?: emptyList()
+                    val found = list.find { it.id == event.scenarioId }
+                    val growth = found?.assumptions?.growth
+                    if (growth != null) {
+                        update {
+                            copy(
+                                assumptions = growth,
+                                scenarioNameInput = found.name
+                            )
+                        }
+                        recompute()
+                    }
+                }
+            }
         }
     }
 
@@ -211,7 +229,8 @@ class GrowthSimulatorViewModel(
                 baselineProfile = cachedProfile ?: fallbackProfile,
                 assumptions = Assumptions(
                     growth = currentState.assumptions
-                )
+                ),
+                type = ScenarioType.GROWTH
             )
 
             scenarioRepository.saveScenario(scenario)

@@ -61,6 +61,24 @@ class MainViewModel(
             initialValue = emptyList()
         )
 
+    private val _selectedScenario = MutableStateFlow<Scenario?>(null)
+    val selectedScenario: StateFlow<Scenario?> = _selectedScenario.asStateFlow()
+
+    fun selectScenario(scenarioId: String?) {
+        if (scenarioId == null) {
+            _selectedScenario.value = null
+            return
+        }
+        viewModelScope.launch {
+            val list = scenarioRepository.scenariosFlow.firstOrNull() ?: emptyList()
+            _selectedScenario.value = list.find { it.id == scenarioId }
+        }
+    }
+
+    fun clearSelectedScenario() {
+        _selectedScenario.value = null
+    }
+
     val isOnboardingCompleted: StateFlow<Boolean?> = combine(
         repository.isOnboardingCompletedFlow,
         _immediateOnboardingCompleted

@@ -17,6 +17,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BookmarkAdd
 import androidx.compose.material.icons.filled.Refresh
@@ -26,12 +31,16 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -58,11 +67,18 @@ import kotlin.math.roundToInt
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GrowthSimulatorScreen(
+    scenarioId: String? = null,
     viewModel: GrowthSimulatorViewModel = koinViewModel(),
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.state.collectAsState()
     val scrollState = rememberScrollState()
+
+    LaunchedEffect(scenarioId) {
+        if (!scenarioId.isNullOrBlank()) {
+            viewModel.onEvent(GrowthSimulatorIntent.LoadScenarioById(scenarioId))
+        }
+    }
 
     val horizonIndex = when (state.assumptions.timeHorizonMonths) {
         24 -> 1
@@ -70,49 +86,106 @@ fun GrowthSimulatorScreen(
         else -> 0
     }
 
+    val result = state.result
+    val finalMrrDollars = (result?.finalMrrMinor ?: 0L) / 100
+    val baselineMrrDollars = state.baselineMrrMinor / 100
+    val gainPercent = if (baselineMrrDollars > 0) {
+        ((finalMrrDollars - baselineMrrDollars).toDouble() / baselineMrrDollars * 100).roundToInt()
+    } else 0
+
+    val showStickyHeader by remember {
+        derivedStateOf { scrollState.value > 220 }
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(RevLensTheme.colors.background)
-            .verticalScroll(scrollState)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Horizon selector
-        SegmentedTabs(
-            options = listOf("12 Months", "24 Months", "36 Months"),
-            selectedIndex = horizonIndex,
-            onOptionSelected = { index ->
-                val months = when (index) {
-                    1 -> 24
-                    2 -> 36
-                    else -> 12
+        // Pinned Top Header: Horizon Switcher & Sticky Result Card
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(RevLensTheme.colors.background)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            SegmentedTabs(
+                options = listOf("12 Months", "24 Months", "36 Months"),
+                selectedIndex = horizonIndex,
+                onOptionSelected = { index ->
+                    val months = when (index) {
+                        1 -> 24
+                        2 -> 36
+                        else -> 12
+                    }
+                    viewModel.onEvent(GrowthSimulatorIntent.ChangeHorizon(months))
                 }
-                viewModel.onEvent(GrowthSimulatorIntent.ChangeHorizon(months))
-            }
-        )
+            )
 
-        // Result Card (Sticky / Top Summary)
-        val result = state.result
-        if (result != null) {
-            val finalMrrDollars = result.finalMrrMinor / 100
-            val baselineMrrDollars = state.baselineMrrMinor / 100
-            val gainPercent = if (baselineMrrDollars > 0) {
-                ((finalMrrDollars - baselineMrrDollars).toDouble() / baselineMrrDollars * 100).roundToInt()
-            } else 0
-
-            SectionCard(
-                title = "Simulated Growth Result"
+            AnimatedVisibility(
+                visible = showStickyHeader && result != null,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(
-                        text = "Projected MRR in ${state.assumptions.timeHorizonMonths} Months",
-                        style = RevLensTypography.labelMedium,
-                        color = RevLensTheme.colors.textSecondary
-                    )
-
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = RevLensTheme.colors.surfaceElevated,
+                    border = BorderStroke(1.dp, RevLensTheme.colors.borderDefault),
+                    shadowElevation = 3.dp,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                text = "PROJECTED MRR (${state.assumptions.timeHorizonMonths} MO)",
+                                style = RevLensTypography.labelSmall,
+                                color = RevLensTheme.colors.textSecondary
+                            )
+                            Text(
+                                text = "${state.currencySymbol}${formatNumberWithCommas(finalMrrDollars)}",
+                                style = RevLensTypography.titleLarge,
+                                color = RevLensTheme.colors.textPrimary
+                            )
+                        }
+
+                        DeltaChip(
+                            delta = if (gainPercent >= 0) "+$gainPercent%" else "$gainPercent%",
+                            type = if (gainPercent >= 0) DeltaType.POSITIVE else DeltaType.NEGATIVE
+                        )
+                    }
+                }
+            }
+        }
+
+        // Scrollable Body
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Result Card (Full Summary)
+            if (result != null) {
+                SectionCard(
+                    title = "Simulated Growth Result"
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(
+                            text = "Projected MRR in ${state.assumptions.timeHorizonMonths} Months",
+                            style = RevLensTypography.labelMedium,
+                            color = RevLensTheme.colors.textSecondary
+                        )
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
@@ -382,6 +455,7 @@ fun GrowthSimulatorScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
     }
+}
 
     // Dialogs & Sheets
 
